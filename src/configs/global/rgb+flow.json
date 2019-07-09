@@ -1,0 +1,6 @@
+{
+    "name": "modalityRGB+Flow",
+    "global_config": {
+        "modalities": ["rgb", "flow"]
+    }
+}

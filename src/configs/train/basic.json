@@ -1,0 +1,36 @@
+{
+    "name": "v0.2_ftfc3_lr3e-4_decay0.6per5e",
+    "n_gpu": 1,
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0003,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "lr_scheduler": {
+        "type":"StepLR",
+        "args":{
+            "step_size": 5,
+            "gamma": 0.6
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 1,
+        "verbosity": 2,
+        "monitor": "valid_seen_loss",
+        "monitor_mode": "min"
+    },
+    "trainer_args": {
+        "show_all_loss": true,
+        "log_step": 500,
+        "finetune_fc_epoch": 3
+    },
+    "visualization":{
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    }
+}

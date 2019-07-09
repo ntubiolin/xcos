@@ -1,0 +1,40 @@
+{
+    "metrics": [
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc_Verb",
+                "k":1,
+                "output_key": "verb_logits",
+                "target_key": "verb_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc_Verb",
+                "k":5,
+                "output_key": "verb_logits",
+                "target_key": "verb_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc_Noun",
+                "k":1,
+                "output_key": "noun_logits",
+                "target_key": "noun_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc_Noun",
+                "k":5,
+                "output_key": "noun_logits",
+                "target_key": "noun_class"
+            }
+        }
+    ]
+}

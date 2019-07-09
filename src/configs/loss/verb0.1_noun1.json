@@ -1,0 +1,61 @@
+{
+    "name": "verb0.1+noun1",
+    "losses": [
+        {
+            "nickname": "NounCrossEntropy",
+            "type": "CrossEntropyLoss",
+            "weight": 1,
+            "args": {
+                "output_key": "noun_logits",
+                "target_key": "noun_class"
+            }
+        },
+        {
+            "nickname": "VerbCrossEntropy",
+            "type": "CrossEntropyLoss",
+            "weight": 0.1,
+            "args": {
+                "output_key": "verb_logits",
+                "target_key": "verb_class"
+            }
+        }
+    ],
+    "metrics": [
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc_Verb",
+                "k":1,
+                "output_key": "verb_logits",
+                "target_key": "verb_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc_Verb",
+                "k":5,
+                "output_key": "verb_logits",
+                "target_key": "verb_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc_Noun",
+                "k":1,
+                "output_key": "noun_logits",
+                "target_key": "noun_class"
+            }
+        },
+        {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc_Noun",
+                "k":5,
+                "output_key": "noun_logits",
+                "target_key": "noun_class"
+            }
+        }
+    ]
+}

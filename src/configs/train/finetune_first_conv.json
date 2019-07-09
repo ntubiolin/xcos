@@ -1,0 +1,8 @@
+{
+    "name": "ftFirstConv2",
+    "trainer_args": {
+        "show_all_loss": true,
+        "log_step": 500,
+        "finetune_first_conv_epoch": 2
+    }
+}
