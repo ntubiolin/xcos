@@ -5,6 +5,6 @@
 *
 
 
-#### PR readiness check list
+#### PR readiness checklist
 > - [  ] Did it pass the Flake8 check?
 > - [  ] Did you test this PR?  
