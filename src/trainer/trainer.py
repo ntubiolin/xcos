@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from torchvision.utils import make_grid
 
-from base.base_trainer import BaseTrainer
-from utils.util import get_lr, flow_to_image, in_channel_map
+from trainer.base_trainer import BaseTrainer
+from utils.util import get_lr
 
 
 class Trainer(BaseTrainer):
@@ -17,17 +17,13 @@ class Trainer(BaseTrainer):
 
     def __init__(self, model, losses, metrics, optimizer, resume, config,
                  data_loader, valid_data_loaders=[], lr_scheduler=None, train_logger=None,
-                 show_all_loss=False, log_step=20,
-                 finetune_fc_epoch=None, finetune_first_conv_epoch=None):
+                 log_step=20):
         super(Trainer, self).__init__(
             model, losses, metrics, optimizer, resume,
             config, data_loader, valid_data_loaders, train_logger)
         self.config = config
         self.lr_scheduler = lr_scheduler
         self.log_step = log_step
-        self.show_all_loss = show_all_loss
-        self.finetune_fc_epoch = finetune_fc_epoch
-        self.finetune_first_conv_epoch = finetune_first_conv_epoch
 
     def _eval_metrics(self, data_input, model_output):
         acc_metrics = np.zeros(len(self.metrics))
@@ -35,25 +31,6 @@ class Trainer(BaseTrainer):
             acc_metrics[i] += metric(data_input, model_output)
             self.writer.add_scalar(f'{metric.__name__}', acc_metrics[i])
         return acc_metrics
-
-    def _set_finetune(self, epoch):
-        if self.finetune_fc_epoch is not None:
-            # Tune only the last fc layer for some epochs
-            if epoch <= self.finetune_fc_epoch:
-                self.logger.info('Currently tuning only the last layer.')
-                self.model.set_finetune_mode('fc')
-            else:
-                self.logger.info('Currently tuning the whole model.')
-                self.model.set_finetune_mode('all')
-
-        if self.finetune_first_conv_epoch is not None:
-            # Tune only the last fc layer for some epochs
-            if epoch <= self.finetune_first_conv_epoch:
-                self.logger.info('Currently tuning only the first convolution.')
-                self.model.set_finetune_mode('first_conv')
-            else:
-                self.logger.info('Currently tuning the whole model.')
-                self.model.set_finetune_mode('all')
 
     def _train_epoch(self, epoch):
         """
@@ -75,7 +52,6 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.logger.info(f'Current lr: {get_lr(self.optimizer)}')
         epoch_start_time = time.time()
-        self._set_finetune(epoch)
 
         total_loss = 0
         total_metrics = np.zeros(len(self.metrics))
@@ -172,12 +148,8 @@ class Trainer(BaseTrainer):
         }
 
     def _write_images(self, data_input, model_output):
-        for modality in in_channel_map.keys():
-            if f"{modality}_video" in data_input.keys():
-                frames = data_input[f'{modality}_video'][0].transpose(0, 1)
-                if modality == 'flow':
-                    frames = flow_to_image(frames)
-                self.writer.add_image(f'input_{modality}', make_grid(frames, nrow=4, normalize=True))
+
+        self.writer.add_image("data_input", make_grid(data_input["data_input"], nrow=4, normalize=True))
 
     def inference(self, data_loader, saved_keys=['verb_logits', 'noun_logits', 'uid']):
         self.model.eval()

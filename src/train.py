@@ -36,8 +36,6 @@ def main(config, args):
     # build model architecture
     model = get_instance(
         module_arch, 'arch', config,
-        num_verb_classes=data_loader.num_verb_classes,
-        num_noun_classes=data_loader.num_noun_classes
     )
     model.summary()
 

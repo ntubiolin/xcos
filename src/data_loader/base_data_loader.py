@@ -62,4 +62,10 @@ class BaseDataLoader(DataLoader):
         if self.valid_sampler is None:
             return None
         else:
-            return DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
+            valid_data_loader = DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
+            valid_data_loader.name = 'valid' + self.name
+            return valid_data_loader
+
+    @property
+    def name(self):
+        return self.__class__.__name__

@@ -1,0 +1,9 @@
+{
+    "name": "MnistModel",
+    "arch": {
+        "type": "MnistModel",
+        "args": {
+        }
+    }
+}
+
