@@ -117,7 +117,7 @@ dmypy.json
 **outputs*
 
 # dataset
-dataset/
+datasets/
 src/saved/
 
 # pretrained model weights
