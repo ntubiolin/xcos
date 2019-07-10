@@ -1,10 +1,10 @@
 {
-    "name": "v0.2_ftfc3_lr3e-4_decay0.6per5e",
+    "name": "pytorch_golden_template",
     "n_gpu": 1,
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 0.0003,
+            "lr": 0.0001,
             "weight_decay": 0,
             "amsgrad": true
         }
@@ -25,9 +25,7 @@
         "monitor_mode": "min"
     },
     "trainer_args": {
-        "show_all_loss": true,
-        "log_step": 500,
-        "finetune_fc_epoch": 3
+        "log_step": 500
     },
     "visualization":{
         "tensorboardX": true,
