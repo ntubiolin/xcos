@@ -2,7 +2,7 @@ import torch.nn as nn
 
 
 class CrossEntropyLoss(nn.Module):
-    def __init__(self, output_key='verb_logits', target_key='verb_class'):
+    def __init__(self, output_key, target_key):
         super(CrossEntropyLoss, self).__init__()
         self.loss_fn = nn.CrossEntropyLoss()
         self.output_key = output_key
