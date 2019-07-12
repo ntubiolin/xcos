@@ -22,10 +22,10 @@
         "save_freq": 1,
         "verbosity": 2,
         "monitor": "valid_seen_loss",
-        "monitor_mode": "min"
+        "monitor_mode": "min",
+        "log_step": 500
     },
     "trainer_args": {
-        "log_step": 500
     },
     "visualization":{
         "tensorboardX": true,
