@@ -12,7 +12,8 @@ import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
-from trainer.trainer import Trainer
+from .training_pipeline import TrainingPipeline
+from .testing_pipeline import TestingPipeline
 
 
 class PipelineManager():
@@ -144,7 +145,7 @@ class PipelineManager():
 
     def _setup_optimizer(self):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
-        self.optimizer = get_instance(torch.optim, 'optimizer', self.onfig, trainable_params)
+        self.optimizer = get_instance(torch.optim, 'optimizer', self.config, trainable_params)
 
     def _setup_lr_scheduler(self):
         self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', self.config, self.optimizer)
@@ -163,21 +164,20 @@ class PipelineManager():
         writer_dir = os.path.join(self.config['visualization']['log_dir'], self.config['name'], self.start_time)
         self.writer = WriterTensorboardX(writer_dir, logger, self.config['visualization']['tensorboardX'])
 
-    def _setup_trainer(self):
-        self.trainer = Trainer(
-            self.model, self.loss_functions, self.evaluation_metrics, self.optimizer,
-            resume=self.args.resume,
-            config=self.config,
-            data_loader=self.data_loader,
-            valid_data_loaders=self.valid_data_loaders,
-            lr_scheduler=self.lr_scheduler,
+    def _create_training_pipeline(self):
+        training_pipeline = TrainingPipeline(
+            self.model, self.data_loader, self.config,
+            losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
+            writer=self.writer, checkpoint_dir=self.checkpoint_dir,
+            valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
             **self.config['trainer_args']
         )
 
         if self.args.pretrained is not None:
-            self.trainer.load_pretrained(self.args.pretrained)
+            training_pipeline.load_pretrained(self.args.pretrained)
+        return training_pipeline
 
-    def _setup_tester(self):
+    def _create_testing_pipeline(self):
         # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
         torch.multiprocessing.set_sharing_strategy('file_system')
         saved_keys = ['verb_logits', 'noun_logits', 'uid', 'verb_class', 'noun_class']
@@ -191,7 +191,7 @@ class PipelineManager():
                 logger.info(f'Saving results on loader {loader.name} into {file_path}')
                 pickle.dump(inference_results, f)
 
-    def _setup_pipeline(self, config):
+    def _setup_pipeline(self):
         self._setup_device()
         self._setup_model()
         self._setup_data_loader()
@@ -203,9 +203,9 @@ class PipelineManager():
             self._setup_loss_functions()
             self._setup_optimizer()
             self._setup_lr_scheduler()
-            self.pipeline = self._setup_trainer()
+            self.pipeline = self._create_training_pipeline()
         else:
-            self.pipeline = self._setup_tester()
+            self.pipeline = self._create_testing_pipeline()
 
         self._setup_evaluation_metrics()
 
