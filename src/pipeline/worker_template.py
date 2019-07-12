@@ -5,21 +5,24 @@ import torch
 from torchvision.utils import make_grid
 
 from utils.util import get_lr
+from utils.logging_config import logger
 
 
 class WorkerTemplate:
-    def __init__(self, model, losses, metrics, optimizer, data_loader, writer):
+    def __init__(self, config, model, data_loader, losses, metrics, optimizer, writer, log_step, **kwargs):
+        self.config = config
         self.model = model
         self.losses = losses
         self.metrics = metrics
         self.optimizer = optimizer
         self.data_loader = data_loader
         self.writer = writer
+        self.log_step = log_step
 
     def _setup_model(self):
         np.random.seed()
         self.model.train()
-        self.logger.info(f'Current lr: {get_lr(self.optimizer)}')
+        logger.info(f'Current lr: {get_lr(self.optimizer)}')
 
     def _setup_writer(self):
         self.writer.set_step(self.step, self.data_loader.name)
@@ -57,7 +60,7 @@ class WorkerTemplate:
         for key in data.keys():
             # Dataloader yeilds something that's not tensor, e.g data['video_id']
             if torch.is_tensor(data[key]):
-                    data[key] = data[key].to(self.device)
+                data[key] = data[key].to(self.device)
         return data
 
     def _write_images(self, data, model_output):

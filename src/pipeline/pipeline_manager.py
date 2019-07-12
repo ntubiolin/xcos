@@ -1,7 +1,6 @@
 import os
 import json
 import datetime
-import pickle
 
 import torch
 
@@ -35,7 +34,7 @@ class PipelineManager():
         self.lr_scheduler = None
 
         # _setup_pipeline() will intialize the above attribute if needed, based on the config
-        self.pipeline = self._setup_pipeline()
+        self._setup_pipeline()
 
     def _setup_device(self):
         def prepare_device(n_gpu_use):
@@ -170,6 +169,7 @@ class PipelineManager():
             losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
             writer=self.writer, checkpoint_dir=self.checkpoint_dir,
             valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
+            log_step=self.config['trainer']['log_step'],
             **self.config['trainer_args']
         )
 
@@ -178,6 +178,7 @@ class PipelineManager():
         return training_pipeline
 
     def _create_testing_pipeline(self):
+        """
         # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
         torch.multiprocessing.set_sharing_strategy('file_system')
         saved_keys = ['verb_logits', 'noun_logits', 'uid', 'verb_class', 'noun_class']
@@ -191,12 +192,23 @@ class PipelineManager():
                 logger.info(f'Saving results on loader {loader.name} into {file_path}')
                 pickle.dump(inference_results, f)
 
+        """
+        testing_pipeline = TestingPipeline(
+            self.model, self.data_loader, self.config,
+            losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
+            writer=self.writer, checkpoint_dir=self.checkpoint_dir,
+            valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
+            **self.config['trainer_args']
+        )
+        return teseting_pipeline
+
     def _setup_pipeline(self):
         self._setup_device()
         self._setup_model()
         self._setup_data_loader()
         self._setup_checkpoint_dir()
         self._setup_writer()
+        self._setup_evaluation_metrics()
 
         if self.args.mode == 'train':
             self._setup_valid_data_loaders()
@@ -207,7 +219,6 @@ class PipelineManager():
         else:
             self.pipeline = self._create_testing_pipeline()
 
-        self._setup_evaluation_metrics()
 
     def run(self):
         self.pipeline.run()

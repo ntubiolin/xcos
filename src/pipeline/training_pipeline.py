@@ -7,7 +7,7 @@ from .validator import Validator
 
 class TrainingPipeline(BasePipeline):
 
-    def _setup(self):
+    def _setup_config(self):
         self.epochs = self.config['trainer']['epochs']
         self.save_freq = self.config['trainer']['save_freq']
         self.verbosity = self.config['trainer']['verbosity']
@@ -27,10 +27,11 @@ class TrainingPipeline(BasePipeline):
     def _create_workers(self):
         trainer = Trainer(
             self.config, self.model, self.data_loader,
-            self.losses, self.metrics, self.optimizer, self.writer
+            self.losses, self.metrics, self.optimizer, self.writer, self.log_step
         )
         validator = Validator(
             self.config, self.model, self.data_loader,
-            self.losses, self.metrics, self.optimizer, self.writer
+            self.losses, self.metrics, self.optimizer, self.writer, self.log_step
         )
-        self.workers = [trainer, validator]
+        workers = [trainer, validator]
+        return workers

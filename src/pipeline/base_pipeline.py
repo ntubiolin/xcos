@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 import torch
 
 from utils.logging_config import logger
+from model.base_model import BaseModel
+from data_loader.base_data_loader import BaseDataLoader
 
 
 class BasePipeline(ABC):
@@ -11,10 +13,11 @@ class BasePipeline(ABC):
     Base pipeline for training/validation/testing process
     """
     def __init__(
-        self, model, data_loader, config,
+        self, model: BaseModel, data_loader: BaseDataLoader, config: dict,
         losses=None, metrics=None, optimizer=None,
         writer=None, checkpoint_dir=None,
         valid_data_loaders=[], lr_scheduler=None,
+        log_step=None,
         train_logger=None
     ):
         self.config = config
@@ -28,6 +31,7 @@ class BasePipeline(ABC):
         self.writer = writer
         self.checkpoint_dir = checkpoint_dir
         self.lr_scheduler = lr_scheduler
+        self.log_step = log_step
         self.train_logger = train_logger
 
         self._setup_config()
