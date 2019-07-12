@@ -1,47 +1,45 @@
 import os
-import math
+from abc import ABC, abstractmethod
+
 import torch
+
 from utils.logging_config import logger
 
 
-class BasePipeline():
+class BasePipeline(ABC):
     """
     Base pipeline for training/validation/testing process
     """
     def __init__(
         self, model, data_loader, config,
-        losses=None, metrics=None, optimizer=None, writer=None, checkpoint_dir=None,
-        valid_data_loaders=[], train_logger=None
+        losses=None, metrics=None, optimizer=None,
+        writer=None, checkpoint_dir=None,
+        valid_data_loaders=[], lr_scheduler=None,
+        train_logger=None
     ):
         self.config = config
-        self.logger = logger
-
         self.model = model
+        self.data_loader = data_loader
+
         self.losses = losses
         self.metrics = metrics
         self.optimizer = optimizer
-
-        self.epochs = config['trainer']['epochs']
-        self.save_freq = config['trainer']['save_freq']
-        self.verbosity = config['trainer']['verbosity']
-
+        self.valid_data_loaders = valid_data_loaders
         self.writer = writer
         self.checkpoint_dir = checkpoint_dir
+        self.lr_scheduler = lr_scheduler
         self.train_logger = train_logger
 
-        # configuration to monitor model performance and save best
-        self.monitor = config['trainer']['monitor']
-        self.monitor_mode = config['trainer']['monitor_mode']
-        assert self.monitor_mode in ['min', 'max', 'off']
-        self.monitor_best = math.inf if self.monitor_mode == 'min' else -math.inf
+        self._setup_config()
+        self.workers = self._create_workers()
 
-        self.data_loader = data_loader
-        self.valid_data_loaders = valid_data_loaders
-        self.do_validation = len(self.valid_data_loaders) > 0
+    @abstractmethod
+    def _setup_config(self):
+        pass
 
-        self.start_epoch = 1
-        self.train_iteration_count = 0
-        self.valid_iteration_counts = [0 for _ in range(len(self.valid_data_loaders))]
+    @abstractmethod
+    def _create_workers(self):
+        return []
 
     def _record_log(self, epoch, log):
         # print logged informations to the screen
@@ -50,7 +48,7 @@ class BasePipeline():
             self.train_logger.add_entry(log)
             if self.verbosity >= 1:
                 for key, value in log.items():
-                    self.logger.info('    {:15s}: {}'.format(str(key), value))
+                    logger.info('    {:15s}: {}'.format(str(key), value))
                     if 'epoch' not in key:
                         self.writer.add_scalar(key, value)
 
@@ -69,7 +67,7 @@ class BasePipeline():
                 if epoch == 1:
                     msg = "Warning: Can\'t recognize metric named '{}' ".format(self.monitor)\
                         + "for performance monitoring. model_best checkpoint won\'t be updated."
-                    self.logger.warning(msg)
+                    logger.warning(msg)
         if epoch % self.save_freq == 0 or best:
             self._save_checkpoint(epoch, save_best=best)
 
@@ -104,11 +102,11 @@ class BasePipeline():
         best_str = '-best' if save_best else ''
         filename = os.path.join(self.checkpoint_dir, f'checkpoint-epoch{epoch}_{self.monitor_best:.4f}{best_str}.pth')
         torch.save(state, filename)
-        self.logger.info("Saving checkpoint: {} ...".format(filename))
+        logger.info("Saving checkpoint: {} ...".format(filename))
 
-    def train(self):
+    def run(self):
         """
-        Full training logic
+        Full pipeline logic
         """
         for epoch in range(self.start_epoch, self.epochs + 1):
             all_logs = {}
@@ -118,3 +116,6 @@ class BasePipeline():
 
             self._record_log(epoch, all_logs)
             self._check_and_save_best(epoch, all_logs)
+
+            if self.lr_scheduler is not None:
+                self.lr_scheduler.step()
