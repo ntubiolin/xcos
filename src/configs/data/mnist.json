@@ -1,0 +1,12 @@
+{
+    "name": "b32",
+    "data_loader": {
+        "type": "MnistDataLoader",
+        "args": {
+            "data_dir": "../datasets/mnist",
+            "batch_size": 32,
+            "validation_split": 0.1,
+            "num_workers": 4
+        }
+    }
+}
