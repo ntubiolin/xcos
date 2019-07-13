@@ -9,15 +9,21 @@ from utils.logging_config import logger
 
 
 class WorkerTemplate:
-    def __init__(self, config, model, data_loader, losses, metrics, optimizer, writer, log_step, **kwargs):
+    def __init__(self, config, device, model, data_loader, losses, metrics, optimizer, writer, lr_scheduler, **kwargs):
         self.config = config
+        self.device = device
         self.model = model
         self.losses = losses
         self.metrics = metrics
         self.optimizer = optimizer
         self.data_loader = data_loader
         self.writer = writer
-        self.log_step = log_step
+        self.lr_scheduler = lr_scheduler
+
+        self.log_step = config['trainer']['log_step']
+        self.verbosity = config['trainer']['verbosity']
+
+        self.step = 0
 
     def _setup_model(self):
         np.random.seed()
@@ -66,7 +72,10 @@ class WorkerTemplate:
     def _write_images(self, data, model_output):
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
 
-    def _iter_data(self):
+    def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
+        pass
+
+    def _iter_data(self, epoch):
         epoch_start_time = time.time()
         total_loss = 0
         total_metrics = np.zeros(len(self.metrics))
@@ -74,6 +83,7 @@ class WorkerTemplate:
             batch_start_time = time.time()
 
             self._setup_writer()
+            self.step += 1
 
             data = self._data_to_device(data)
 
@@ -82,7 +92,7 @@ class WorkerTemplate:
             if batch_idx % self.log_step == 0:
                 self._write_images(data, model_output)
                 if self.verbosity >= 2:
-                    self._print_log(batch_start_time, loss, metrics)
+                    self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
             total_loss += loss.item()
             total_metrics += metrics
@@ -97,8 +107,12 @@ class WorkerTemplate:
             'epoch': epoch,
             'epoch_time': epoch_time,
             'avg_loss': avg_loss,
-            'avg_metrics': avg_metrics
+            # 'avg_metrics': avg_metrics
         }
+        for i, item in enumerate(self.config['metrics']):
+            key = item["args"]["nickname"]
+            log[f"avg_{key}"] = avg_metrics[i]
+
         return log
 
     def _setup_lr_scheduler(self):
@@ -107,7 +121,7 @@ class WorkerTemplate:
 
     def run(self, epoch):
         self._setup_model()
-        epoch_time, avg_loss, avg_metrics = self._iter_data()
+        epoch_time, avg_loss, avg_metrics = self._iter_data(epoch)
         self._setup_lr_scheduler()
         log = self._to_log(epoch, epoch_time, avg_loss, avg_metrics)
         return log

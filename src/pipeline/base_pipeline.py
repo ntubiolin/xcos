@@ -13,13 +13,13 @@ class BasePipeline(ABC):
     Base pipeline for training/validation/testing process
     """
     def __init__(
-        self, model: BaseModel, data_loader: BaseDataLoader, config: dict,
+        self, device, model: BaseModel, data_loader: BaseDataLoader, config: dict,
         losses=None, metrics=None, optimizer=None,
         writer=None, checkpoint_dir=None,
         valid_data_loaders=[], lr_scheduler=None,
-        log_step=None,
         train_logger=None
     ):
+        self.device = device
         self.config = config
         self.model = model
         self.data_loader = data_loader
@@ -31,8 +31,9 @@ class BasePipeline(ABC):
         self.writer = writer
         self.checkpoint_dir = checkpoint_dir
         self.lr_scheduler = lr_scheduler
-        self.log_step = log_step
         self.train_logger = train_logger
+
+        self.verbosity = self.config['trainer']['verbosity']
 
         self._setup_config()
         self.workers = self._create_workers()
@@ -45,16 +46,16 @@ class BasePipeline(ABC):
     def _create_workers(self):
         return []
 
-    def _record_log(self, epoch, log):
+    def _print_and_record_log(self, epoch, log):
         # print logged informations to the screen
         self.writer.set_step(epoch, 'epoch_average')
         if self.train_logger is not None:
             self.train_logger.add_entry(log)
+        for key, value in log.items():
             if self.verbosity >= 1:
-                for key, value in log.items():
-                    logger.info('    {:15s}: {}'.format(str(key), value))
-                    if 'epoch' not in key:
-                        self.writer.add_scalar(key, value)
+                logger.info('    {:20s}: {:.4f}'.format(str(key), value))
+            if 'epoch' not in key:
+                self.writer.add_scalar(key, value)
 
     def _check_and_save_best(self, epoch, log):
         """
@@ -118,7 +119,7 @@ class BasePipeline(ABC):
                 log = worker.run(epoch)
                 all_logs = {**all_logs, **log}
 
-            self._record_log(epoch, all_logs)
+            self._print_and_record_log(epoch, all_logs)
             self._check_and_save_best(epoch, all_logs)
 
             if self.lr_scheduler is not None:

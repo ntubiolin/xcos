@@ -12,23 +12,24 @@ class Validator(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
-    def _eval_metrics(self, data_input, model_output):
-        acc_metrics = np.zeros(len(self.metrics))
-        for i, metric in enumerate(self.metrics):
-            acc_metrics[i] += metric(data_input, model_output)
-            self.writer.add_scalar(f'{metric.__name__}', acc_metrics[i])
-        return acc_metrics
+    def _run_and_optimize_model(self, data):
+        model_output = self.model(data)
+        loss = self._get_and_write_loss(data, model_output)
 
-    def _get_loss(self, data_input, model_output):
-        losses = []
-        for loss_name, (loss_instance, loss_weight) in self.losses.items():
-            if loss_weight <= 0.0:
-                continue
-            loss = loss_instance(data_input, model_output) * loss_weight
-            losses.append(loss)
-            self.writer.add_scalar(f'{loss_name}', loss.item())
-        loss = sum(losses)
-        return loss
+        metrics = self._get_and_write_metrics(data, model_output)
+        return model_output, loss, metrics
+
+    def _to_log(self, epoch, epoch_time, avg_loss, avg_metrics):
+        log = {
+            'valid_epoch_time': epoch_time,
+            'valid_avg_loss': avg_loss,
+            # 'valid_avg_metrics': avg_metrics
+        }
+        for i, item in enumerate(self.config['metrics']):
+            key = item["args"]["nickname"]
+            log[f"valid_avg_{key}"] = avg_metrics[i]
+
+        return log
 
     def _valid_epoch(self, epoch, valid_loader_idx):
         """
@@ -65,7 +66,4 @@ class Validator(WorkerTemplate):
             f'{loader.name}_loss': total_val_loss / len(loader),
             f'{loader.name}_metrics': (total_val_metrics / len(loader)).tolist()
         }
-
-    def _write_images(self, data_input, model_output):
-
         self.writer.add_image("data_input", make_grid(data_input["data_input"], nrow=4, normalize=True))

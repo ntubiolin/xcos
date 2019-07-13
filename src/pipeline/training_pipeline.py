@@ -10,7 +10,6 @@ class TrainingPipeline(BasePipeline):
     def _setup_config(self):
         self.epochs = self.config['trainer']['epochs']
         self.save_freq = self.config['trainer']['save_freq']
-        self.verbosity = self.config['trainer']['verbosity']
 
         # configuration to monitor model performance and save best
         self.monitor = self.config['trainer']['monitor']
@@ -26,12 +25,15 @@ class TrainingPipeline(BasePipeline):
 
     def _create_workers(self):
         trainer = Trainer(
-            self.config, self.model, self.data_loader,
-            self.losses, self.metrics, self.optimizer, self.writer, self.log_step
+            self.config, self.device, self.model, self.data_loader,
+            self.losses, self.metrics, self.optimizer, self.writer, self.lr_scheduler
         )
-        validator = Validator(
-            self.config, self.model, self.data_loader,
-            self.losses, self.metrics, self.optimizer, self.writer, self.log_step
-        )
-        workers = [trainer, validator]
+        workers = [trainer]
+        for valid_data_loader in self.valid_data_loaders:
+            workers.append(
+                Validator(
+                    self.config, self.device, self.model, valid_data_loader,
+                    self.losses, self.metrics, self.optimizer, self.writer, self.lr_scheduler
+                )
+            )
         return workers

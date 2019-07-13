@@ -165,11 +165,10 @@ class PipelineManager():
 
     def _create_training_pipeline(self):
         training_pipeline = TrainingPipeline(
-            self.model, self.data_loader, self.config,
+            self.device, self.model, self.data_loader, self.config,
             losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
             writer=self.writer, checkpoint_dir=self.checkpoint_dir,
             valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
-            log_step=self.config['trainer']['log_step'],
             **self.config['trainer_args']
         )
 
@@ -194,7 +193,7 @@ class PipelineManager():
 
         """
         testing_pipeline = TestingPipeline(
-            self.model, self.data_loader, self.config,
+            self.device, self.model, self.data_loader, self.config,
             losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
             writer=self.writer, checkpoint_dir=self.checkpoint_dir,
             valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
@@ -218,7 +217,6 @@ class PipelineManager():
             self.pipeline = self._create_training_pipeline()
         else:
             self.pipeline = self._create_testing_pipeline()
-
 
     def run(self):
         self.pipeline.run()
