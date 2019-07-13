@@ -18,7 +18,7 @@ class WorkerTemplate(ABC):
     def __init__(
         self, config: dict, device, model: BaseModel, data_loader: BaseDataLoader,
         losses: dict, metrics: list, optimizer,
-        writer, lr_scheduler,
+        writer, lr_scheduler, step: int = 0,
         **kwargs
     ):
         self.config = config
@@ -34,7 +34,7 @@ class WorkerTemplate(ABC):
         self.log_step = config['trainer']['log_step']
         self.verbosity = config['trainer']['verbosity']
 
-        self.step = 0  # Tensorboard log step
+        self.step = step  # Tensorboard log step
 
     # ============ Implement the following functions ==============
     @abstractmethod
