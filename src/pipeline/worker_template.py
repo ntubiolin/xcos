@@ -40,15 +40,16 @@ class WorkerTemplate(ABC):
     @abstractmethod
     def _run_and_optimize_model(self, data):
         """ Put data into model and optimize the model"""
-        pass
+        return {}, None, []
 
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
         """ Print messages on terminal. """
         pass
 
+    @abstractmethod
     def _to_log(self, epoch, epoch_time, avg_loss, avg_metrics):
         """ Turn loss and metrics to log dict"""
-        pass
+        return {}
 
     @abstractmethod
     def _setup_model(self):

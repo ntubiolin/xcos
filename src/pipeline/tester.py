@@ -11,6 +11,14 @@ class Tester(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
+    # TODO: fix tester
+    def _run_and_optimize_model(self, data):
+        model_output = self.model(data)
+        return model_output, None, []
+
+    def _setup_model(self):
+        self.model.eval()
+
     def inference(self, data_loader, saved_keys=['verb_logits', 'noun_logits', 'uid']):
         self.model.eval()
         logger.info(f'Inferencing with following keys to save: {saved_keys}')
