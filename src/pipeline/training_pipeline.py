@@ -19,10 +19,6 @@ class TrainingPipeline(BasePipeline):
 
         self.do_validation = len(self.valid_data_loaders) > 0
 
-        self.start_epoch = 1
-        self.train_iteration_count = 0
-        self.valid_iteration_counts = [0 for _ in range(len(self.valid_data_loaders))]
-
     def _create_workers(self):
         trainer = Trainer(
             self.config, self.device, self.model, self.data_loader,

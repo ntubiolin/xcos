@@ -33,6 +33,10 @@ class PipelineManager():
         self.optimizer = None
         self.lr_scheduler = None
 
+        self.start_epoch = 1
+        self.train_iteration_count = 0
+        self.valid_iteration_counts = [0 for _ in range(len(self.valid_data_loaders))]
+
         # _setup_pipeline() will intialize the above attribute if needed, based on the config
         self._setup_pipeline()
 
@@ -56,7 +60,10 @@ class PipelineManager():
             return device, list_ids
         self.device, self.device_ids = prepare_device(self.config['n_gpu'])
 
-    def _setup_model(self):
+    def _setup_model_and_optimizer(self):
+        """ Setup model and optimizer
+
+        Load pretrained / resume checkpoint / data parallel if specified """
         model = get_instance(
             module_arch, 'arch', self.config,
         )
@@ -64,16 +71,22 @@ class PipelineManager():
         model.summary()
         self.model = model.to(self.device)
 
-        if self.args.pretrained is not None:
-            logger.info("Loading pretrained checkpoint: {} ...".format(self.args.pretrained))
-            checkpoint = torch.load(self.args.pretrained)
-            self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+        self._setup_optimizer()
 
         if self.args.resume:
             self._resume_checkpoint(self.args.resume)
 
+        if self.args.pretrained is not None:
+            self._load_pretrained(self.args.pretrained)
+
         if len(self.device_ids) > 1:
             self.model = torch.nn.DataParallel(model, device_ids=self.device_ids)
+
+    def _load_pretrained(self, pretrained_path):
+        """ Load pretrained model not strictly """
+        logger.info("Loading pretrained checkpoint: {} ...".format(pretrained_path))
+        checkpoint = torch.load(pretrained_path)
+        self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
     def _resume_checkpoint(self, resume_path):
         """
@@ -81,7 +94,7 @@ class PipelineManager():
 
         :param resume_path: Checkpoint path to be resumed
         """
-        logger.info("Loading checkpoint: {} ...".format(resume_path))
+        logger.info("Resuming checkpoint: {} ...".format(resume_path))
         checkpoint = torch.load(resume_path)
         self.start_epoch = checkpoint['epoch'] + 1
         self.monitor_best = checkpoint['monitor_best']
@@ -108,12 +121,17 @@ class PipelineManager():
         # load optimizer state from checkpoint only when optimizer type is not changed.
         if checkpoint['config']['optimizer']['type'] != self.config['optimizer']['type']:
             logger.warning('Warning: Optimizer type given in config file is different from that of checkpoint. '
-                                'Optimizer parameters not being resumed.')
+                           'Optimizer parameters not being resumed.')
+        elif self.optimizer is None:
+            if self.args.mode == 'train':
+                raise IOError("Loading optimizer to None")
+            else:
+                logger.warning("Not loading optimizer state because it's not training mode")
         else:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
 
         self.train_logger = checkpoint['logger']
-        logger.info("Checkpoint '{}' (epoch {}) loaded".format(resume_path, self.start_epoch))
+        logger.info("Checkpoint '{}' (epoch {}) loaded".format(resume_path, self.start_epoch - 1))
 
     def _setup_data_loader(self):
         self.data_loader = get_instance(module_data, 'data_loader', self.config)
@@ -169,11 +187,11 @@ class PipelineManager():
             losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
             writer=self.writer, checkpoint_dir=self.checkpoint_dir,
             valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
+            start_epoch=self.start_epoch,
+            train_iteration_count=self.train_iteration_count, valid_iteration_counts=self.valid_iteration_counts,
             **self.config['trainer_args']
         )
 
-        if self.args.pretrained is not None:
-            training_pipeline.load_pretrained(self.args.pretrained)
         return training_pipeline
 
     def _create_testing_pipeline(self):
@@ -197,14 +215,15 @@ class PipelineManager():
             losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
             writer=self.writer, checkpoint_dir=self.checkpoint_dir,
             valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
+            resume=self.args.resume, pretrained=self.args.pretrained,
             **self.config['trainer_args']
         )
-        return teseting_pipeline
+        return testing_pipeline
 
     def _setup_pipeline(self):
         self._setup_device()
-        self._setup_model()
         self._setup_data_loader()
+        self._setup_model_and_optimizer()
         self._setup_checkpoint_dir()
         self._setup_writer()
         self._setup_evaluation_metrics()
@@ -212,7 +231,6 @@ class PipelineManager():
         if self.args.mode == 'train':
             self._setup_valid_data_loaders()
             self._setup_loss_functions()
-            self._setup_optimizer()
             self._setup_lr_scheduler()
             self.pipeline = self._create_training_pipeline()
         else:

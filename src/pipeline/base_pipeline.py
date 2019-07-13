@@ -15,8 +15,9 @@ class BasePipeline(ABC):
     def __init__(
         self, device, model: BaseModel, data_loader: BaseDataLoader, config: dict,
         losses=None, metrics=None, optimizer=None,
-        writer=None, checkpoint_dir=None,
-        valid_data_loaders=[], lr_scheduler=None,
+        writer=None, checkpoint_dir: str = None,
+        valid_data_loaders: list = [], lr_scheduler=None,
+        start_epoch: int = 1, train_iteration_count: int = 0, valid_iteration_counts: int = 0,
         train_logger=None
     ):
         self.device = device
@@ -34,6 +35,10 @@ class BasePipeline(ABC):
         self.train_logger = train_logger
 
         self.verbosity = self.config['trainer']['verbosity']
+
+        self.start_epoch = start_epoch
+        self.train_iteration_count = train_iteration_count
+        self.valid_iteration_counts = valid_iteration_counts
 
         self._setup_config()
         self.workers = self._create_workers()
@@ -105,7 +110,9 @@ class BasePipeline(ABC):
         }
 
         best_str = '-best' if save_best else ''
-        filename = os.path.join(self.checkpoint_dir, f'checkpoint-epoch{epoch}_{self.monitor_best:.4f}{best_str}.pth')
+        filename = os.path.join(
+            self.checkpoint_dir, f'ckpt-ep{epoch}-{self.monitor}{self.monitor_best:.4f}{best_str}.pth'
+        )
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
 
@@ -116,6 +123,7 @@ class BasePipeline(ABC):
         for epoch in range(self.start_epoch, self.epochs + 1):
             all_logs = {}
             for worker in self.workers:
+                assert self.model == worker.model, f"{self.model} != {worker.model}"
                 log = worker.run(epoch)
                 all_logs = {**all_logs, **log}
 
