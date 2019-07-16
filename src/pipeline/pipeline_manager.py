@@ -27,15 +27,15 @@ class PipelineManager():
 
         self.model = None
         self.data_loader = None
-        self.valid_data_loaders = []
+        self.valid_data_loaders = None
         self.loss_functions = None
         self.evaluation_metrics = None
         self.optimizer = None
         self.lr_scheduler = None
 
-        self.start_epoch = 1
-        self.train_iteration_count = 0
-        self.valid_iteration_counts = [0 for _ in range(len(self.valid_data_loaders))]
+        self.start_epoch = None
+        self.train_iteration_count = None
+        self.valid_iteration_counts = None
 
         # _setup_pipeline() will intialize the above attribute if needed, based on the config
         self._setup_pipeline()
@@ -73,7 +73,7 @@ class PipelineManager():
 
         self._setup_optimizer()
 
-        if self.args.resume:
+        if self.args.resume is not None:
             self._resume_checkpoint(self.args.resume)
 
         if self.args.pretrained is not None:
@@ -180,6 +180,9 @@ class PipelineManager():
         # setup visualization writer instance
         writer_dir = os.path.join(self.config['visualization']['log_dir'], self.config['name'], self.start_time)
         self.writer = WriterTensorboardX(writer_dir, logger, self.config['visualization']['tensorboardX'])
+        self.start_epoch = 1
+        self.train_iteration_count = 0
+        self.valid_iteration_counts = [0] * len(self.valid_data_loaders)
 
     def _create_training_pipeline(self):
         training_pipeline = TrainingPipeline(
@@ -223,13 +226,14 @@ class PipelineManager():
     def _setup_pipeline(self):
         self._setup_device()
         self._setup_data_loader()
+        if self.args.mode == 'train':
+            self._setup_valid_data_loaders()
         self._setup_model_and_optimizer()
         self._setup_checkpoint_dir()
         self._setup_writer()
         self._setup_evaluation_metrics()
 
         if self.args.mode == 'train':
-            self._setup_valid_data_loaders()
             self._setup_loss_functions()
             self._setup_lr_scheduler()
             self.pipeline = self._create_training_pipeline()

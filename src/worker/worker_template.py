@@ -18,7 +18,7 @@ class WorkerTemplate(ABC):
     def __init__(
         self, config: dict, device, model: BaseModel, data_loader: BaseDataLoader,
         losses: dict, metrics: list, optimizer,
-        writer, lr_scheduler, step: int = 0,
+        writer, lr_scheduler, step: int,
         **kwargs
     ):
         self.config = config

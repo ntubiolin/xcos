@@ -17,7 +17,7 @@ class BasePipeline(ABC):
         losses=None, metrics=None, optimizer=None,
         writer=None, checkpoint_dir: str = None,
         valid_data_loaders: list = [], lr_scheduler=None,
-        start_epoch: int = 1, train_iteration_count: int = 0, valid_iteration_counts: int = 0,
+        start_epoch: int = 1, train_iteration_count: int = 0, valid_iteration_counts: list = [0],
         train_logger=None
     ):
         self.device = device

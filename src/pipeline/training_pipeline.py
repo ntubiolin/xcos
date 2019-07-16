@@ -26,12 +26,12 @@ class TrainingPipeline(BasePipeline):
             self.train_iteration_count
         )
         workers = [trainer]
-        for valid_data_loader in self.valid_data_loaders:
+        for i, valid_data_loader in enumerate(self.valid_data_loaders):
             workers.append(
                 Validator(
                     self.config, self.device, self.model, valid_data_loader,
                     self.losses, self.metrics, self.optimizer, self.writer, self.lr_scheduler,
-                    self.valid_iteration_counts
+                    self.valid_iteration_counts[i]
                 )
             )
         return workers
