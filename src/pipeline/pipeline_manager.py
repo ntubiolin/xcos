@@ -51,7 +51,7 @@ class PipelineManager():
                     "Warning: There\'s no GPU available on this machine, training will be performed on CPU.")
                 n_gpu_use = 0
             if n_gpu_use > n_gpu:
-                msg = (f"Warning: The number of GPU\'s configured to use is {n_gpu_use}"
+                msg = (f"Warning: The number of GPU\'s configured to use is {n_gpu_use} "
                        f"but only {n_gpu} are available on this machine.")
                 logger.warning(msg)
                 n_gpu_use = n_gpu
