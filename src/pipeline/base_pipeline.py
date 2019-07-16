@@ -86,8 +86,7 @@ class BasePipeline(ABC):
         Saving checkpoints
 
         :param epoch: current epoch number
-        :param log: logging information of the epoch
-        :param save_best: if True, rename the saved checkpoint to 'model_best.pth'
+        :param save_best: if True, add '-best.pth' at the end of the best model
         """
         arch = type(self.model).__name__
 
