@@ -1,5 +1,5 @@
 from .base_pipeline import BasePipeline
-from .tester import Tester
+from worker.tester import Tester
 
 
 class TestingPipeline(BasePipeline):

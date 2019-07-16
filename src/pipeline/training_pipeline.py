@@ -1,8 +1,8 @@
 import math
 
 from .base_pipeline import BasePipeline
-from .trainer import Trainer
-from .validator import Validator
+from worker.trainer import Trainer
+from worker.validator import Validator
 
 
 class TrainingPipeline(BasePipeline):
