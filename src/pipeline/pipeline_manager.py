@@ -17,14 +17,21 @@ from .testing_pipeline import TestingPipeline
 
 class PipelineManager():
     """
-    Training pipeline manager that controls train/validation process
+    Training/testing pipeline manager that controls train/validation/testing process
+
+    Example:
+        pipeline_manager = PipelineManager(args, config)
+        pipeline_manager.set_mode(args.mode)
+        pipeline_manager.setup_pipeline()
+        pipeline_manager.run()
     """
-    def __init__(self, args, config):
+    def __init__(self, args: dict, config: dict):
         self.start_time = datetime.datetime.now().strftime('%m%d_%H%M%S')
 
         self.args = args
         self.config = config
 
+        # setup_pipeline() will intialize the following attribute if needed, based on the config
         self.model = None
         self.data_loader = None
         self.valid_data_loaders = None
@@ -36,9 +43,6 @@ class PipelineManager():
         self.start_epoch = None
         self.train_iteration_count = None
         self.valid_iteration_counts = None
-
-        # _setup_pipeline() will intialize the above attribute if needed, based on the config
-        self._setup_pipeline()
 
     def _setup_device(self):
         def prepare_device(n_gpu_use):
@@ -123,7 +127,7 @@ class PipelineManager():
             logger.warning('Warning: Optimizer type given in config file is different from that of checkpoint. '
                            'Optimizer parameters not being resumed.')
         elif self.optimizer is None:
-            if self.args.mode == 'train':
+            if self.mode == 'train':
                 raise IOError("Loading optimizer to None")
             else:
                 logger.warning("Not loading optimizer state because it's not training mode")
@@ -223,17 +227,22 @@ class PipelineManager():
         )
         return testing_pipeline
 
-    def _setup_pipeline(self):
+    def set_mode(self, mode):
+        self.mode = mode
+
+    def setup_pipeline(self):
         self._setup_device()
         self._setup_data_loader()
-        if self.args.mode == 'train':
+
+        if self.mode == 'train':
             self._setup_valid_data_loaders()
+
         self._setup_model_and_optimizer()
         self._setup_checkpoint_dir()
         self._setup_writer()
         self._setup_evaluation_metrics()
 
-        if self.args.mode == 'train':
+        if self.mode == 'train':
             self._setup_loss_functions()
             self._setup_lr_scheduler()
             self.pipeline = self._create_training_pipeline()

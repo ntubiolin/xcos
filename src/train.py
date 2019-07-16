@@ -12,6 +12,8 @@ from pipeline.pipeline_manager import PipelineManager
 
 def main(config, args):
     pipeline_manager = PipelineManager(args, config)
+    pipeline_manager.set_mode(args.mode)
+    pipeline_manager.setup_pipeline()
     pipeline_manager.run()
 
 
