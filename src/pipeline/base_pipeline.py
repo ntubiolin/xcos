@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 import torch
 
 from utils.logging_config import logger
-from model.base_model import BaseModel
-from data_loader.base_data_loader import BaseDataLoader
 
 
 class BasePipeline(ABC):
