@@ -1,91 +1,20 @@
 import os
 import json
 import argparse
-import pickle
 from copy import copy
 
 import torch
 
-import data_loader.data_loaders as module_data
-import model.loss as module_loss
-import model.metric as module_metric
-import model.model as module_arch
-from trainer.trainer import Trainer
-from utils.logger import Logger
 from utils.logging_config import logger
 import global_variables
-
-
-def get_instance(module, name, config, *args, **kargs):
-    return getattr(module, config[name]['type'])(*args, **config[name]['args'], **kargs)
+from pipeline.pipeline_manager import PipelineManager
 
 
 def main(config, args):
-    train_logger = Logger()
-
-    # setup data_loader instances
-    data_loader = get_instance(module_data, 'data_loader', config)
-    if 'valid_data_loaders' in config.keys():
-        valid_data_loaders = [
-            getattr(module_data, entry['type'])(**entry['args'])
-            for entry in config['valid_data_loaders']
-        ]
-    else:
-        valid_data_loaders = [data_loader.split_validation()]
-
-    # build model architecture
-    model = get_instance(
-        module_arch, 'arch', config,
-    )
-    model.summary()
-
-    # setup instances of losses
-    losses = {
-        entry.get('nickname', entry['type']): (
-            getattr(module_loss, entry['type'])(**entry['args']),
-            entry['weight']
-        )
-        for entry in config['losses']
-    }
-
-    # setup instances of metrics
-    metrics = [
-        getattr(module_metric, entry['type'])(**entry['args'])
-        for entry in config['metrics']
-    ]
-
-    # build optimizer, learning rate scheduler. delete every lines containing lr_scheduler for disabling scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
-    lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', config, optimizer)
-
-    trainer = Trainer(model, losses, metrics, optimizer,
-                      resume=args.resume,
-                      config=config,
-                      data_loader=data_loader,
-                      valid_data_loaders=valid_data_loaders,
-                      lr_scheduler=lr_scheduler,
-                      train_logger=train_logger,
-                      **config['trainer_args'])
-
-    if args.pretrained is not None:
-        trainer.load_pretrained(args.pretrained)
-
-    if args.mode == 'test':
-        # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
-        torch.multiprocessing.set_sharing_strategy('file_system')
-        saved_keys = ['verb_logits', 'noun_logits', 'uid', 'verb_class', 'noun_class']
-        for loader in trainer.valid_data_loaders:
-            file_path = os.path.join(args.save_dir, loader.name + '.pkl')
-            if os.path.exists(file_path) and args.skip_exists:
-                logger.warning(f'Skipping inference and saving {file_path}')
-                continue
-            inference_results = trainer.inference(loader, saved_keys)
-            with open(file_path, 'wb') as f:
-                logger.info(f'Saving results on loader {loader.name} into {file_path}')
-                pickle.dump(inference_results, f)
-    else:
-        trainer.train()
+    pipeline_manager = PipelineManager(args, config)
+    pipeline_manager.set_mode(args.mode)
+    pipeline_manager.setup_pipeline()
+    pipeline_manager.run()
 
 
 def extend_config(config, config_B):

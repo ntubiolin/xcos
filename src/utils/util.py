@@ -4,6 +4,10 @@ from glob import glob
 import torch
 
 
+def get_instance(module, name, config, *args, **kargs):
+    return getattr(module, config[name]['type'])(*args, **config[name]['args'], **kargs)
+
+
 def ensure_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)

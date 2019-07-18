@@ -1,5 +1,8 @@
 # Pytorch Golden Template
 
+## Class Diagram
+<img src='./doc/PytorchTemplate-initialDesgin.png'>
+
 ## Features
 
 ## Usage

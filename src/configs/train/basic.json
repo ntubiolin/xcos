@@ -1,6 +1,6 @@
 {
     "name": "pytorch_golden_template",
-    "n_gpu": 1,
+    "n_gpu": 2,
     "optimizer": {
         "type": "Adam",
         "args": {
@@ -21,11 +21,11 @@
         "save_dir": "saved/",
         "save_freq": 1,
         "verbosity": 2,
-        "monitor": "valid_seen_loss",
-        "monitor_mode": "min"
+        "monitor": "valid_avg_loss",
+        "monitor_mode": "min",
+        "log_step": 500
     },
     "trainer_args": {
-        "log_step": 500
     },
     "visualization":{
         "tensorboardX": true,
