@@ -10,7 +10,7 @@ class TestingPipeline(BasePipeline):
     def _create_workers(self):
         tester = Tester(
             self.config, self.model, self.data_loader,
-            self.losses, self.metrics, self.optimizer, self.writer
+            self.loss_functions, self.evaluation_metrics, self.optimizer, self.writer
         )
         workers = [tester]
         return workers

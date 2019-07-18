@@ -13,33 +13,12 @@ class BasePipeline(ABC):
     Base pipeline for training/validation/testing process
     """
     def __init__(
-        self, device, model: BaseModel, data_loader: BaseDataLoader, config: dict,
-        losses=None, metrics=None, optimizer=None,
-        writer=None, checkpoint_dir: str = None,
-        valid_data_loaders: list = [], lr_scheduler=None,
-        start_epoch: int = 1, train_iteration_count: int = 0, valid_iteration_counts: list = [0],
-        train_logger=None
+        self, pipeline_shared_attributes: dict = {}, train_logger=None
     ):
-        self.device = device
-        self.config = config
-        self.model = model
-        self.data_loader = data_loader
+        for name, value in pipeline_shared_attributes.items():
+            self.__setattr__(name, value)
 
-        self.losses = losses
-        self.metrics = metrics
-        self.optimizer = optimizer
-        self.valid_data_loaders = valid_data_loaders
-        self.writer = writer
-        self.checkpoint_dir = checkpoint_dir
-        self.lr_scheduler = lr_scheduler
         self.train_logger = train_logger
-
-        self.verbosity = self.config['trainer']['verbosity']
-
-        self.start_epoch = start_epoch
-        self.train_iteration_count = train_iteration_count
-        self.valid_iteration_counts = valid_iteration_counts
-
         self._setup_config()
         self.workers = self._create_workers()
 
