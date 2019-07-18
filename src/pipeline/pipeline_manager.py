@@ -189,14 +189,14 @@ class PipelineManager():
         self.valid_iteration_counts = [0] * len(self.valid_data_loaders)
 
     def _setup_pipeline_shared_attributes(self):
-        shared_names = [
+        shared_attr_names = [
             'device', 'model', 'config', 'optimizer',
             'writer', 'checkpoint_dir', 'lr_scheduler', 'data_loader',
             'valid_data_loaders', 'train_iteration_count', 'valid_iteration_counts',
             'start_epoch', 'evaluation_metrics'
         ]
         self._pipeline_shared_attributes = {
-            name: getattr(self, name) for name in shared_names
+            name: getattr(self, name) for name in shared_attr_names
         }
         for name, value in self.config['pipeline_attributes'].items():
             self._pipeline_shared_attributes[name] = value
