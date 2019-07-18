@@ -224,12 +224,7 @@ class PipelineManager():
 
         """
         testing_pipeline = TestingPipeline(
-            self.device, self.model, self.data_loader, self.config,
-            losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
-            writer=self.writer, checkpoint_dir=self.checkpoint_dir,
-            valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
-            **self.config['trainer_args']
-        )
+            self._pipeline_shared_attributes, losses=self.loss_functions)
         return testing_pipeline
 
     def set_mode(self, mode):
