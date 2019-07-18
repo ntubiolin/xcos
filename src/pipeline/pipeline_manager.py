@@ -200,6 +200,7 @@ class PipelineManager():
         }
         for name, value in self.config['pipeline_attributes'].items():
             self._pipeline_shared_attributes[name] = value
+        self._pipeline_shared_attributes['verbosity'] = self.config['trainer']['verbosity']
 
     def _create_training_pipeline(self):
         training_pipeline = TrainingPipeline(
