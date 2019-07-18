@@ -193,20 +193,17 @@ class PipelineManager():
             'device', 'model', 'config', 'optimizer',
             'writer', 'checkpoint_dir', 'lr_scheduler', 'data_loader',
             'valid_data_loaders', 'train_iteration_count', 'valid_iteration_counts',
-            'start_epoch', 'loss_functions', 'evaluation_metrics'
+            'start_epoch', 'evaluation_metrics'
         ]
         self._pipeline_shared_attributes = {
-            name: self.__getattr__(name) for name in shared_names
+            name: getattr(self, name) for name in shared_names
         }
         for name, value in self.config['pipeline_attributes'].items():
             self._pipeline_shared_attributes[name] = value
 
     def _create_training_pipeline(self):
         training_pipeline = TrainingPipeline(
-            self._pipeline_shared_attributes,
-            **self.config['trainer_args']
-        )
-
+            self._pipeline_shared_attributes, loss_functions=self.loss_functions)
         return training_pipeline
 
     def _create_testing_pipeline(self):

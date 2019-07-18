@@ -20,12 +20,12 @@
         "epochs": 100,
         "save_dir": "saved/",
         "save_freq": 1,
+        "verbosity": 2,
         "monitor": "valid_avg_loss",
         "monitor_mode": "min",
         "log_step": 500
     },
     "pipeline_attributes": {
-        "verbosity": 2
     },
     "visualization":{
         "tensorboardX": true,

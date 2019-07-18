@@ -13,11 +13,12 @@ class BasePipeline(ABC):
     Base pipeline for training/validation/testing process
     """
     def __init__(
-        self, pipeline_shared_attributes: dict = {}, train_logger=None
+        self, pipeline_shared_attributes: dict = {}, train_logger=None,
+        loss_functions: list = []
     ):
         for name, value in pipeline_shared_attributes.items():
             self.__setattr__(name, value)
-
+        self.loss_functions = loss_functions
         self.train_logger = train_logger
         self._setup_config()
         self.workers = self._create_workers()
