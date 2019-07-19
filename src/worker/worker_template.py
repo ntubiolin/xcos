@@ -118,14 +118,8 @@ class WorkerTemplate(ABC):
         avg_metrics = (total_metrics / len(self.data_loader)).tolist()
         return epoch_time, avg_loss, avg_metrics
 
-    def _update_lr(self):
-        """ Update learning rate if there is a lr_scheduler """
-        if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
-
     def run(self, epoch):
         self._setup_model()
         epoch_time, avg_loss, avg_metrics = self._iter_data(epoch)
-        self._update_lr()
         log = self._to_log(epoch, epoch_time, avg_loss, avg_metrics)
         return log

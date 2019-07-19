@@ -43,7 +43,7 @@ class BasePipeline(ABC):
 
         self._worker_shared_list = {
             'common': ['config', 'device', 'model', 'loss_functions',
-                       'evaluation_metrics', 'writer', 'lr_scheduler'],
+                       'evaluation_metrics', 'writer'],
             'trainer': ['optimizer'], 'tester': [], 'validator': []
         }
 
