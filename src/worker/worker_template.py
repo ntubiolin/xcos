@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torchvision.utils import make_grid
 
-from model.base_model import BaseModel
 from data_loader.base_data_loader import BaseDataLoader
 
 
@@ -16,25 +15,15 @@ class WorkerTemplate(ABC):
     that deals with the main optimization & model inference.
     """
     def __init__(
-        self, config: dict, device, model: BaseModel, data_loader: BaseDataLoader,
-        losses: dict, metrics: list, optimizer,
-        writer, lr_scheduler, step: int,
-        **kwargs
+        self, attributes: dict, data_loader: BaseDataLoader, step: int
     ):
-        self.config = config
-        self.device = device
-        self.model = model
-        self.losses = losses
+        for name, value in attributes.items():
+            setattr(self, name, value)
 
-        self.metrics = metrics
-        self.optimizer = optimizer
+        self.log_step = self.config['trainer']['log_step']
+        self.verbosity = self.config['trainer']['verbosity']
+
         self.data_loader = data_loader
-        self.writer = writer
-        self.lr_scheduler = lr_scheduler
-
-        self.log_step = config['trainer']['log_step']
-        self.verbosity = config['trainer']['verbosity']
-
         self.step = step  # Tensorboard log step
 
     # ============ Implement the following functions ==============
@@ -76,7 +65,7 @@ class WorkerTemplate(ABC):
         Losses will be summed and returned.
         """
         losses = []
-        for loss_name, (loss_instance, loss_weight) in self.losses.items():
+        for loss_name, (loss_instance, loss_weight) in self.loss_functions.items():
             if loss_weight <= 0.0:
                 continue
             loss = loss_instance(data, model_output) * loss_weight
@@ -88,8 +77,8 @@ class WorkerTemplate(ABC):
 
     def _get_and_write_metrics(self, data, model_output):
         """ Calculate evaluation metrics and write them to Tensorboard """
-        acc_metrics = np.zeros(len(self.metrics))
-        for i, metric in enumerate(self.metrics):
+        acc_metrics = np.zeros(len(self.evaluation_metrics))
+        for i, metric in enumerate(self.evaluation_metrics):
             acc_metrics[i] += metric(data, model_output)
             self.writer.add_scalar(f'{metric.__name__}', acc_metrics[i])
         return acc_metrics
@@ -106,7 +95,7 @@ class WorkerTemplate(ABC):
         """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
         epoch_start_time = time.time()
         total_loss = 0
-        total_metrics = np.zeros(len(self.metrics))
+        total_metrics = np.zeros(len(self.evaluation_metrics))
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
 
