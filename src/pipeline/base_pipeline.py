@@ -20,9 +20,7 @@ class BasePipeline(ABC):
     def __init__(
         self, args, config
     ):
-        self.args = args
         self.config = config
-        self.mode = args.mode
         self.start_time = datetime.datetime.now().strftime('%m%d_%H%M%S')
         self._setup_device()
         self._setup_data_loader()
@@ -37,11 +35,11 @@ class BasePipeline(ABC):
         self._setup_config()
         self.verbosity = config['trainer']['verbosity']
 
-        if self.args.resume is not None:
-            self._resume_checkpoint(self.args.resume)
+        if args.resume is not None:
+            self._resume_checkpoint(args.resume)
 
-        if self.args.pretrained is not None:
-            self._load_pretrained(self.args.pretrained)
+        if args.pretrained is not None:
+            self._load_pretrained(args.pretrained)
 
     @abstractmethod
     def _setup_config(self):
@@ -169,10 +167,7 @@ class BasePipeline(ABC):
             logger.warning('Warning: Optimizer type given in config file is different from that of checkpoint. '
                            'Optimizer parameters not being resumed.')
         elif self.optimizer is None:
-            if self.mode == 'train':
-                raise IOError("Loading optimizer to None")
-            else:
-                logger.warning("Not loading optimizer state because it's not training mode")
+            logger.warning("Not loading optimizer state because it's not initialized.")
         else:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
 
