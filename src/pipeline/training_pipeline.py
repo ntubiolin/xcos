@@ -1,11 +1,32 @@
 import math
 
+import torch
+
 from .base_pipeline import BasePipeline
 from worker.trainer import Trainer
 from worker.validator import Validator
+import model.loss as module_loss
+from utils.util import get_instance
 
 
 class TrainingPipeline(BasePipeline):
+    def __init__(self, args, config):
+        super().__init__(args, config)
+        self._setup_loss_functions()
+        self._setup_lr_scheduler()
+        self.workers = self._create_workers()
+
+    def _setup_loss_functions(self):
+        self.loss_functions = {
+            entry.get('nickname', entry['type']): (
+                getattr(module_loss, entry['type'])(**entry['args']),
+                entry['weight']
+            )
+            for entry in self.config['losses']
+        }
+
+    def _setup_lr_scheduler(self):
+        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', self.config, self.optimizer)
 
     def _setup_config(self):
         self.epochs = self.config['trainer']['epochs']

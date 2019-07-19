@@ -6,15 +6,18 @@ from copy import copy
 import torch
 
 from utils.logging_config import logger
+from pipeline import TrainingPipeline, TestingPipeline
 import global_variables
-from pipeline.pipeline_manager import PipelineManager
 
 
 def main(config, args):
-    pipeline_manager = PipelineManager(args, config)
-    pipeline_manager.set_mode(args.mode)
-    pipeline_manager.setup_pipeline()
-    pipeline_manager.run()
+    if args.mode == 'train':
+        pipeline = TrainingPipeline(args, config)
+    elif args.mode == 'test':
+        pipeline = TestingPipeline(args, config)
+    else:
+        raise NotImplementedError(f'Mode {args.mode} not defined.')
+    pipeline.run()
 
 
 def extend_config(config, config_B):
