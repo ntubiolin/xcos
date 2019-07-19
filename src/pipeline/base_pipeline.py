@@ -9,7 +9,6 @@ from utils.util import ensure_dir, get_instance
 from utils.visualization import WriterTensorboardX
 from utils.logging_config import logger
 import data_loader.data_loaders as module_data
-import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
 
@@ -104,15 +103,6 @@ class BasePipeline(ABC):
         else:
             self.valid_data_loaders = []
 
-    def _setup_loss_functions(self):
-        self.loss_functions = {
-            entry.get('nickname', entry['type']): (
-                getattr(module_loss, entry['type'])(**entry['args']),
-                entry['weight']
-            )
-            for entry in self.config['losses']
-        }
-
     def _setup_evaluation_metrics(self):
         self.evaluation_metrics = [
             getattr(module_metric, entry['type'])(**entry['args'])
@@ -122,9 +112,6 @@ class BasePipeline(ABC):
     def _setup_optimizer(self):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
         self.optimizer = get_instance(torch.optim, 'optimizer', self.config, trainable_params)
-
-    def _setup_lr_scheduler(self):
-        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', self.config, self.optimizer)
 
     def _setup_checkpoint_dir(self):
         self.checkpoint_dir = os.path.join(self.config['trainer']['save_dir'], self.config['name'], self.start_time)
