@@ -25,6 +25,7 @@ class WorkerTemplate(ABC):
         self.device = device
         self.model = model
         self.losses = losses
+
         self.metrics = metrics
         self.optimizer = optimizer
         self.data_loader = data_loader

@@ -188,17 +188,23 @@ class PipelineManager():
         self.train_iteration_count = 0
         self.valid_iteration_counts = [0] * len(self.valid_data_loaders)
 
+    def _setup_pipeline_shared_attributes(self):
+        shared_attr_names = [
+            'device', 'model', 'config', 'optimizer',
+            'writer', 'checkpoint_dir', 'lr_scheduler', 'data_loader',
+            'valid_data_loaders', 'train_iteration_count', 'valid_iteration_counts',
+            'start_epoch', 'evaluation_metrics'
+        ]
+        self._pipeline_shared_attributes = {
+            name: getattr(self, name) for name in shared_attr_names
+        }
+        for name, value in self.config['pipeline_attributes'].items():
+            self._pipeline_shared_attributes[name] = value
+        self._pipeline_shared_attributes['verbosity'] = self.config['trainer']['verbosity']
+
     def _create_training_pipeline(self):
         training_pipeline = TrainingPipeline(
-            self.device, self.model, self.data_loader, self.config,
-            losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
-            writer=self.writer, checkpoint_dir=self.checkpoint_dir,
-            valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
-            start_epoch=self.start_epoch,
-            train_iteration_count=self.train_iteration_count, valid_iteration_counts=self.valid_iteration_counts,
-            **self.config['trainer_args']
-        )
-
+            self._pipeline_shared_attributes, loss_functions=self.loss_functions)
         return training_pipeline
 
     def _create_testing_pipeline(self):
@@ -218,13 +224,7 @@ class PipelineManager():
 
         """
         testing_pipeline = TestingPipeline(
-            self.device, self.model, self.data_loader, self.config,
-            losses=self.loss_functions, metrics=self.evaluation_metrics, optimizer=self.optimizer,
-            writer=self.writer, checkpoint_dir=self.checkpoint_dir,
-            valid_data_loaders=self.valid_data_loaders, lr_scheduler=self.lr_scheduler,
-            resume=self.args.resume, pretrained=self.args.pretrained,
-            **self.config['trainer_args']
-        )
+            self._pipeline_shared_attributes, losses=self.loss_functions)
         return testing_pipeline
 
     def set_mode(self, mode):
@@ -242,6 +242,7 @@ class PipelineManager():
         self._setup_writer()
         self._setup_evaluation_metrics()
 
+        self._setup_pipeline_shared_attributes()
         if self.mode == 'train':
             self._setup_loss_functions()
             self._setup_lr_scheduler()
