@@ -28,8 +28,7 @@ class BasePipeline(ABC):
         self._setup_device()
         self._setup_data_loader()
 
-        if self.mode == 'train':
-            self._setup_valid_data_loaders()
+        self._setup_valid_data_loaders()
 
         self._setup_model_and_optimizer()
         self._setup_checkpoint_dir()
@@ -38,6 +37,12 @@ class BasePipeline(ABC):
 
         self._setup_config()
         self.verbosity = config['trainer']['verbosity']
+
+        if self.args.resume is not None:
+            self._resume_checkpoint(self.args.resume)
+
+        if self.args.pretrained is not None:
+            self._load_pretrained(self.args.pretrained)
 
     @abstractmethod
     def _setup_config(self):
@@ -82,12 +87,6 @@ class BasePipeline(ABC):
 
         self._setup_optimizer()
 
-        if self.args.resume is not None:
-            self._resume_checkpoint(self.args.resume)
-
-        if self.args.pretrained is not None:
-            self._load_pretrained(self.args.pretrained)
-
         if len(self.device_ids) > 1:
             self.model = torch.nn.DataParallel(model, device_ids=self.device_ids)
 
@@ -100,8 +99,10 @@ class BasePipeline(ABC):
                 getattr(module_data, entry['type'])(**entry['args'])
                 for entry in self.config['valid_data_loaders']
             ]
-        else:
+        elif self.data_loader.validation_split > 0:
             self.valid_data_loaders = [self.data_loader.split_validation()]
+        else:
+            self.valid_data_loaders = []
 
     def _setup_loss_functions(self):
         self.loss_functions = {
@@ -144,31 +145,6 @@ class BasePipeline(ABC):
 
     # =============== functions for setting up attributes (start) ================
 
-    # def _create_training_pipeline(self):
-    #     training_pipeline = TrainingPipeline(
-    #         self._pipeline_shared_attributes, loss_functions=self.loss_functions)
-    #     return training_pipeline
-
-    # def _create_testing_pipeline(self):
-    #     """
-    #     # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
-    #     torch.multiprocessing.set_sharing_strategy('file_system')
-    #     saved_keys = ['verb_logits', 'noun_logits', 'uid', 'verb_class', 'noun_class']
-    #     for loader in self.valid_data_loaders:
-    #         file_path = os.path.join(self.args.save_dir, loader.name + '.pkl')
-    #         if os.path.exists(file_path) and self.args.skip_exists:
-    #             logger.warning(f'Skipping inference and saving {file_path}')
-    #             continue
-    #         inference_results = trainer.inference(loader, saved_keys)
-    #         with open(file_path, 'wb') as f:
-    #             logger.info(f'Saving results on loader {loader.name} into {file_path}')
-    #             pickle.dump(inference_results, f)
-
-    #     """
-    #     testing_pipeline = TestingPipeline(
-    #         self._pipeline_shared_attributes, losses=self.loss_functions)
-    #     return testing_pipeline
-
     def _load_pretrained(self, pretrained_path):
         """ Load pretrained model not strictly """
         logger.info("Loading pretrained checkpoint: {} ...".format(pretrained_path))
@@ -188,13 +164,9 @@ class BasePipeline(ABC):
 
         # Estimated iteration_count is based on length of the current data loader,
         # which will be wrong if the batch sizes between the two training processes are different.
-        self.train_iteration_count = checkpoint.get(
-            'train_iteration_count',
-            (checkpoint['epoch'] - 1) * len(self.data_loader))
+        self.train_iteration_count = checkpoint.get('train_iteration_count', 0)
         self.valid_iteration_counts = checkpoint.get(
-            'valid_iteration_counts', [
-                (checkpoint['epoch'] - 1) * len(self.valid_data_loaders[i])
-                for i in range(len(self.valid_data_loaders))])
+            'valid_iteration_counts', [0] * len(self.valid_data_loaders))
         self.valid_iteration_counts = list(self.valid_iteration_counts)
 
         # load architecture params from checkpoint.
