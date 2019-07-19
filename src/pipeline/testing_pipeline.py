@@ -3,6 +3,9 @@ from worker.tester import Tester
 
 
 class TestingPipeline(BasePipeline):
+    def __init__(self, args, config):
+        super().__init__(args, config)
+        self._create_workers()
 
     def _setup_config(self):
         pass

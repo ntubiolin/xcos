@@ -6,6 +6,12 @@ from worker.validator import Validator
 
 
 class TrainingPipeline(BasePipeline):
+    def __init__(self, args, config):
+        self.config = config
+        super().__init__(args, config)
+        self._setup_loss_functions()
+        self._setup_lr_scheduler()
+        self.workers = self._create_workers()
 
     def _setup_config(self):
         self.epochs = self.config['trainer']['epochs']
