@@ -42,17 +42,14 @@ class TrainingPipeline(BasePipeline):
 
     def _create_workers(self):
         trainer = Trainer(
-            self.config, self.device, self.model, self.data_loader,
-            self.loss_functions, self.evaluation_metrics, self.optimizer,
-            self.writer, self.lr_scheduler, self.train_iteration_count
+            self, self.data_loader, self.train_iteration_count
         )
         workers = [trainer]
+
         for i, valid_data_loader in enumerate(self.valid_data_loaders):
             workers.append(
                 Validator(
-                    self.config, self.device, self.model, valid_data_loader,
-                    self.loss_functions, self.evaluation_metrics, self.optimizer,
-                    self.writer, self.lr_scheduler, self.valid_iteration_counts[i]
+                    self, valid_data_loader, self.valid_iteration_counts[i]
                 )
             )
         return workers

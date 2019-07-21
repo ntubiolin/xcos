@@ -26,9 +26,6 @@ class TestingPipeline(BasePipeline):
         pass
 
     def _create_workers(self):
-        tester = Tester(
-            self.config, self.model, self.data_loader,
-            self.loss_functions, self.evaluation_metrics, self.optimizer, self.writer
-        )
+        tester = Tester(self, self.data_loader, 0)
         workers = [tester]
         return workers

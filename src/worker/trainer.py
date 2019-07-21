@@ -5,6 +5,7 @@ import numpy as np
 from .worker_template import WorkerTemplate
 from utils.logging_config import logger
 from utils.util import get_lr
+from pipeline.base_pipeline import BasePipeline
 
 
 class Trainer(WorkerTemplate):
@@ -14,6 +15,12 @@ class Trainer(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
+    def __init__(self, pipeline: BasePipeline, *args):
+        super().__init__(pipeline, *args)
+        # Some shared attributes are trainer exclusive and therefore is initialized here
+        for attr_name in ['optimizer']:
+            setattr(self, attr_name, getattr(pipeline, attr_name))
+
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
         logger.info(
             f'Epoch: {epoch} [{batch_idx * self.data_loader.batch_size}/{self.data_loader.n_samples} '
