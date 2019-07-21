@@ -67,15 +67,15 @@ class WorkerTemplate(ABC):
         Losses will be summed and returned.
         """
         losses = []
-        for loss_name, (loss_instance, loss_weight) in self.loss_functions.items():
-            if loss_weight <= 0.0:
+        for loss in self.loss_functions:
+            if loss.weight <= 0.0:
                 continue
-            loss = loss_instance(data, model_output) * loss_weight
-            losses.append(loss)
-            self.writer.add_scalar(f'{loss_name}', loss.item())
-        loss = sum(losses)
-        self.writer.add_scalar('loss', loss.item())
-        return loss
+            loss_value = loss(data, model_output) * loss.weight
+            losses.append(loss_value)
+            self.writer.add_scalar(f'{loss.nickname}', loss_value.item())
+        total_loss = sum(losses)
+        self.writer.add_scalar('total_loss', total_loss.item())
+        return total_loss
 
     def _get_and_write_metrics(self, data, model_output):
         """ Calculate evaluation metrics and write them to Tensorboard """

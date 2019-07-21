@@ -17,13 +17,10 @@ class TrainingPipeline(BasePipeline):
         self.workers = self._create_workers()
 
     def _setup_loss_functions(self):
-        self.loss_functions = {
-            entry.get('nickname', entry['type']): (
-                getattr(module_loss, entry['type'])(**entry['args']),
-                entry['weight']
-            )
+        self.loss_functions = [
+            getattr(module_loss, entry['type'])(**entry['args'])
             for entry in self.config['losses']
-        }
+        ]
 
     def _setup_lr_scheduler(self):
         self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', self.config, self.optimizer)
