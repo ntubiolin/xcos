@@ -22,7 +22,6 @@ class BaseDataLoader(DataLoader):
 
         self.batch_idx = 0
         self.n_samples = len(dataset)
-
         self.sampler, self.valid_sampler = self._split_sampler(self.validation_split)
 
         self.init_kwargs = {

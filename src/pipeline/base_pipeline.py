@@ -95,6 +95,8 @@ class BasePipeline(ABC):
                 getattr(module_data, entry['type'])(**entry['args'])
                 for entry in global_config['valid_data_loaders']
             ]
+            if self.data_loader.validation_split > 0:
+                raise ValueError(f'Split ratio > 0 when other validation loaders are specified.')
         elif self.data_loader.validation_split > 0:
             self.valid_data_loaders = [self.data_loader.split_validation()]
         else:
