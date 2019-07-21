@@ -1,6 +1,0 @@
-{
-    "name": "modalityFlow",
-    "global_config": {
-        "modalities": ["flow"]
-    }
-}
