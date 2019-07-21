@@ -1,36 +1,45 @@
 import os
-import json
 import argparse
-from copy import copy
 
 import torch
 
 from utils.logging_config import logger
 from pipeline import TrainingPipeline, TestingPipeline
-import global_variables
 
 
-def main(config, args):
+def main(args):
+
+    #######################
+    # Setup global config #
+    #######################
+    from utils.global_config import global_config
+    if args.resume:
+        # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
+        global_config.set_config(torch.load(args.resume)['config'])
+
+    if args.configs:
+        global_config.extend_configs(args.configs)
+
+    if args.device:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.device
+
+    logger.info(f'Experiment name: {global_config["name"]}')
+
+    ##################
+    # Setup pipeline #
+    ##################
     if args.mode == 'train':
-        pipeline = TrainingPipeline(args, config)
+        pipeline = TrainingPipeline(args)
     elif args.mode == 'test':
-        pipeline = TestingPipeline(args, config)
+        pipeline = TestingPipeline(args)
     else:
         raise NotImplementedError(f'Mode {args.mode} not defined.')
+
+    ################
+    # Run pipeline #
+    ################
+
     pipeline.run()
-
-
-def extend_config(config, config_B):
-    new_config = copy(config)
-    for key, value in config_B.items():
-        if key in new_config.keys():
-            if key == 'name':
-                value = f"{new_config[key]}_{value}"
-            else:
-                logger.warning(f"Overriding '{key}' in config")
-            del new_config[key]
-        new_config[key] = value
-    return new_config
 
 
 def parse_args():
@@ -62,18 +71,4 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    config = {}
-    if args.resume:
-        # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
-        config = torch.load(args.resume)['config']
-    if args.configs:
-        # load config files, the overlapped entries will be overwriten
-        for config_file in args.configs:
-            config = extend_config(config, json.load(open(config_file)))
-
-    if args.device:
-        os.environ["CUDA_VISIBLE_DEVICES"] = args.device
-
-    global_variables.global_config = config.get('global_config', {})
-    logger.info(f'Experiment name: {config["name"]}')
-    main(config, args)
+    main(args)

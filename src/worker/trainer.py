@@ -5,6 +5,7 @@ import numpy as np
 from .worker_template import WorkerTemplate
 from utils.logging_config import logger
 from utils.util import get_lr
+from utils.global_config import global_config
 from pipeline.base_pipeline import BasePipeline
 
 
@@ -46,7 +47,7 @@ class Trainer(WorkerTemplate):
             'avg_loss': avg_loss,
         }
         # Metrics is a list
-        for i, item in enumerate(self.config['metrics']):
+        for i, item in enumerate(global_config['metrics']):
             key = item["args"]["nickname"]
             log[f"avg_{key}"] = avg_metrics[i]
 
