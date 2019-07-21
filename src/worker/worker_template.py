@@ -7,6 +7,7 @@ from torchvision.utils import make_grid
 
 from data_loader.base_data_loader import BaseDataLoader
 from pipeline.base_pipeline import BasePipeline
+from utils.global_config import global_config
 
 
 class WorkerTemplate(ABC):
@@ -22,8 +23,8 @@ class WorkerTemplate(ABC):
         for attr_name in ['config', 'device', 'model', 'loss_functions', 'evaluation_metrics', 'writer']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
-        self.log_step = self.config['trainer']['log_step']
-        self.verbosity = self.config['trainer']['verbosity']
+        self.log_step = global_config['trainer']['log_step']
+        self.verbosity = global_config['trainer']['verbosity']
 
         self.data_loader = data_loader
         self.step = step  # Tensorboard log step

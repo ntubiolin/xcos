@@ -1,4 +1,5 @@
 from .worker_template import WorkerTemplate
+from utils.global_config import global_config
 
 
 class Validator(WorkerTemplate):
@@ -20,7 +21,7 @@ class Validator(WorkerTemplate):
             'valid_avg_loss': avg_loss,
         }
         # Metrics is a list
-        for i, item in enumerate(self.config['metrics']):
+        for i, item in enumerate(global_config['metrics']):
             key = item["args"]["nickname"]
             log[f"valid_avg_{key}"] = avg_metrics[i]
 
