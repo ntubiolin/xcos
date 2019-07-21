@@ -2,12 +2,12 @@
     "name": "CrossEntropy",
     "losses": [
         {
-            "nickname": "CrossEntropy",
             "type": "CrossEntropyLoss",
-            "weight": 1,
             "args": {
                 "output_key": "model_output",
-                "target_key": "data_target"
+                "target_key": "data_target",
+                "nickname": "CrossEntropy",
+                "weight": 1
             }
         }
     ],
