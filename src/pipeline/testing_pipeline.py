@@ -26,10 +26,6 @@ class TestingPipeline(BasePipeline):
         pass
 
     def _create_workers(self):
-        shared_list = (self._worker_shared_list['common'] + self._worker_shared_list['tester'])
-        tester = Tester(
-            {attr_name: getattr(self, attr_name) for attr_name in shared_list},
-            self.data_loader, 0
-        )
+        tester = Tester(self, self.data_loader, 0)
         workers = [tester]
         return workers

@@ -6,6 +6,7 @@ import torch
 from torchvision.utils import make_grid
 
 from data_loader.base_data_loader import BaseDataLoader
+from pipeline.base_pipeline import BasePipeline
 
 
 class WorkerTemplate(ABC):
@@ -15,10 +16,11 @@ class WorkerTemplate(ABC):
     that deals with the main optimization & model inference.
     """
     def __init__(
-        self, attributes: dict, data_loader: BaseDataLoader, step: int
+        self, pipeline: BasePipeline, data_loader: BaseDataLoader, step: int
     ):
-        for name, value in attributes.items():
-            setattr(self, name, value)
+        # Attributes listed below are shared from pipeline among all different workers.
+        for attr_name in ['config', 'device', 'model', 'loss_functions', 'evaluation_metrics', 'writer']:
+            setattr(self, attr_name, getattr(pipeline, attr_name))
 
         self.log_step = self.config['trainer']['log_step']
         self.verbosity = self.config['trainer']['verbosity']

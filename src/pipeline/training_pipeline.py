@@ -41,21 +41,15 @@ class TrainingPipeline(BasePipeline):
         self.do_validation = len(self.valid_data_loaders) > 0
 
     def _create_workers(self):
-        trainer_shared_list = (self._worker_shared_list['common']
-                               + self._worker_shared_list['trainer'])
-        valid_shared_list = (self._worker_shared_list['common']
-                             + self._worker_shared_list['validator'])
         trainer = Trainer(
-            {attr_name: getattr(self, attr_name) for attr_name in trainer_shared_list},
-            self.data_loader, self.train_iteration_count
+            self, self.data_loader, self.train_iteration_count
         )
         workers = [trainer]
 
         for i, valid_data_loader in enumerate(self.valid_data_loaders):
             workers.append(
                 Validator(
-                    {attr_name: getattr(self, attr_name) for attr_name in valid_shared_list},
-                    valid_data_loader, self.valid_iteration_counts[i]
+                    self, valid_data_loader, self.valid_iteration_counts[i]
                 )
             )
         return workers

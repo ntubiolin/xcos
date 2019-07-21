@@ -41,12 +41,6 @@ class BasePipeline(ABC):
         if args.pretrained is not None:
             self._load_pretrained(args.pretrained)
 
-        self._worker_shared_list = {
-            'common': ['config', 'device', 'model', 'loss_functions',
-                       'evaluation_metrics', 'writer'],
-            'trainer': ['optimizer'], 'tester': [], 'validator': []
-        }
-
     @abstractmethod
     def _setup_config(self):
         pass
