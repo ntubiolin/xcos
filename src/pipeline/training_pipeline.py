@@ -20,7 +20,7 @@ class TrainingPipeline(BasePipeline):
     def _setup_loss_functions(self):
         self.loss_functions = [
             getattr(module_loss, entry['type'])(**entry['args'])
-            for entry in self.config['losses']
+            for entry in global_config['losses']
         ]
 
     def _setup_lr_scheduler(self):
