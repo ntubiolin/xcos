@@ -67,12 +67,12 @@ class WorkerTemplate(ABC):
         Losses will be summed and returned.
         """
         losses = []
-        for loss in self.loss_functions:
-            if loss.weight <= 0.0:
+        for loss_function in self.loss_functions:
+            if loss_function.weight <= 0.0:
                 continue
-            loss_value = loss(data, model_output) * loss.weight
-            losses.append(loss_value)
-            self.writer.add_scalar(f'{loss.nickname}', loss_value.item())
+            loss = loss_function(data, model_output) * loss_function.weight
+            losses.append(loss)
+            self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
         total_loss = sum(losses)
         self.writer.add_scalar('total_loss', total_loss.item())
         return total_loss
