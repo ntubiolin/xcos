@@ -1,5 +1,4 @@
 from .worker_template import WorkerTemplate
-from utils.global_config import global_config
 
 
 class Validator(WorkerTemplate):

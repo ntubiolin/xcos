@@ -5,7 +5,6 @@ import numpy as np
 from .worker_template import WorkerTemplate
 from utils.logging_config import logger
 from utils.util import get_lr
-from utils.global_config import global_config
 from pipeline.base_pipeline import BasePipeline
 
 
