@@ -13,11 +13,10 @@ def num_checkpoints(path):
 
 def collect_satisfied(args):
     collected = []
-    arch_paths = sorted(glob(os.path.join(args.saved_dir, args.pattern)))
+    arch_paths = sorted(glob(os.path.join(args.root_dir_ckpts, args.pattern)))
     for arch_path in arch_paths:
         assert os.path.isdir(arch_path)
-        if os.path.basename(arch_path) == 'runs':
-            continue
+        assert os.path.basename(arch_path) != 'runs'
         exp_paths = sorted(glob(os.path.join(arch_path, '*')))
         assert all([os.path.isdir(exp_path) for exp_path in exp_paths])
 
@@ -34,7 +33,7 @@ def ask_one_by_one(args, collected):
         exp_name = basename(dirname(path))
         exp_time = basename(path)
 
-        runs_dir = os.path.join(args.saved_dir, 'runs', exp_name, exp_time)
+        runs_dir = os.path.join(args.root_dir_runs, exp_name, exp_time)
         print('\nDelete the following directories?')
         print(path)
         if os.path.exists(runs_dir):
@@ -56,8 +55,8 @@ def clean_empty_exp(args):
             if len(os.listdir(exp_path)) == 0:
                 os.rmdir(exp_path)
 
-    walk_clean(args.saved_dir)
-    walk_clean(os.path.join(args.saved_dir, 'runs'))
+    walk_clean(args.root_dir_ckpts)
+    walk_clean(args.root_dir_runs)
 
 
 def ask_all_in_once(args, collected):
@@ -69,7 +68,7 @@ def ask_all_in_once(args, collected):
         to_delete.append(path)
         print(path)
 
-        runs_dir = os.path.join(args.saved_dir, 'runs', exp_name, exp_time)
+        runs_dir = os.path.join(args.root_dir_runs, exp_name, exp_time)
         if os.path.exists(runs_dir):
             to_delete.append(runs_dir)
             print(runs_dir)
@@ -93,8 +92,13 @@ parser.add_argument(
     '-p', '--pattern', type=str,
     help='Those saved files fit this re pattern will be deleted.')
 parser.add_argument(
-    '--saved_dir', type=str,
-    default=os.path.join(dirname(dirname(abspath(__file__))), 'saved'),
+    '--root_dir_ckpts', type=str,
+    default=os.path.join(dirname(dirname(abspath(__file__))), 'saved', 'ckpts'),
+    help='The save directory'
+)
+parser.add_argument(
+    '--root_dir_runs', type=str,
+    default=os.path.join(dirname(dirname(abspath(__file__))), 'saved', 'runs'),
     help='The save directory'
 )
 parser.add_argument(
