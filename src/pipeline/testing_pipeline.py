@@ -3,7 +3,7 @@ from worker.tester import Tester
 
 
 class TestingPipeline(BasePipeline):
-    def __init__(self, args, config):
+    def __init__(self, args):
         #     """
         #     # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
         #     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -19,7 +19,7 @@ class TestingPipeline(BasePipeline):
         #             pickle.dump(inference_results, f)
 
         #     """
-        super().__init__(args, config)
+        super().__init__(args)
         self._create_workers()
 
     def _setup_config(self):

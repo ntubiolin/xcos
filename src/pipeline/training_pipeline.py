@@ -7,11 +7,12 @@ from worker.trainer import Trainer
 from worker.validator import Validator
 import model.loss as module_loss
 from utils.util import get_instance
+from utils.global_config import global_config
 
 
 class TrainingPipeline(BasePipeline):
-    def __init__(self, args, config):
-        super().__init__(args, config)
+    def __init__(self, args):
+        super().__init__(args)
         self._setup_loss_functions()
         self._setup_lr_scheduler()
         self.workers = self._create_workers()
@@ -23,15 +24,15 @@ class TrainingPipeline(BasePipeline):
         ]
 
     def _setup_lr_scheduler(self):
-        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', self.config, self.optimizer)
+        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', global_config, self.optimizer)
 
     def _setup_config(self):
-        self.epochs = self.config['trainer']['epochs']
-        self.save_freq = self.config['trainer']['save_freq']
+        self.epochs = global_config['trainer']['epochs']
+        self.save_freq = global_config['trainer']['save_freq']
 
         # configuration to monitor model performance and save best
-        self.monitor = self.config['trainer']['monitor']
-        self.monitor_mode = self.config['trainer']['monitor_mode']
+        self.monitor = global_config['trainer']['monitor']
+        self.monitor_mode = global_config['trainer']['monitor_mode']
         assert self.monitor_mode in ['min', 'max', 'off']
         self.monitor_best = math.inf if self.monitor_mode == 'min' else -math.inf
 
