@@ -184,7 +184,8 @@ class BasePipeline(ABC):
                 if global_config['trainer']['verbosity'] >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
                 if 'epoch_time' not in key:
-                    self.writer.add_scalar(key, value)
+                    # TODO: See if we can use tree-structured tensorboard logging
+                    self.writer.add_scalar(f'{loader_name}_{key}', value)
 
     def _check_and_save_best(self, epoch, all_logs):
         """
@@ -203,7 +204,6 @@ class BasePipeline(ABC):
                     msg = f"Warning: Can\'t recognize metric '{self.monitored_metric}' in '{self.monitored_loader}' "\
                         + f"for performance monitoring. model_best checkpoint won\'t be updated."
                     logger.warning(msg)
-                    breakpoint()
         if epoch % self.save_freq == 0 or best:
             self._save_checkpoint(epoch, save_best=best)
 
