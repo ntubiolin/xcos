@@ -31,7 +31,8 @@ class TrainingPipeline(BasePipeline):
         self.save_freq = global_config['trainer']['save_freq']
 
         # configuration to monitor model performance and save best
-        self.monitor = global_config['trainer']['monitor']
+        self.monitored_loader = global_config['trainer']['monitored_loader']
+        self.monitored_metric = global_config['trainer']['monitored_metric']
         self.monitor_mode = global_config['trainer']['monitor_mode']
         assert self.monitor_mode in ['min', 'max', 'off']
         self.monitor_best = math.inf if self.monitor_mode == 'min' else -math.inf

@@ -39,10 +39,17 @@ class WorkerTemplate(ABC):
         """ Print messages on terminal. """
         pass
 
-    @abstractmethod
-    def _to_log(self, epoch, epoch_time, avg_loss, avg_metrics):
-        """ Turn loss and metrics to log dict"""
-        return {}
+    def _to_log(self, epoch_time, avg_loss, avg_metrics):
+        log = {
+            'epoch_time': epoch_time,
+            'avg_loss': avg_loss,
+        }
+        # Metrics is a list
+        for i, item in enumerate(self.config['metrics']):
+            key = item["args"]["nickname"]
+            log[f"avg_{key}"] = avg_metrics[i]
+
+        return log
 
     @abstractmethod
     def _setup_model(self):
@@ -83,7 +90,7 @@ class WorkerTemplate(ABC):
         acc_metrics = np.zeros(len(self.evaluation_metrics))
         for i, metric in enumerate(self.evaluation_metrics):
             acc_metrics[i] += metric(data, model_output)
-            self.writer.add_scalar(f'{metric.__name__}', acc_metrics[i])
+            self.writer.add_scalar(metric.nickname, acc_metrics[i])
         return acc_metrics
 
     def _data_to_device(self, data):
@@ -124,5 +131,5 @@ class WorkerTemplate(ABC):
     def run(self, epoch):
         self._setup_model()
         epoch_time, avg_loss, avg_metrics = self._iter_data(epoch)
-        log = self._to_log(epoch, epoch_time, avg_loss, avg_metrics)
+        log = self._to_log(epoch_time, avg_loss, avg_metrics)
         return log

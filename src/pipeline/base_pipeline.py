@@ -173,31 +173,37 @@ class BasePipeline(ABC):
 
         logger.info("Checkpoint '{}' (epoch {}) loaded".format(resume_path, self.start_epoch - 1))
 
-    def _print_and_record_log(self, epoch, log):
+    def _print_and_record_log(self, epoch, all_logs):
         # print logged informations to the screen
-        self.writer.set_step(epoch, 'epoch_average')
-        for key, value in log.items():
+        self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
+        logger.info(f'  epoch: {epoch:d}')
+        for loader_name, log in all_logs.items():
             if global_config['trainer']['verbosity'] >= 1:
-                logger.info('    {:20s}: {:.4f}'.format(str(key), value))
-            if 'epoch' not in key:
-                self.writer.add_scalar(key, value)
+                logger.info(f'  {loader_name}:')
+            for key, value in log.items():
+                if global_config['trainer']['verbosity'] >= 1:
+                    logger.info(f'    {str(key):20s}: {value:.4f}')
+                if 'epoch_time' not in key:
+                    self.writer.add_scalar(key, value)
 
-    def _check_and_save_best(self, epoch, log):
+    def _check_and_save_best(self, epoch, all_logs):
         """
         Evaluate model performance according to configured metric, save best checkpoint as model_best
         """
         best = False
         if self.monitor_mode != 'off':
             try:
-                if (self.monitor_mode == 'min' and log[self.monitor] < self.monitor_best) or\
-                        (self.monitor_mode == 'max' and log[self.monitor] > self.monitor_best):
-                    self.monitor_best = log[self.monitor]
+                metric_value = all_logs[self.monitored_loader][self.monitored_metric]
+                if (self.monitor_mode == 'min' and metric_value < self.monitor_best) or\
+                        (self.monitor_mode == 'max' and metric_value > self.monitor_best):
+                    self.monitor_best = metric_value
                     best = True
             except KeyError:
                 if epoch == 1:
-                    msg = "Warning: Can\'t recognize metric named '{}' ".format(self.monitor)\
-                        + "for performance monitoring. model_best checkpoint won\'t be updated."
+                    msg = f"Warning: Can\'t recognize metric '{self.monitored_metric}' in '{self.monitored_loader}' "\
+                        + f"for performance monitoring. model_best checkpoint won\'t be updated."
                     logger.warning(msg)
+                    breakpoint()
         if epoch % self.save_freq == 0 or best:
             self._save_checkpoint(epoch, save_best=best)
 
@@ -228,8 +234,9 @@ class BasePipeline(ABC):
         }
 
         best_str = '-best' if save_best else ''
+        monitored_name = f'{self.monitored_loader}_{self.monitored_metric}'
         filename = os.path.join(
-            self.checkpoint_dir, f'ckpt-ep{epoch}-{self.monitor}{self.monitor_best:.4f}{best_str}.pth'
+            self.checkpoint_dir, f'ckpt-ep{epoch}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
         )
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
@@ -243,7 +250,7 @@ class BasePipeline(ABC):
             for worker in self.workers:
                 assert self.model == worker.model, f"{self.model} != {worker.model}"
                 log = worker.run(epoch)
-                all_logs = {**all_logs, **log}
+                all_logs[worker.data_loader.name] = log
 
             self._print_and_record_log(epoch, all_logs)
             self._check_and_save_best(epoch, all_logs)
