@@ -22,7 +22,6 @@ class BaseDataLoader(DataLoader):
 
         self.batch_idx = 0
         self.n_samples = len(dataset)
-
         self.sampler, self.valid_sampler = self._split_sampler(self.validation_split)
 
         self.init_kwargs = {
@@ -63,9 +62,5 @@ class BaseDataLoader(DataLoader):
             return None
         else:
             valid_data_loader = DataLoader(sampler=self.valid_sampler, **self.init_kwargs)
-            valid_data_loader.name = 'valid' + self.name
+            valid_data_loader.name = 'valid_' + self.name
             return valid_data_loader
-
-    @property
-    def name(self):
-        return self.__class__.__name__

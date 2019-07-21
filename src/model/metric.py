@@ -2,9 +2,9 @@ import torch
 
 
 class TopKAcc():
-    def __init__(self, k, nickname="", output_key='verb_logits', target_key='verb_class'):
+    def __init__(self, k, output_key, target_key, nickname=None):
         self.k = k
-        self.__name__ = f'top{self.k}_acc_{target_key}' if nickname == "" else nickname
+        self.nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
         self.output_key = output_key
         self.target_key = target_key
 

@@ -17,7 +17,6 @@ class TestingPipeline(BasePipeline):
         #         with open(file_path, 'wb') as f:
         #             logger.info(f'Saving results on loader {loader.name} into {file_path}')
         #             pickle.dump(inference_results, f)
-
         #     """
         super().__init__(args)
         self._create_workers()

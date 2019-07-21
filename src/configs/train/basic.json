@@ -21,7 +21,8 @@
         "save_dir": "saved/",
         "save_freq": 1,
         "verbosity": 2,
-        "monitor": "valid_avg_loss",
+        "monitored_loader": "valid_mnist",
+        "monitored_metric": "avg_loss",
         "monitor_mode": "min",
         "log_step": 500
     },

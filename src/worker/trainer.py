@@ -5,7 +5,6 @@ import numpy as np
 from .worker_template import WorkerTemplate
 from utils.logging_config import logger
 from utils.util import get_lr
-from utils.global_config import global_config
 from pipeline.base_pipeline import BasePipeline
 
 
@@ -39,19 +38,6 @@ class Trainer(WorkerTemplate):
 
         metrics = self._get_and_write_metrics(data, model_output)
         return model_output, loss, metrics
-
-    def _to_log(self, epoch, epoch_time, avg_loss, avg_metrics):
-        log = {
-            'epoch': epoch,
-            'epoch_time': epoch_time,
-            'avg_loss': avg_loss,
-        }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics']):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
-
-        return log
 
     def _setup_model(self):
         np.random.seed()
