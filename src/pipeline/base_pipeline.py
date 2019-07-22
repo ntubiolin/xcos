@@ -240,6 +240,10 @@ class BasePipeline(ABC):
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
 
+    @abstractmethod
+    def _after_epoch(self, epoch, all_logs):
+        pass
+
     def run(self):
         """
         Full pipeline logic
@@ -250,9 +254,4 @@ class BasePipeline(ABC):
                 assert self.model == worker.model, f"{self.model} != {worker.model}"
                 log = worker.run(epoch)
                 all_logs[worker.data_loader.name] = log
-
-            self._print_and_record_log(epoch, all_logs)
-            self._check_and_save_best(epoch, all_logs)
-
-            if self.lr_scheduler is not None:
-                self.lr_scheduler.step()
+            self._after_epoch(epoch, all_logs)

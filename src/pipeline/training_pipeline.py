@@ -39,6 +39,13 @@ class TrainingPipeline(BasePipeline):
 
         self.do_validation = len(self.valid_data_loaders) > 0
 
+    def _after_epoch(self, epoch, all_logs):
+        self._print_and_record_log(epoch, all_logs)
+        self._check_and_save_best(epoch, all_logs)
+
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step()
+
     def _create_workers(self):
         trainer = Trainer(
             self, self.data_loader, self.train_iteration_count

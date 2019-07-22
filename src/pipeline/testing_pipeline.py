@@ -24,6 +24,9 @@ class TestingPipeline(BasePipeline):
     def _setup_config(self):
         self.epochs = self.start_epoch
 
+    def _after_epoch(self, epoch, all_logs):
+        pass
+
     def _create_workers(self):
         tester = Tester(self, self.data_loader, 0)
         workers = [tester]
