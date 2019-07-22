@@ -17,8 +17,8 @@ def main(args):
         # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
         global_config.set_config(torch.load(args.resume)['config'])
 
-    if args.configs:
-        global_config.extend_configs(args.configs)
+    global_config.setup(args.template_config, args.specified_configs)
+    global_config.print_changed()
 
     if args.device:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
@@ -44,9 +44,16 @@ def main(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='PyTorch Template')
-    parser.add_argument('-c', '--configs', default=None, type=str, nargs='+',
-                        help=('Configuraion files. Note that the duplicated entries of later files will',
-                              ' overwrite the former ones.'))
+    parser.add_argument(
+        '-tc', '--template_config', default='configs/train/basic.json', type=str,
+        help=('Template configuraion file. It should contain all default configuration '
+              'and will be overwritten by specified config.')
+    )
+    parser.add_argument(
+        '-sc', '--specified_configs', default=None, type=str, nargs='+',
+        help=('Specified configuraion files. They serve as experiemnt controls and will '
+              'overwrite template configs.')
+    )
     parser.add_argument('-r', '--resume', default=None, type=str,
                         help='path to latest checkpoint (default: None)')
     parser.add_argument('-p', '--pretrained', default=None, type=str,
@@ -58,7 +65,7 @@ def parse_args():
     parser.add_argument('--skip_exists', action='store_true', help='Skip inference when saving files already exist.')
     args = parser.parse_args()
 
-    assert args.resume is not None or args.configs is not None, 'At least one of resume or configs should be provided.'
+    # assert args.resume is not None or args.configs is not None, 'At least one of resume or configs should be provided'
     if args.mode == 'test':
         # assertions to make sure user do provide a valid path
         assert args.save_dir is not None

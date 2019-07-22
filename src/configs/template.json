@@ -1,0 +1,54 @@
+{
+    "n_gpu": 1,
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 5,
+            "gamma": 0.6
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 1,
+        "verbosity": 2,
+        "monitor": "valid_seen_loss",
+        "monitor_mode": "min",
+        "log_step": 500
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "MnistModel",
+        "args": {}
+    },
+    "data_loader": {
+        "type": "MnistDataLoader",
+        "args": {
+            "data_dir": "../datasets/mnist",
+            "batch_size": 32,
+            "validation_split": 0.1,
+            "num_workers": 4
+        }
+    },
+    "losses": {},
+    "metrics": {},
+    "name": "pytorch_golden_template_MnistModel_b12l8_new_valid_CrossEntropy_modalityRGB+Flow_pytorch_golden_template_MnistModel_b12l8_new_valid_CrossEntropy_modalityRGB+Flow",
+    "global_config": {
+        "modalities": [
+            "rgb",
+            "flow"
+        ]
+    }
+}
