@@ -18,7 +18,7 @@
     },
     "trainer": {
         "epochs": 100,
-        "save_dir": "saved/ckpts",
+        "save_dir": "saved",
         "save_freq": 1,
         "verbosity": 2,
         "monitored_loader": "valid_mnist",

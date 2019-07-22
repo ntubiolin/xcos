@@ -27,7 +27,10 @@ class BasePipeline(ABC):
         self._setup_valid_data_loaders()
 
         self._setup_model_and_optimizer()
-        self._setup_checkpoint_dir()
+
+        self._setup_saving_dir(args.resume)
+        self._save_config_file()
+
         self._setup_writer()
         self._setup_evaluation_metrics()
 
@@ -111,12 +114,13 @@ class BasePipeline(ABC):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
         self.optimizer = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
 
-    def _setup_checkpoint_dir(self):
-        self.checkpoint_dir = os.path.join(global_config['trainer']['save_dir'], global_config['name'], self.start_time)
-        # Save configuration file into checkpoint directory:
+    @abstractmethod
+    def _setup_saving_dir(self, resume_path):
+        pass
 
-        ensure_dir(self.checkpoint_dir)
-        config_save_path = os.path.join(self.checkpoint_dir, 'config.json')
+    def _save_config_file(self):
+        # Save configuration file into checkpoint directory
+        config_save_path = os.path.join(self.saving_dir, 'config.json')
         with open(config_save_path, 'w') as handle:
             json.dump(global_config, handle, indent=4, sort_keys=False)
 

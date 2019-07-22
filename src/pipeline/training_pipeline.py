@@ -1,5 +1,6 @@
 import math
 import os
+import json
 
 import torch
 
@@ -10,6 +11,7 @@ import model.loss as module_loss
 from utils.util import get_instance
 from utils.global_config import global_config
 from utils.logging_config import logger
+from utils.util import ensure_dir
 
 
 class TrainingPipeline(BasePipeline):
@@ -18,6 +20,16 @@ class TrainingPipeline(BasePipeline):
         self._setup_loss_functions()
         self._setup_lr_scheduler()
         self.workers = self._create_workers()
+
+    def _setup_saving_dir(self, resume_path):
+        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], 'ckpts',
+                                       global_config['name'], self.start_time)
+        ensure_dir(self.saving_dir)
+
+        # Save configuration file into checkpoint directory
+        config_save_path = os.path.join(self.saving_dir, 'config.json')
+        with open(config_save_path, 'w') as handle:
+            json.dump(global_config, handle, indent=4, sort_keys=False)
 
     def _setup_loss_functions(self):
         self.loss_functions = [
@@ -84,7 +96,7 @@ class TrainingPipeline(BasePipeline):
         best_str = '-best' if save_best else ''
         monitored_name = f'{self.monitored_loader}_{self.monitored_metric}'
         filename = os.path.join(
-            self.checkpoint_dir, f'ckpt-ep{epoch}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
+            self.saving_dir, f'ckpt-ep{epoch}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
         )
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))

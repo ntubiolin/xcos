@@ -1,5 +1,10 @@
+import os
+
 from .base_pipeline import BasePipeline
 from worker.tester import Tester
+
+from utils.global_config import global_config
+from utils.util import ensure_dir
 
 
 class TestingPipeline(BasePipeline):
@@ -11,6 +16,14 @@ class TestingPipeline(BasePipeline):
         super().__init__(args)
         self.saved_keys = args.saved_keys
         self.workers = self._create_workers()
+
+    def _setup_saving_dir(self, resume_path):
+        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], 'outputs',
+                                       global_config['name'], self.start_time)
+        ensure_dir(self.saving_dir)
+        if resume_path is not None:
+            # Mark the used resume path by a symbolic link
+            os.symlink(resume_path, os.path.join(self.saving_dir, 'resumed_ckpt.pth'))
 
     def _setup_config(self):
         pass
@@ -29,5 +42,4 @@ class TestingPipeline(BasePipeline):
         """
         for worker in self.workers:
             worker_output = worker.run(0)
-            breakpoint()
             self._save_inference_results(worker_output)
