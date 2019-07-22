@@ -143,6 +143,7 @@ class WorkerTemplate(ABC):
 
     def run(self, epoch):
         self._setup_model()
-        epoch_stats = self._iter_data(epoch)
+        with torch.set_grad_enabled(self.enable_grad):
+            epoch_stats = self._iter_data(epoch)
         log = self._to_log(epoch_stats)
         return log

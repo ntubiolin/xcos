@@ -22,12 +22,22 @@ class TestingPipeline(BasePipeline):
         self.workers = self._create_workers()
 
     def _setup_config(self):
-        self.epochs = self.start_epoch
-
-    def _after_epoch(self, epoch, all_logs):
         pass
 
     def _create_workers(self):
         tester = Tester(self, self.data_loader, 0)
         workers = [tester]
         return workers
+
+    def _save_inference_results(self, all_worker_output):
+        pass
+
+    def run(self):
+        """
+        Full testing pipeline logic
+        """
+        all_worker_output = {}
+        for worker in self.workers:
+            worker_output = worker.run(0)
+            all_worker_output[worker.data_loader.name] = worker_output
+        self._save_inference_results(all_worker_output)

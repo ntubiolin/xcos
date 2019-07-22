@@ -12,18 +12,21 @@ class Tester(WorkerTemplate):
         Inherited from WorkerTemplate.
     """
     # TODO: fix tester
-    def _run_and_optimize_model(self, data):
-        model_output = self.model(data)
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
 
         # Some functions like epoch statistics are ignored in tester.
-        def void_function(self, *args, **kargs):
+        def void_function(*args, **kargs):
             return None
 
         self._stats_init = void_function
         self._stats_update = void_function
         self._stats_finalize = void_function
+        self.enable_grad = False
 
-        return model_output, torch.zeros(1), []
+    def _run_and_optimize_model(self, data):
+        model_output = self.model(data)
+        return model_output, None, None
 
     def _setup_model(self):
         self.model.eval()

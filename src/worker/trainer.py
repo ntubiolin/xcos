@@ -20,6 +20,7 @@ class Trainer(WorkerTemplate):
         # Some shared attributes are trainer exclusive and therefore is initialized here
         for attr_name in ['optimizer', 'loss_functions']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
+        self.enable_grad = True
 
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
         logger.info(
