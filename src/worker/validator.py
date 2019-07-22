@@ -14,7 +14,10 @@ class Validator(WorkerTemplate):
         # Some shared attributes are trainer exclusive and therefore is initialized here
         for attr_name in ['loss_functions']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
-        self.enable_grad = False
+
+    @property
+    def enable_grad(self):
+        return False
 
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)

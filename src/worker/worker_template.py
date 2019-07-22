@@ -30,6 +30,11 @@ class WorkerTemplate(ABC):
         self.step = step  # Tensorboard log step
 
     # ============ Implement the following functions ==============
+    @property
+    @abstractmethod
+    def enable_grad(self):
+        pass
+
     @abstractmethod
     def _run_and_optimize_model(self, data):
         """ Put data into model and optimize the model"""
