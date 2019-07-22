@@ -1,4 +1,5 @@
 from .worker_template import WorkerTemplate
+from pipeline.base_pipeline import BasePipeline
 
 
 class Validator(WorkerTemplate):
@@ -8,6 +9,12 @@ class Validator(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
+    def __init__(self, pipeline: BasePipeline, *args):
+        super().__init__(pipeline, *args)
+        # Some shared attributes are trainer exclusive and therefore is initialized here
+        for attr_name in ['loss_functions']:
+            setattr(self, attr_name, getattr(pipeline, attr_name))
+
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)
         loss = self._get_and_write_loss(data, model_output)

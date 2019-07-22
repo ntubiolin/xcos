@@ -22,7 +22,7 @@ class TestingPipeline(BasePipeline):
         self._create_workers()
 
     def _setup_config(self):
-        pass
+        self.epochs = self.start_epoch
 
     def _create_workers(self):
         tester = Tester(self, self.data_loader, 0)

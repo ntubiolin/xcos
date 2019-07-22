@@ -20,7 +20,7 @@ class WorkerTemplate(ABC):
         self, pipeline: BasePipeline, data_loader: BaseDataLoader, step: int
     ):
         # Attributes listed below are shared from pipeline among all different workers.
-        for attr_name in ['device', 'model', 'loss_functions', 'evaluation_metrics', 'writer']:
+        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
         self.log_step = global_config['trainer']['log_step']

@@ -14,7 +14,7 @@ class Tester(WorkerTemplate):
     # TODO: fix tester
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)
-        return model_output, None, []
+        return model_output, torch.zeros(1), []
 
     def _setup_model(self):
         self.model.eval()
