@@ -45,7 +45,7 @@ class WorkerTemplate(ABC):
             'avg_loss': avg_loss,
         }
         # Metrics is a list
-        for i, item in enumerate(global_config['metrics']):
+        for i, item in enumerate(global_config['metrics'].values()):
             key = item["args"]["nickname"]
             log[f"avg_{key}"] = avg_metrics[i]
 
