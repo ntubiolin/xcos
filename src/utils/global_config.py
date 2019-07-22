@@ -102,8 +102,9 @@ class SingleGlobalConfig(AttrDict):
     """
     def setup(self, template_config_filename: list, specified_config_filenames: list, resumed_checkpoint: dict = None):
         """ Setup the global_config. """
-        self._setattr('_allow_invalid_attributes', True)  # To set self._template_config, self._specified_config etc.
         # NOTE: this function needs to be called by main.py before imported by modules unless it is resumed
+
+        self._setattr('_allow_invalid_attributes', True)  # To set self._template_config, self._specified_config etc.
         if resumed_checkpoint is not None:
             self._template_config = resumed_checkpoint['config']
         else:
