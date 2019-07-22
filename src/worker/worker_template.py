@@ -96,8 +96,9 @@ class WorkerTemplate(ABC):
         total_metrics = np.zeros(len(self.evaluation_metrics))
         return epoch_start_time, total_loss, total_metrics
 
-    def _stats_update(self, stats, loss, metrics):
+    def _stats_update(self, stats, products):
         """ Update epoch statistics """
+        loss, metrics = products['loss'], products['metrics']
         epoch_start_time, total_loss, total_metrics = stats
         total_loss += loss.item()
         total_metrics += metrics
@@ -125,10 +126,17 @@ class WorkerTemplate(ABC):
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
-            stats = self._stats_update(stats, loss, metrics)
+            products = {
+                'data': data,
+                'model_output': model_output,
+                'loss': loss,
+                'metrics': metrics
+            }
+            stats = self._stats_update(stats, products)
         return self._stats_finalize(stats)
 
-    def _to_log(self, epoch_stats):
+    def _finalize_output(self, epoch_stats):
+        """ The output of trainer and validator are logged messages. """
         epoch_time, avg_loss, avg_metrics = epoch_stats
         log = {
             'epoch_time': epoch_time,
@@ -145,5 +153,5 @@ class WorkerTemplate(ABC):
         self._setup_model()
         with torch.set_grad_enabled(self.enable_grad):
             epoch_stats = self._iter_data(epoch)
-        log = self._to_log(epoch_stats)
-        return log
+        output = self._finalize_output(epoch_stats)
+        return output

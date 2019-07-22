@@ -29,15 +29,14 @@ class TestingPipeline(BasePipeline):
         workers = [tester]
         return workers
 
-    def _save_inference_results(self, all_worker_output):
+    def _save_inference_results(self, worker_output):
         pass
 
     def run(self):
         """
         Full testing pipeline logic
         """
-        all_worker_output = {}
         for worker in self.workers:
             worker_output = worker.run(0)
-            all_worker_output[worker.data_loader.name] = worker_output
-        self._save_inference_results(all_worker_output)
+            breakpoint()
+            self._save_inference_results(worker_output)
