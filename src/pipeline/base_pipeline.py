@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from utils.util import ensure_dir, get_instance
+from utils.util import get_instance
 from utils.visualization import WriterTensorboardX
 from utils.logging_config import logger
 from utils.global_config import global_config
