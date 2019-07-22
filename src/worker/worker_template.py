@@ -126,17 +126,18 @@ class WorkerTemplate(ABC):
             data = self._data_to_device(data)
             model_output, loss, metrics = self._run_and_optimize_model(data)
 
-            if batch_idx % self.log_step == 0:
-                self._write_images(data, model_output)
-                if self.verbosity >= 2:
-                    self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
-
             products = {
                 'data': data,
                 'model_output': model_output,
                 'loss': loss,
                 'metrics': metrics
             }
+
+            if batch_idx % self.log_step == 0:
+                self._write_images(data, model_output)
+                if self.verbosity >= 2:
+                    self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
+
             stats = self._stats_update(stats, products)
         return self._stats_finalize(stats)
 

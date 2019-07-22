@@ -1,10 +1,13 @@
 import os
 
+import numpy as np
+
 from .base_pipeline import BasePipeline
 from worker.tester import Tester
 
 from utils.global_config import global_config
 from utils.util import ensure_dir
+from utils.logging_config import logger
 
 
 class TestingPipeline(BasePipeline):
@@ -33,8 +36,10 @@ class TestingPipeline(BasePipeline):
         workers = [tester]
         return workers
 
-    def _save_inference_results(self, worker_output):
-        pass
+    def _save_inference_results(self, worker, worker_output):
+        path = os.path.join(self.saving_dir, f'{worker.data_loader.name}_output.npz')
+        logger.info(f'Saving {path}...')
+        np.savez(path, **worker_output)
 
     def run(self):
         """
@@ -42,4 +47,4 @@ class TestingPipeline(BasePipeline):
         """
         for worker in self.workers:
             worker_output = worker.run(0)
-            self._save_inference_results(worker_output)
+            self._save_inference_results(worker, worker_output)
