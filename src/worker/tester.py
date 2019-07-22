@@ -14,10 +14,22 @@ class Tester(WorkerTemplate):
     # TODO: fix tester
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)
+
+        # Some functions like epoch statistics are ignored in tester.
+        def void_function(self, *args, **kargs):
+            return None
+
+        self._stats_init = void_function
+        self._stats_update = void_function
+        self._stats_finalize = void_function
+
         return model_output, torch.zeros(1), []
 
     def _setup_model(self):
         self.model.eval()
+
+    def _to_log(self, epoch_stats):
+        return {}
 
     def inference(self, data_loader, saved_keys=['verb_logits', 'noun_logits', 'uid']):
         self.model.eval()

@@ -19,7 +19,7 @@ class TestingPipeline(BasePipeline):
         #             pickle.dump(inference_results, f)
         #     """
         super().__init__(args)
-        self._create_workers()
+        self.workers = self._create_workers()
 
     def _setup_config(self):
         self.epochs = self.start_epoch

@@ -104,7 +104,7 @@ class BasePipeline(ABC):
     def _setup_evaluation_metrics(self):
         self.evaluation_metrics = [
             getattr(module_metric, entry['type'])(**entry['args'])
-            for key, entry in global_config['metrics'].items()
+            for entry in global_config['metrics'].values()
         ]
 
     def _setup_optimizer(self):

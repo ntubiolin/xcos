@@ -39,18 +39,6 @@ class WorkerTemplate(ABC):
         """ Print messages on terminal. """
         pass
 
-    def _to_log(self, epoch_time, avg_loss, avg_metrics):
-        log = {
-            'epoch_time': epoch_time,
-            'avg_loss': avg_loss,
-        }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics'].values()):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
-
-        return log
-
     @abstractmethod
     def _setup_model(self):
         """ Set random seed and self.model.eval() or self.model.train() """
@@ -101,18 +89,35 @@ class WorkerTemplate(ABC):
                 data[key] = data[key].to(self.device)
         return data
 
-    def _iter_data(self, epoch):
-        """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
+    def _stats_init(self):
+        """ Initialize epoch statistics like elapsed time, total loss, and metrics """
         epoch_start_time = time.time()
         total_loss = 0
         total_metrics = np.zeros(len(self.evaluation_metrics))
+        return epoch_start_time, total_loss, total_metrics
+
+    def _stats_update(self, stats, loss, metrics):
+        """ Update epoch statistics """
+        epoch_start_time, total_loss, total_metrics = stats
+        total_loss += loss.item()
+        total_metrics += metrics
+        return epoch_start_time, total_loss, total_metrics
+
+    def _stats_finalize(self, stats):
+        """ Calculate the overall elapsed time and average loss/metrics in this epoch """
+        epoch_start_time, total_loss, total_metrics = stats
+        epoch_time = time.time() - epoch_start_time
+        avg_loss = total_loss / len(self.data_loader)
+        avg_metrics = (total_metrics / len(self.data_loader)).tolist()
+        return epoch_time, avg_loss, avg_metrics
+
+    def _iter_data(self, epoch):
+        """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
+        stats = self._stats_init()
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
-
             self._setup_writer()
-
             data = self._data_to_device(data)
-
             model_output, loss, metrics = self._run_and_optimize_model(data)
 
             if batch_idx % self.log_step == 0:
@@ -120,16 +125,24 @@ class WorkerTemplate(ABC):
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
-            total_loss += loss.item()
-            total_metrics += metrics
+            stats = self._stats_update(stats, loss, metrics)
+        return self._stats_finalize(stats)
 
-        epoch_time = time.time() - epoch_start_time
-        avg_loss = total_loss / len(self.data_loader)
-        avg_metrics = (total_metrics / len(self.data_loader)).tolist()
-        return epoch_time, avg_loss, avg_metrics
+    def _to_log(self, epoch_stats):
+        epoch_time, avg_loss, avg_metrics = epoch_stats
+        log = {
+            'epoch_time': epoch_time,
+            'avg_loss': avg_loss,
+        }
+        # Metrics is a list
+        for i, item in enumerate(global_config['metrics'].values()):
+            key = item["args"]["nickname"]
+            log[f"avg_{key}"] = avg_metrics[i]
+
+        return log
 
     def run(self, epoch):
         self._setup_model()
-        epoch_time, avg_loss, avg_metrics = self._iter_data(epoch)
-        log = self._to_log(epoch_time, avg_loss, avg_metrics)
+        epoch_stats = self._iter_data(epoch)
+        log = self._to_log(epoch_stats)
         return log
