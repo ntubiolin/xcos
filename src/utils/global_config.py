@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import json
 from attrdict import AttrDict
 
@@ -23,28 +25,31 @@ def get_value_in_nested_dict(nested_dict: dict, keys: list):
             return temp
 
 
-def get_changed_config(template_config, specified_config):
+def get_changed_and_added_config(template_config, specified_config):
     changed_config = {}
-    template_key_value_pair_dict = iter_attr_dict(template_config, "", {})
-    specified_key_value_pair_dict = iter_attr_dict(specified_config, "", {})
-    for k, v in specified_key_value_pair_dict.items():
-        if k in template_key_value_pair_dict:
-            if v != template_key_value_pair_dict[k]:
+    added_config = {}
+    flatten_template_config = iter_attr_dict(template_config, "", {})
+    flatten_specified_config = iter_attr_dict(specified_config, "", {})
+    for k, v in flatten_specified_config.items():
+        if k == 'name':
+            changed_config['name'] = f"{template_config['name']}+{specified_config['name']}"
+        elif k in flatten_template_config:
+            if v != flatten_template_config[k]:
                 changed_config[k] = v
         else:
             changed_config[k] = v
-    return changed_config
+            added_config[k] = v
+    return changed_config, added_config
 
 
 def merge_template_and_changed_config(template_config, changed_config):
-    merged_config = template_config.copy()
+    merged_config = deepcopy(template_config)
     for k, v in changed_config.items():
         keys = k.split('/')
         temp = merged_config
         for i, k in enumerate(keys):
             if i == len(keys) - 1:
                 temp[k] = v
-
             else:
                 if k not in temp:
                     temp[k] = {}
@@ -76,18 +81,25 @@ class SingleGlobalConfig(AttrDict):
 
     def print_changed(self):
         for k, v in self.changed_config.items():
-            logger.warning(f"Changed key : {k} -> {v}")
+            if k in self.added_config:
+                logger.info(f"Added key: {k} ({v})")
+            else:
+                original_value = get_value_in_nested_dict(self.template_config, k.split('/'))
+                breakpoint()
+                logger.warning(f"Changed key: {k} ({original_value} -> {v})")
 
     def _load_template_conifg(self, config_filename):
         # Note that for some reason this is not mutable
-        self.template_config = self._extend_configs({}, [config_filename])
+        with open(config_filename) as fin:
+            self.template_config = json.load(fin)
 
     def _load_specified_configs(self, config_filenames):
         # Note that for some reason this is not mutable
         self.specified_config = self._extend_configs({}, config_filenames)
 
     def _get_changed_and_merged_config(self):
-        self.changed_config = get_changed_config(self.template_config, self.specified_config)
+        self.changed_config, self.added_config = \
+            get_changed_and_added_config(self.template_config, self.specified_config)
         self.merged_config = merge_template_and_changed_config(self.template_config, self.changed_config)
 
     def _extend_configs(self, config, config_filenames: list):
