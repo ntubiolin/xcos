@@ -13,11 +13,15 @@ def main(args):
     # Setup global config #
     #######################
     from utils.global_config import global_config
-    if args.resume:
-        # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
-        global_config.set_config(torch.load(args.resume)['config'])
+    # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
+    if args.resume is not None:
+        logger.info("Resuming checkpoint: {} ...".format(args.resume))
+        resumed_checkpoint = torch.load(args.resume)
+    else:
+        resumed_checkpoint = None
+    setattr(args, 'resumed_checkpoint', resumed_checkpoint)
 
-    global_config.setup(args.template_config, args.specified_configs)
+    global_config.setup(args.template_config, args.specified_configs, resumed_checkpoint)
     global_config.print_changed()
 
     if args.device:

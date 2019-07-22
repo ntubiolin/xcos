@@ -34,8 +34,8 @@ class BasePipeline(ABC):
 
         self._setup_config()
 
-        if args.resume is not None:
-            self._resume_checkpoint(args.resume)
+        if args.resumed_checkpoint is not None:
+            self._resume_checkpoint(args.resumed_checkpoint)
 
         if args.pretrained is not None:
             self._load_pretrained(args.pretrained)
@@ -137,43 +137,41 @@ class BasePipeline(ABC):
         checkpoint = torch.load(pretrained_path)
         self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
-    def _resume_checkpoint(self, resume_path):
+    def _resume_checkpoint(self, resumed_checkpoint):
         """
-        Resume from saved checkpoints
+        Resume from saved resumed_checkpoints
 
-        :param resume_path: Checkpoint path to be resumed
+        :param resume_path: resumed_checkpoint path to be resumed
         """
-        logger.info("Resuming checkpoint: {} ...".format(resume_path))
-        checkpoint = torch.load(resume_path)
-        self.start_epoch = checkpoint['epoch'] + 1
-        self.monitor_best = checkpoint['monitor_best']
+        self.start_epoch = resumed_checkpoint['epoch'] + 1
+        self.monitor_best = resumed_checkpoint['monitor_best']
 
         # Estimated iteration_count is based on length of the current data loader,
         # which will be wrong if the batch sizes between the two training processes are different.
-        self.train_iteration_count = checkpoint.get('train_iteration_count', 0)
-        self.valid_iteration_counts = checkpoint.get(
+        self.train_iteration_count = resumed_checkpoint.get('train_iteration_count', 0)
+        self.valid_iteration_counts = resumed_checkpoint.get(
             'valid_iteration_counts', [0] * len(self.valid_data_loaders))
         self.valid_iteration_counts = list(self.valid_iteration_counts)
 
-        # load architecture params from checkpoint.
-        if checkpoint['config']['arch'] != global_config['arch']:
+        # load architecture params from resumed_checkpoint.
+        if resumed_checkpoint['config']['arch'] != global_config['arch']:
             logger.warning(
-                'Warning: Architecture configuration given in config file is different from that of checkpoint. '
+                'Warning: Architecture config given in config file is different from that of resumed_checkpoint. '
                 'This may yield an exception while state_dict is being loaded.'
             )
         model = self.model.module if len(self.device_ids) > 1 else self.model
-        model.load_state_dict(checkpoint['state_dict'])
+        model.load_state_dict(resumed_checkpoint['state_dict'])
 
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if checkpoint['config']['optimizer']['type'] != global_config['optimizer']['type']:
-            logger.warning('Warning: Optimizer type given in config file is different from that of checkpoint. '
+        # load optimizer state from resumed_checkpoint only when optimizer type is not changed.
+        if resumed_checkpoint['config']['optimizer']['type'] != global_config['optimizer']['type']:
+            logger.warning('Warning: Optimizer type given in config file is different from that of resumed_checkpoint. '
                            'Optimizer parameters not being resumed.')
         elif self.optimizer is None:
             logger.warning("Not loading optimizer state because it's not initialized.")
         else:
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            self.optimizer.load_state_dict(resumed_checkpoint['optimizer'])
 
-        logger.info("Checkpoint '{}' (epoch {}) loaded".format(resume_path, self.start_epoch - 1))
+        logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
     def _print_and_record_log(self, epoch, all_logs):
         # print logged informations to the screen
