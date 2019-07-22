@@ -1,6 +1,7 @@
 import torch
 
 from .worker_template import WorkerTemplate
+from pipeline.base_pipeline import BasePipeline
 
 
 class Tester(WorkerTemplate):
@@ -10,11 +11,12 @@ class Tester(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
-    # TODO: fix tester
-    def __init__(self, *args, **kargs):
-        super().__init__(*args, **kargs)
+    def __init__(self, pipeline: BasePipeline, *args):
+        super().__init__(pipeline, *args)
+        # Some shared attributes are trainer exclusive and therefore is initialized here
+        for attr_name in ['saved_keys']:
+            setattr(self, attr_name, getattr(pipeline, attr_name))
         self.enable_grad = False
-        self.saved_keys = ['verb_logits', 'noun_logits', 'uid']
 
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)
