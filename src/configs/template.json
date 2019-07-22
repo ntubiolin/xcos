@@ -22,7 +22,9 @@
         "verbosity": 2,
         "monitor": "valid_seen_loss",
         "monitor_mode": "min",
-        "log_step": 500
+        "log_step": 500,
+        "monitored_loader": "valid_mnist",
+        "monitored_metric": "avg_loss"
     },
     "trainer_args": {},
     "visualization": {
@@ -39,16 +41,40 @@
             "data_dir": "../datasets/mnist",
             "batch_size": 32,
             "validation_split": 0.1,
-            "num_workers": 4
+            "num_workers": 4,
+            "name": "mnist"
         }
     },
-    "losses": {},
-    "metrics": {},
-    "name": "pytorch_golden_template_MnistModel_b12l8_new_valid_CrossEntropy_modalityRGB+Flow_pytorch_golden_template_MnistModel_b12l8_new_valid_CrossEntropy_modalityRGB+Flow",
-    "global_config": {
-        "modalities": [
-            "rgb",
-            "flow"
-        ]
-    }
+    "losses": {
+        "0": {
+            "type": "CrossEntropyLoss",
+            "args": {
+                "output_key": "model_output",
+                "target_key": "data_target",
+                "nickname": "CrossEntropy",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc",
+                "k": 1,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        },
+        "1": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc",
+                "k": 5,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        }
+    },
+    "name": "template_config"
 }
