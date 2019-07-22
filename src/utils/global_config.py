@@ -56,7 +56,7 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     # Check each value in specified_config to see if it is different from the template
     for k, v in flatten_specified_config.items():
         # Concatenate if it is name
-        if k == 'name':
+        if k == 'name' and 'name' in specified_config:
             changed_config['name'] = f"{template_config['name']}+{specified_config['name']}"
 
         # Added to changed_config only if it is different from the tempalte
@@ -100,13 +100,18 @@ class SingleGlobalConfig(AttrDict):
     One could use either global_config.some_attribute or global_config['some_attribute']
     to access the config
     """
-    def setup(self, template_config_filename: list, specified_config_filenames: list):
+    def setup(self, template_config_filename: list, specified_config_filenames: list, resumed_checkpoint: dict = None):
         """ Setup the global_config. """
+        self._setattr('_allow_invalid_attributes', True)  # To set self._template_config, self._specified_config etc.
         # NOTE: this function needs to be called by main.py before imported by modules unless it is resumed
-        self._load_template_conifg(template_config_filename)
+        if resumed_checkpoint is not None:
+            self._template_config = resumed_checkpoint['config']
+        else:
+            self._load_template_config(template_config_filename)
         self._load_specified_configs(specified_config_filenames)
         self._get_changed_and_merged_config()
-        self.set_config(self.merged_config)
+        self._setattr('_allow_invalid_attributes', False)
+        self.set_config(self._merged_config)
 
     def set_config(self, config: list):
         """ Set the config. """
@@ -120,32 +125,34 @@ class SingleGlobalConfig(AttrDict):
 
     def print_changed(self):
         """ Print all changed/added values. """
-        for k, v in self.changed_config.items():
+        for k, v in self._changed_config.items():
             if k in self.added_config:
                 logger.info(f"Added key: {k} ({v})")
             else:
-                original_value = get_value_in_nested_dict(self.template_config, k.split('/'))
+                original_value = get_value_in_nested_dict(self._template_config, k.split('/'))
                 logger.warning(f"Changed key: {k} ({original_value} -> {v})")
 
-    def _load_template_conifg(self, config_filename: str):
+    def _load_template_config(self, config_filename: str):
         """ Load the template config. """
         # Note that for some reason this is not mutable?
         with open(config_filename) as fin:
-            self.template_config = json.load(fin)
+            self._template_config = json.load(fin)
 
     def _load_specified_configs(self, config_filenames: list):
         """ Load specified config(s). """
         # Note that for some reason this is not mutable?
-        self.specified_config = self._extend_configs({}, config_filenames)
+        self._specified_config = self._extend_configs({}, config_filenames)
 
     def _get_changed_and_merged_config(self):
         """ Compare specified_config and template_config to get changed_config/merged_config. """
-        self.changed_config, self.added_config = \
-            get_changed_and_added_config(self.template_config, self.specified_config)
-        self.merged_config = merge_template_and_changed_config(self.template_config, self.changed_config)
+        self._changed_config, self.added_config = \
+            get_changed_and_added_config(self._template_config, self._specified_config)
+        self._merged_config = merge_template_and_changed_config(self._template_config, self._changed_config)
 
     def _extend_configs(self, config: dict, config_filenames: list):
         """ Extend a dict config with several config files. """
+        if config_filenames is None:
+            return {}
         # load config files, the overlapped entries will be overwriten
         for config_filename in config_filenames:
             with open(config_filename) as fin:
