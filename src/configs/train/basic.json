@@ -17,7 +17,7 @@
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 200,
         "save_dir": "saved/",
         "save_freq": 1,
         "verbosity": 2,
@@ -31,5 +31,8 @@
     "visualization":{
         "tensorboardX": true,
         "log_dir": "saved/runs"
+    },
+    "dummy": {
+        "test": true
     }
 }
