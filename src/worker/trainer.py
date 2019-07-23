@@ -2,13 +2,13 @@ import time
 
 import numpy as np
 
-from .worker_template import WorkerTemplate
+from .training_worker import TrainingWorker
 from utils.logging_config import logger
 from utils.util import get_lr
 from pipeline.base_pipeline import BasePipeline
 
 
-class Trainer(WorkerTemplate):
+class Trainer(TrainingWorker):
     """
     Trainer class
 

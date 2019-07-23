@@ -36,7 +36,7 @@ class Tester(WorkerTemplate):
         return {k: [] for k in self.saved_keys}
 
     def _stats_update(self, stats, products):
-        """ Update the dictionary saver. """
+        """ Update the dictionary saver: extend entries """
         data, model_output = products['data'], products['model_output']
 
         def fetch_from_dict(dictionary):
@@ -51,9 +51,9 @@ class Tester(WorkerTemplate):
         fetch_from_dict(model_output)
         return stats
 
-    def _stats_finalize(self, stats):
+    def _stats_finalize(self, epoch_stats):
         """ Just return the dictionary saver. """
-        return stats
+        return epoch_stats
 
     def _finalize_output(self, epoch_stats):
         """ Just return the dictionary saver. """

@@ -49,13 +49,28 @@ class WorkerTemplate(ABC):
         """ Set random seed and self.model.eval() or self.model.train() """
         pass
 
-    def _write_images(self, data, model_output):
-        """ Write images to Tensorboard """
-        self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
+    @abstractmethod
+    def _stats_init(self):
+        pass
+
+    @abstractmethod
+    def _stats_update(self, stats, products):
+        pass
+
+    @abstractmethod
+    def _stats_finalize(self, stats):
+        pass
+
+    @abstractmethod
+    def _finalize_output(self, epoch_stats):
+        pass
 
     # ============ Implement the above functions ==============
 
     # Generally, the following function should not be changed.
+    def _write_images(self, data, model_output):
+        """ Write images to Tensorboard """
+        self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
@@ -94,29 +109,6 @@ class WorkerTemplate(ABC):
                 data[key] = data[key].to(self.device)
         return data
 
-    def _stats_init(self):
-        """ Initialize epoch statistics like elapsed time, total loss, and metrics """
-        epoch_start_time = time.time()
-        total_loss = 0
-        total_metrics = np.zeros(len(self.evaluation_metrics))
-        return epoch_start_time, total_loss, total_metrics
-
-    def _stats_update(self, stats, products):
-        """ Update epoch statistics """
-        loss, metrics = products['loss'], products['metrics']
-        epoch_start_time, total_loss, total_metrics = stats
-        total_loss += loss.item()
-        total_metrics += metrics
-        return epoch_start_time, total_loss, total_metrics
-
-    def _stats_finalize(self, stats):
-        """ Calculate the overall elapsed time and average loss/metrics in this epoch """
-        epoch_start_time, total_loss, total_metrics = stats
-        epoch_time = time.time() - epoch_start_time
-        avg_loss = total_loss / len(self.data_loader)
-        avg_metrics = (total_metrics / len(self.data_loader)).tolist()
-        return epoch_time, avg_loss, avg_metrics
-
     def _iter_data(self, epoch):
         """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
         stats = self._stats_init()
@@ -140,20 +132,6 @@ class WorkerTemplate(ABC):
 
             stats = self._stats_update(stats, products)
         return self._stats_finalize(stats)
-
-    def _finalize_output(self, epoch_stats):
-        """ The output of trainer and validator are logged messages. """
-        epoch_time, avg_loss, avg_metrics = epoch_stats
-        log = {
-            'epoch_time': epoch_time,
-            'avg_loss': avg_loss,
-        }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics'].values()):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
-
-        return log
 
     def run(self, epoch):
         self._setup_model()

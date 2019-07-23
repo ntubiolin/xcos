@@ -1,8 +1,8 @@
-from .worker_template import WorkerTemplate
+from .training_worker import TrainingWorker
 from pipeline.base_pipeline import BasePipeline
 
 
-class Validator(WorkerTemplate):
+class Validator(TrainingWorker):
     """
     Validator class
 
