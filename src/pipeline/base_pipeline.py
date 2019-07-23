@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from utils.util import ensure_dir, get_instance
+from utils.util import get_instance
 from utils.visualization import WriterTensorboardX
 from utils.logging_config import logger
 from utils.global_config import global_config
@@ -24,11 +24,13 @@ class BasePipeline(ABC):
         self.start_time = datetime.datetime.now().strftime('%m%d_%H%M%S')
         self._setup_device()
         self._setup_data_loader()
-
         self._setup_valid_data_loaders()
 
         self._setup_model_and_optimizer()
-        self._setup_checkpoint_dir()
+
+        self._setup_saving_dir(args)
+        self._save_config_file()
+
         self._setup_writer()
         self._setup_evaluation_metrics()
 
@@ -96,7 +98,7 @@ class BasePipeline(ABC):
                 for entry in global_config['valid_data_loaders']
             ]
             if self.data_loader.validation_split > 0:
-                raise ValueError(f'Split ratio > 0 when other validation loaders are specified.')
+                raise ValueError(f'Split ratio should not > 0 when other validation loaders are specified.')
         elif self.data_loader.validation_split > 0:
             self.valid_data_loaders = [self.data_loader.split_validation()]
         else:
@@ -105,19 +107,20 @@ class BasePipeline(ABC):
     def _setup_evaluation_metrics(self):
         self.evaluation_metrics = [
             getattr(module_metric, entry['type'])(**entry['args'])
-            for key, entry in global_config['metrics'].items()
+            for entry in global_config['metrics'].values()
         ]
 
     def _setup_optimizer(self):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
         self.optimizer = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
 
-    def _setup_checkpoint_dir(self):
-        self.checkpoint_dir = os.path.join(global_config['trainer']['save_dir'], global_config['name'], self.start_time)
-        # Save configuration file into checkpoint directory:
+    @abstractmethod
+    def _setup_saving_dir(self, resume_path):
+        pass
 
-        ensure_dir(self.checkpoint_dir)
-        config_save_path = os.path.join(self.checkpoint_dir, 'config.json')
+    def _save_config_file(self):
+        # Save configuration file into checkpoint directory
+        config_save_path = os.path.join(self.saving_dir, 'config.json')
         with open(config_save_path, 'w') as handle:
             json.dump(global_config, handle, indent=4, sort_keys=False)
 
@@ -173,87 +176,18 @@ class BasePipeline(ABC):
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
-    def _print_and_record_log(self, epoch, all_logs):
-        # print logged informations to the screen
+    def _print_and_record_log(self, epoch, worker_outputs):
+        # print common worker logged info
         self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
-        for loader_name, log in all_logs.items():
+        # print the logged info for each loader (corresponding to each worker)
+        for loader_name, output in worker_outputs.items():
+            log = output['log']
             if global_config['trainer']['verbosity'] >= 1:
                 logger.info(f'  {loader_name}:')
             for key, value in log.items():
                 if global_config['trainer']['verbosity'] >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
-                if 'epoch_time' not in key:
+                if 'elapsed_time' not in key:
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)
-
-    def _check_and_save_best(self, epoch, all_logs):
-        """
-        Evaluate model performance according to configured metric, save best checkpoint as model_best
-        """
-        best = False
-        if self.monitor_mode != 'off':
-            try:
-                metric_value = all_logs[self.monitored_loader][self.monitored_metric]
-                if (self.monitor_mode == 'min' and metric_value < self.monitor_best) or\
-                        (self.monitor_mode == 'max' and metric_value > self.monitor_best):
-                    self.monitor_best = metric_value
-                    best = True
-            except KeyError:
-                if epoch == 1:
-                    msg = f"Warning: Can\'t recognize metric '{self.monitored_metric}' in '{self.monitored_loader}' "\
-                        + f"for performance monitoring. model_best checkpoint won\'t be updated."
-                    logger.warning(msg)
-        if epoch % self.save_freq == 0 or best:
-            self._save_checkpoint(epoch, save_best=best)
-
-    def _save_checkpoint(self, epoch, save_best=False):
-        """
-        Saving checkpoints
-
-        :param epoch: current epoch number
-        :param save_best: if True, add '-best.pth' at the end of the best model
-        """
-        arch = type(self.model).__name__
-
-        # assure that we save the model state without DataParallel module
-        if isinstance(self.model, torch.nn.DataParallel):
-            # get the original state out from DataParallel module
-            model_state = self.model.module.state_dict()
-        else:
-            model_state = self.model.state_dict()
-        state = {
-            'arch': arch,
-            'epoch': epoch,
-            'state_dict': model_state,
-            'optimizer': self.optimizer.state_dict(),
-            'monitor_best': self.monitor_best,
-            'config': global_config,
-            'train_iteration_count': self.train_iteration_count,
-            'valid_iteration_counts': self.valid_iteration_counts,
-        }
-
-        best_str = '-best' if save_best else ''
-        monitored_name = f'{self.monitored_loader}_{self.monitored_metric}'
-        filename = os.path.join(
-            self.checkpoint_dir, f'ckpt-ep{epoch}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
-        )
-        torch.save(state, filename)
-        logger.info("Saving checkpoint: {} ...".format(filename))
-
-    def run(self):
-        """
-        Full pipeline logic
-        """
-        for epoch in range(self.start_epoch, self.epochs + 1):
-            all_logs = {}
-            for worker in self.workers:
-                assert self.model == worker.model, f"{self.model} != {worker.model}"
-                log = worker.run(epoch)
-                all_logs[worker.data_loader.name] = log
-
-            self._print_and_record_log(epoch, all_logs)
-            self._check_and_save_best(epoch, all_logs)
-
-            if self.lr_scheduler is not None:
-                self.lr_scheduler.step()

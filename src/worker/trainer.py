@@ -2,13 +2,13 @@ import time
 
 import numpy as np
 
-from .worker_template import WorkerTemplate
+from .training_worker import TrainingWorker
 from utils.logging_config import logger
 from utils.util import get_lr
 from pipeline.base_pipeline import BasePipeline
 
 
-class Trainer(WorkerTemplate):
+class Trainer(TrainingWorker):
     """
     Trainer class
 
@@ -18,8 +18,12 @@ class Trainer(WorkerTemplate):
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
         # Some shared attributes are trainer exclusive and therefore is initialized here
-        for attr_name in ['optimizer']:
+        for attr_name in ['optimizer', 'loss_functions']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
+
+    @property
+    def enable_grad(self):
+        return True
 
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
         logger.info(

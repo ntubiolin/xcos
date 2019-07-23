@@ -20,7 +20,7 @@ class WorkerTemplate(ABC):
         self, pipeline: BasePipeline, data_loader: BaseDataLoader, step: int
     ):
         # Attributes listed below are shared from pipeline among all different workers.
-        for attr_name in ['device', 'model', 'loss_functions', 'evaluation_metrics', 'writer']:
+        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
         self.log_step = global_config['trainer']['log_step']
@@ -30,6 +30,11 @@ class WorkerTemplate(ABC):
         self.step = step  # Tensorboard log step
 
     # ============ Implement the following functions ==============
+    @property
+    @abstractmethod
+    def enable_grad(self):
+        pass
+
     @abstractmethod
     def _run_and_optimize_model(self, data):
         """ Put data into model and optimize the model"""
@@ -39,30 +44,32 @@ class WorkerTemplate(ABC):
         """ Print messages on terminal. """
         pass
 
-    def _to_log(self, epoch_time, avg_loss, avg_metrics):
-        log = {
-            'epoch_time': epoch_time,
-            'avg_loss': avg_loss,
-        }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics'].values()):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
-
-        return log
-
     @abstractmethod
     def _setup_model(self):
         """ Set random seed and self.model.eval() or self.model.train() """
         pass
 
-    def _write_images(self, data, model_output):
-        """ Write images to Tensorboard """
-        self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
+    @abstractmethod
+    def _init_output(self):
+        pass
+
+    @abstractmethod
+    def _update_output(self, output, products):
+        pass
+
+    @abstractmethod
+    def _finalize_output(self, epoch_output) -> dict:
+        """ The final output of worker.run() will be processed by this
+            function, whose responsibility is to create a dictionary contraining
+            log messages and/or saved inference outputs. """
+        pass
 
     # ============ Implement the above functions ==============
 
     # Generally, the following function should not be changed.
+    def _write_data_to_tensorboard(self, data, model_output):
+        """ Write images to Tensorboard """
+        self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
@@ -102,34 +109,36 @@ class WorkerTemplate(ABC):
         return data
 
     def _iter_data(self, epoch):
-        """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
-        epoch_start_time = time.time()
-        total_loss = 0
-        total_metrics = np.zeros(len(self.evaluation_metrics))
+        """
+        Iterate through the dataset and do inference.
+        Output of this worker will be init and updated(after a batch) here using
+        `self._output_init` and `self._output_update`.
+        """
+        output = self._init_output()
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
-
             self._setup_writer()
-
             data = self._data_to_device(data)
-
             model_output, loss, metrics = self._run_and_optimize_model(data)
 
+            products = {
+                'data': data,
+                'model_output': model_output,
+                'loss': loss,
+                'metrics': metrics
+            }
+
             if batch_idx % self.log_step == 0:
-                self._write_images(data, model_output)
+                self._write_data_to_tensorboard(data, model_output)
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
-            total_loss += loss.item()
-            total_metrics += metrics
-
-        epoch_time = time.time() - epoch_start_time
-        avg_loss = total_loss / len(self.data_loader)
-        avg_metrics = (total_metrics / len(self.data_loader)).tolist()
-        return epoch_time, avg_loss, avg_metrics
+            output = self._update_output(output, products)
+        return output
 
     def run(self, epoch):
         self._setup_model()
-        epoch_time, avg_loss, avg_metrics = self._iter_data(epoch)
-        log = self._to_log(epoch_time, avg_loss, avg_metrics)
-        return log
+        with torch.set_grad_enabled(self.enable_grad):
+            epoch_output = self._iter_data(epoch)
+        output = self._finalize_output(epoch_output)
+        return output

@@ -65,18 +65,12 @@ def parse_args():
     parser.add_argument('-d', '--device', default=None, type=str,
                         help='indices of GPUs to enable (default: all)')
     parser.add_argument('--mode', type=str, choices=['train', 'test'], default='train')
-    parser.add_argument('--save_dir', default=None, type=str, help='Path to save the inference results.')
-    parser.add_argument('--skip_exists', action='store_true', help='Skip inference when saving files already exist.')
+    parser.add_argument('--saved_keys', default=['data_target', 'model_output'], type=str, nargs='+',
+                        help='Specify the keys to save at testing mode.')
+    parser.add_argument('--ckpts_subdir', type=str, default='ckpts', help='Subdir name for ckpts saving.')
+    parser.add_argument('--outputs_subdir', type=str, default='outputs', help='Subdir name for outputs saving.')
     args = parser.parse_args()
 
-    # assert args.resume is not None or args.configs is not None, 'At least one of resume or configs should be provided'
-    if args.mode == 'test':
-        # assertions to make sure user do provide a valid path
-        assert args.save_dir is not None
-        if os.path.exists(args.save_dir):
-            logger.warning(f'The directory {args.save_dir} already exists.')
-        else:
-            os.makedirs(args.save_dir)
     return args
 
 
