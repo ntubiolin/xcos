@@ -12,10 +12,10 @@ from utils.logging_config import logger
 
 class TestingPipeline(BasePipeline):
     def __init__(self, args):
-        #     """
-        #     # this line is to solve the error described in https://github.com/pytorch/pytorch/issues/973
-        #     torch.multiprocessing.set_sharing_strategy('file_system')
-        #     """
+        """
+        # You may need this line to solve the error described in https://github.com/pytorch/pytorch/issues/973
+        torch.multiprocessing.set_sharing_strategy('file_system')
+        """
         super().__init__(args)
         self.saved_keys = args.saved_keys
         self.workers = self._create_workers()
@@ -36,7 +36,7 @@ class TestingPipeline(BasePipeline):
         workers = [tester]
         return workers
 
-    def _save_inference_results(self, worker, worker_output):
+    def _save_inference_results(self, worker: Tester, worker_output: dict):
         path = os.path.join(self.saving_dir, f'{worker.data_loader.name}_output.npz')
         logger.info(f'Saving {path}...')
         np.savez(path, **worker_output)
