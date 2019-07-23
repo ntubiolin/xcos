@@ -67,7 +67,7 @@ class WorkerTemplate(ABC):
     # ============ Implement the above functions ==============
 
     # Generally, the following function should not be changed.
-    def _write_images(self, data, model_output):
+    def _write_data_to_tensorboard(self, data, model_output):
         """ Write images to Tensorboard """
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
 
@@ -129,7 +129,7 @@ class WorkerTemplate(ABC):
             }
 
             if batch_idx % self.log_step == 0:
-                self._write_images(data, model_output)
+                self._write_data_to_tensorboard(data, model_output)
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
