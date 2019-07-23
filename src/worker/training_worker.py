@@ -13,14 +13,14 @@ class TrainingWorker(WorkerTemplate):
     Note:
         Inherited from WorkerTemplate.
     """
-    def _output_init(self):
+    def _init_output(self):
         """ Initialize epoch statistics like elapsed time, total loss, and metrics """
         epoch_start_time = time.time()
         total_loss = 0
         total_metrics = np.zeros(len(self.evaluation_metrics))
         return epoch_start_time, total_loss, total_metrics
 
-    def _output_update(self, output, products):
+    def _update_output(self, output, products):
         """ Update epoch statistics """
         loss, metrics = products['loss'], products['metrics']
         epoch_start_time, total_loss, total_metrics = output
@@ -34,8 +34,8 @@ class TrainingWorker(WorkerTemplate):
         avg_metrics = (total_metrics / len(self.data_loader)).tolist()
         return avg_loss, avg_metrics
 
-    def _output_finalize(self, output):
-        """ Return log messages """
+    def _finalize_output(self, output):
+        """ Return saved inference results along with log messages """
         epoch_start_time, total_loss, total_metrics = output
         avg_loss, avg_metrics = self._average_stats(total_loss, total_metrics)
         log = {

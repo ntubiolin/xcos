@@ -50,15 +50,15 @@ class WorkerTemplate(ABC):
         pass
 
     @abstractmethod
-    def _output_init(self):
+    def _init_output(self):
         pass
 
     @abstractmethod
-    def _output_update(self, output, products):
+    def _update_output(self, output, products):
         pass
 
     @abstractmethod
-    def _output_finalize(self, epoch_output) -> dict:
+    def _finalize_output(self, epoch_output) -> dict:
         """ The final output of worker.run() will be processed by this
             function, whose responsibility is to create a dictionary contraining
             log messages and/or saved inference outputs. """
@@ -114,7 +114,7 @@ class WorkerTemplate(ABC):
         Output of this worker will be init and updated(after a batch) here using
         `self._output_init` and `self._output_update`.
         """
-        output = self._output_init()
+        output = self._init_output()
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
             self._setup_writer()
@@ -133,12 +133,12 @@ class WorkerTemplate(ABC):
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
-            output = self._output_update(output, products)
+            output = self._update_output(output, products)
         return output
 
     def run(self, epoch):
         self._setup_model()
         with torch.set_grad_enabled(self.enable_grad):
             epoch_output = self._iter_data(epoch)
-        output = self._output_finalize(epoch_output)
+        output = self._finalize_output(epoch_output)
         return output

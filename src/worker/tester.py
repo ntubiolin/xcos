@@ -33,14 +33,14 @@ class Tester(WorkerTemplate):
     def _to_log(self, epoch_stats):
         return {}
 
-    def _output_init(self):
+    def _init_output(self):
         """ Initialize a dictioary structure to save inferenced results. """
         return {
             'epoch_start_time': time.time(),
             'saved': {k: [] for k in self.saved_keys}
         }
 
-    def _output_update(self, epoch_output, products):
+    def _update_output(self, epoch_output, products):
         """ Update the dictionary saver: extend entries """
         data, model_output = products['data'], products['model_output']
 
@@ -56,7 +56,7 @@ class Tester(WorkerTemplate):
         fetch_from_dict(model_output)
         return epoch_output
 
-    def _output_finalize(self, epoch_output):
+    def _finalize_output(self, epoch_output):
         """ Return saved inference results along with log messages """
         log = {'elasped_time (s)': time.time() - epoch_output['epoch_start_time']}
         return {'saved': epoch_output['saved'], 'log': log}
