@@ -122,7 +122,7 @@ class SingleGlobalConfig(AttrDict):
         self._setattr('_allow_invalid_attributes', False)
         self.set_config(self._merged_config)
 
-    def set_config(self, config: list):
+    def set_config(self, config: dict):
         """ Set the config. """
         for k, v in config.items():
             self[k] = v
