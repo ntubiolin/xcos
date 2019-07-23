@@ -11,7 +11,7 @@ class Validator(TrainingWorker):
     """
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
-        # Some shared attributes are trainer exclusive and therefore is initialized here
+        # Some shared attributes are validator exclusive and therefore is initialized here
         for attr_name in ['loss_functions']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 

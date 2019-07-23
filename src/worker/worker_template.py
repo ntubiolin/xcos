@@ -50,19 +50,15 @@ class WorkerTemplate(ABC):
         pass
 
     @abstractmethod
-    def _stats_init(self):
+    def _output_init(self):
         pass
 
     @abstractmethod
-    def _stats_update(self, stats, products):
+    def _output_update(self, output, products):
         pass
 
     @abstractmethod
-    def _stats_finalize(self, stats):
-        pass
-
-    @abstractmethod
-    def _finalize_output(self, epoch_stats):
+    def _output_finalize(self, epoch_output):
         pass
 
     # ============ Implement the above functions ==============
@@ -111,7 +107,7 @@ class WorkerTemplate(ABC):
 
     def _iter_data(self, epoch):
         """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
-        stats = self._stats_init()
+        output = self._output_init()
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
             self._setup_writer()
@@ -130,12 +126,12 @@ class WorkerTemplate(ABC):
                 if self.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
-            stats = self._stats_update(stats, products)
-        return self._stats_finalize(stats)
+            output = self._output_update(output, products)
+        return output
 
     def run(self, epoch):
         self._setup_model()
         with torch.set_grad_enabled(self.enable_grad):
-            epoch_stats = self._iter_data(epoch)
-        output = self._finalize_output(epoch_stats)
+            epoch_output = self._iter_data(epoch)
+        output = self._output_finalize(epoch_output)
         return output

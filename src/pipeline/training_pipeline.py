@@ -101,11 +101,13 @@ class TrainingPipeline(BasePipeline):
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
 
-    def _print_and_record_log(self, epoch, all_logs):
-        # print logged informations to the screen
+    def _print_and_record_log(self, epoch, worker_outputs):
+        # print common worker logged info
         self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
-        for loader_name, log in all_logs.items():
+        # print the logged info for each loader (corresponding to each worker)
+        for loader_name, output in worker_outputs.items():
+            log = output['log']
             if global_config['trainer']['verbosity'] >= 1:
                 logger.info(f'  {loader_name}:')
             for key, value in log.items():
@@ -115,14 +117,14 @@ class TrainingPipeline(BasePipeline):
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)
 
-    def _check_and_save_best(self, epoch, all_logs):
+    def _check_and_save_best(self, epoch, worker_outputs):
         """
         Evaluate model performance according to configured metric, save best checkpoint as model_best
         """
         best = False
         if self.monitor_mode != 'off':
             try:
-                metric_value = all_logs[self.monitored_loader][self.monitored_metric]
+                metric_value = worker_outputs[self.monitored_loader]['log'][self.monitored_metric]
                 if (self.monitor_mode == 'min' and metric_value < self.monitor_best) or\
                         (self.monitor_mode == 'max' and metric_value > self.monitor_best):
                     self.monitor_best = metric_value
@@ -135,9 +137,9 @@ class TrainingPipeline(BasePipeline):
         if epoch % self.save_freq == 0 or best:
             self._save_checkpoint(epoch, save_best=best)
 
-    def _after_epoch(self, epoch, all_logs):
-        self._print_and_record_log(epoch, all_logs)
-        self._check_and_save_best(epoch, all_logs)
+    def _after_epoch(self, epoch, worker_outputs):
+        self._print_and_record_log(epoch, worker_outputs)
+        self._check_and_save_best(epoch, worker_outputs)
 
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
@@ -147,8 +149,8 @@ class TrainingPipeline(BasePipeline):
         Full training pipeline logic
         """
         for epoch in range(self.start_epoch, self.epochs + 1):
-            all_logs = {}
+            worker_outputs = {}
             for worker in self.workers:
                 log = worker.run(epoch)
-                all_logs[worker.data_loader.name] = log
-            self._after_epoch(epoch, all_logs)
+                worker_outputs[worker.data_loader.name] = log
+            self._after_epoch(epoch, worker_outputs)
