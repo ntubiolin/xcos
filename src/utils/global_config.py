@@ -12,26 +12,26 @@ from attrdict import AttrDict
 from .logging_config import logger
 
 
-def flatten_nested_dict(nested_dict: dict, root_path: str, flatten_dict: dict = {}):
+def flatten_nested_dict(nested_dict: dict, root_path: str, flattened_dict: dict = {}):
     """ Recursively iterate all values in a nested dictionary and return a flatten one.
 
     Args:
         nested_dict (dict): the nested dictionary to be flatten
         root_path (str): node path, viewing nested_dict as a tree
-        flatten_dict (dict): recorded flatten_dict for recursive call
+        flattened_dict (dict): recorded flattened_dict for recursive call
 
     Returns:
-        flatten_dict (dict): flatten dictionary with flatten_key (root_node/leavenode/...) as path
+        flattened_dict (dict): flatten dictionary with flatten_key (root_node/leavenode/...) as path
 
     """
     for k, v in nested_dict.items():
         current_path = f"{root_path}/{k}" if root_path != "" else k
 
         if type(v) != dict:
-            flatten_dict[current_path] = v
+            flattened_dict[current_path] = v
         else:
-            flatten_dict = flatten_nested_dict(v, current_path, flatten_dict)
-    return flatten_dict
+            flattened_dict = flatten_nested_dict(v, current_path, flattened_dict)
+    return flattened_dict
 
 
 def get_value_in_nested_dict(nested_dict: dict, keys: list):
@@ -49,19 +49,19 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     """
     changed_config = {}
     added_config = {}
-    # Flatten nested dictionaries
-    flatten_template_config = flatten_nested_dict(template_config, "")
-    flatten_specified_config = flatten_nested_dict(specified_config, "")
+    # flattened nested dictionaries
+    flattened_template_config = flatten_nested_dict(template_config, "")
+    flattened_specified_config = flatten_nested_dict(specified_config, "")
 
     # Check each value in specified_config to see if it is different from the template
-    for k, v in flatten_specified_config.items():
+    for k, v in flattened_specified_config.items():
         # Concatenate if it is name
         if k == 'name' and 'name' in specified_config:
             changed_config['name'] = f"{template_config['name']}+{specified_config['name']}"
 
         # Added to changed_config only if it is different from the tempalte
-        elif k in flatten_template_config:
-            if v != flatten_template_config[k]:
+        elif k in flattened_template_config:
+            if v != flattened_template_config[k]:
                 changed_config[k] = v
 
         # Added to both added_config changed_config if it is new
@@ -71,7 +71,7 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     return changed_config, added_config
 
 
-def merge_template_and_changed_config(template_config, changed_config):
+def merge_template_and_flattened_changed_config(template_config, changed_config):
     """ Merge the template and changed config as a global_config. """
     merged_config = deepcopy(template_config)
     for k, v in changed_config.items():
@@ -134,7 +134,7 @@ class SingleGlobalConfig(AttrDict):
 
     def print_changed(self):
         """ Print all changed/added values. """
-        for k, v in self._changed_config.items():
+        for k, v in self._flattened_changed_config.items():
             if k in self.added_config:
                 logger.info(f"Added key: {k} ({v})")
             else:
@@ -157,9 +157,9 @@ class SingleGlobalConfig(AttrDict):
 
     def _get_changed_and_merged_config(self):
         """ Compare specified_config and template_config to get changed_config/merged_config. """
-        self._changed_config, self.added_config = \
+        self._flattened_changed_config, self.added_config = \
             get_changed_and_added_config(self._template_config, self._specified_config)
-        self._merged_config = merge_template_and_changed_config(self._template_config, self._changed_config)
+        self._merged_config = merge_template_and_flattened_changed_config(self._template_config, self._changed_config)
 
     def _extend_configs(self, config: dict, config_filenames: list):
         """ Extend a dict config with several config files. """
