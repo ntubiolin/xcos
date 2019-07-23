@@ -26,7 +26,7 @@ class TestingPipeline(BasePipeline):
         ensure_dir(self.saving_dir)
         if resume_path is not None:
             # Mark the used resume path by a symbolic link
-            os.symlink(resume_path, os.path.join(self.saving_dir, 'resumed_ckpt.pth'))
+            os.symlink(os.path.abspath(resume_path), os.path.join(self.saving_dir, 'resumed_ckpt.pth'))
 
     def _setup_config(self):
         pass
