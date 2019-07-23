@@ -39,7 +39,7 @@ class TrainingWorker(WorkerTemplate):
         epoch_start_time, total_loss, total_metrics = output
         avg_loss, avg_metrics = self._average_stats(total_loss, total_metrics)
         log = {
-            'elapsed_time': time.time() - epoch_start_time,
+            'elapsed_time (s)': time.time() - epoch_start_time,
             'avg_loss': avg_loss,
         }
         # Metrics is a list

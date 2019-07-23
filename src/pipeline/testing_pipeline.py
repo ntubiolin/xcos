@@ -36,8 +36,8 @@ class TestingPipeline(BasePipeline):
         workers = [tester]
         return workers
 
-    def _save_inference_results(self, worker: Tester, worker_output: dict):
-        path = os.path.join(self.saving_dir, f'{worker.data_loader.name}_output.npz')
+    def _save_inference_results(self, name: str, worker_output: dict):
+        path = os.path.join(self.saving_dir, f'{name}_output.npz')
         logger.info(f'Saving {path}...')
         np.savez(path, **worker_output)
 
@@ -45,6 +45,9 @@ class TestingPipeline(BasePipeline):
         """
         Full testing pipeline logic
         """
+        worker_outputs = {}
         for worker in self.workers:
             worker_output = worker.run(0)
-            self._save_inference_results(worker, worker_output)
+            self._save_inference_results(worker.data_loader.name, worker_output['saved'])
+            worker_outputs[worker.data_loader.name] = worker_output
+        self._print_and_record_log(0, worker_outputs)

@@ -101,22 +101,6 @@ class TrainingPipeline(BasePipeline):
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
 
-    def _print_and_record_log(self, epoch, worker_outputs):
-        # print common worker logged info
-        self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
-        logger.info(f'  epoch: {epoch:d}')
-        # print the logged info for each loader (corresponding to each worker)
-        for loader_name, output in worker_outputs.items():
-            log = output['log']
-            if global_config['trainer']['verbosity'] >= 1:
-                logger.info(f'  {loader_name}:')
-            for key, value in log.items():
-                if global_config['trainer']['verbosity'] >= 1:
-                    logger.info(f'    {str(key):20s}: {value:.4f}')
-                if 'epoch_time' not in key:
-                    # TODO: See if we can use tree-structured tensorboard logging
-                    self.writer.add_scalar(f'{loader_name}_{key}', value)
-
     def _check_and_save_best(self, epoch, worker_outputs):
         """
         Evaluate model performance according to configured metric, save best checkpoint as model_best
@@ -151,6 +135,6 @@ class TrainingPipeline(BasePipeline):
         for epoch in range(self.start_epoch, self.epochs + 1):
             worker_outputs = {}
             for worker in self.workers:
-                log = worker.run(epoch)
-                worker_outputs[worker.data_loader.name] = log
+                worker_output = worker.run(epoch)
+                worker_outputs[worker.data_loader.name] = worker_output
             self._after_epoch(epoch, worker_outputs)
