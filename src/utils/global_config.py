@@ -99,12 +99,20 @@ class SingleGlobalConfig(AttrDict):
 
     One could use either global_config.some_attribute or global_config['some_attribute']
     to access the config
+
+    Note that since this class is inherited from AttrDict, attributes without starting with a _ will
+    be put into the dictionary. Attrbutes starting with a _ would be viewed as invalid.
+    To setup template_config and specified_config, here the '_allow_invalid_attributes' is set to
+    be True first to allow this invalid self attributes and avoid putting them into the self dict.
     """
     def setup(self, template_config_filename: list, specified_config_filenames: list, resumed_checkpoint: dict = None):
         """ Setup the global_config. """
         # NOTE: this function needs to be called by main.py before imported by modules unless it is resumed
 
-        self._setattr('_allow_invalid_attributes', True)  # To set self._template_config, self._specified_config etc.
+        # This is to set self._template_config, self._specified_config etc as they are classified as invalid attributes
+        # to be put into self. See https://github.com/bcj/AttrDict/blob/9f672997bf/attrdict/mixins.py#L169
+        self._setattr('_allow_invalid_attributes', True)
+
         if resumed_checkpoint is not None:
             self._template_config = resumed_checkpoint['config']
         else:
@@ -135,14 +143,16 @@ class SingleGlobalConfig(AttrDict):
 
     def _load_template_config(self, config_filename: str):
         """ Load the template config. """
-        # Note that for some reason this is not mutable?
+        # Note that since this class is inherited from AttrDict, attributes without starting with a _ will
+        # be put into the dictionary.
         with open(config_filename) as fin:
             logger.info(f"===== Using {config_filename} as template config =====")
             self._template_config = json.load(fin)
 
     def _load_specified_configs(self, config_filenames: list):
         """ Load specified config(s). """
-        # Note that for some reason this is not mutable?
+        # Note that since this class is inherited from AttrDict, attributes without starting with a _ will
+        # be put into the dictionary.
         self._specified_config = self._extend_configs({}, config_filenames)
 
     def _get_changed_and_merged_config(self):
