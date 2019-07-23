@@ -28,7 +28,7 @@ class BasePipeline(ABC):
 
         self._setup_model_and_optimizer()
 
-        self._setup_saving_dir(args.resume)
+        self._setup_saving_dir(args)
         self._save_config_file()
 
         self._setup_writer()
@@ -188,6 +188,6 @@ class BasePipeline(ABC):
             for key, value in log.items():
                 if global_config['trainer']['verbosity'] >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
-                if 'epoch_time' not in key:
+                if 'elapsed_time' not in key:
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)

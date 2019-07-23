@@ -21,7 +21,7 @@ class TrainingPipeline(BasePipeline):
         self._setup_lr_scheduler()
         self.workers = self._create_workers()
 
-    def _setup_saving_dir(self, resume_path):
+    def _setup_saving_dir(self, args):
         self.saving_dir = os.path.join(global_config['trainer']['save_dir'], 'ckpts',
                                        global_config['name'], self.start_time)
         ensure_dir(self.saving_dir)
