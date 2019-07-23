@@ -49,7 +49,7 @@ def main(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='PyTorch Template')
     parser.add_argument(
-        '-tc', '--template_config', default='configs/train/basic.json', type=str,
+        '-tc', '--template_config', default='configs/template.json', type=str,
         help=('Template configuraion file. It should contain all default configuration '
               'and will be overwritten by specified config.')
     )

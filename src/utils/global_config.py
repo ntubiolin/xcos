@@ -137,6 +137,7 @@ class SingleGlobalConfig(AttrDict):
         """ Load the template config. """
         # Note that for some reason this is not mutable?
         with open(config_filename) as fin:
+            logger.info(f"===== Using {config_filename} as template config =====")
             self._template_config = json.load(fin)
 
     def _load_specified_configs(self, config_filenames: list):
