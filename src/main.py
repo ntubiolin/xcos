@@ -67,6 +67,8 @@ def parse_args():
     parser.add_argument('--mode', type=str, choices=['train', 'test'], default='train')
     parser.add_argument('--saved_keys', default=['data_target', 'model_output'], type=str, nargs='+',
                         help='Specify the keys to save at testing mode.')
+    parser.add_argument('--ckpts_subdir', type=str, default='ckpts', help='Subdir name for ckpts saving.')
+    parser.add_argument('--outputs_subdir', type=str, default='outputs', help='Subdir name for outputs saving.')
     args = parser.parse_args()
 
     return args

@@ -21,7 +21,7 @@ class TestingPipeline(BasePipeline):
         self.workers = self._create_workers()
 
     def _setup_saving_dir(self, args):
-        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], 'outputs',
+        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], args.outputs_subdir,
                                        global_config['name'])
         if os.path.exists(self.saving_dir):
             logger.warning('The saving directory already exists. If continued, some files might be overwriten.')

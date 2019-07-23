@@ -22,7 +22,7 @@ class TrainingPipeline(BasePipeline):
         self.workers = self._create_workers()
 
     def _setup_saving_dir(self, args):
-        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], 'ckpts',
+        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
                                        global_config['name'], self.start_time)
         ensure_dir(self.saving_dir)
 
