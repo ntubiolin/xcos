@@ -1,7 +1,7 @@
 {
     "name": "CrossEntropy",
-    "losses": [
-        {
+    "losses": {
+        "0": {
             "type": "CrossEntropyLoss",
             "args": {
                 "output_key": "model_output",
@@ -10,9 +10,9 @@
                 "weight": 1
             }
         }
-    ],
-    "metrics": [
-        {
+    },
+    "metrics": {
+        "0": {
             "type": "TopKAcc",
             "args": {
                 "nickname": "Top1Acc",
@@ -21,7 +21,7 @@
                 "target_key": "data_target"
             }
         },
-        {
+        "1": {
             "type": "TopKAcc",
             "args": {
                 "nickname": "Top5Acc",
@@ -30,5 +30,5 @@
                 "target_key": "data_target"
             }
         }
-    ]
+    }
 }
