@@ -47,7 +47,7 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     """ Compare the difference between template config and specified config,
     and return changed (include added) and added config.
     """
-    changed_config = {}
+    flattened_changed_config = {}
     added_config = {}
     # flattened nested dictionaries
     flattened_template_config = flatten_nested_dict(template_config, "")
@@ -57,24 +57,24 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     for k, v in flattened_specified_config.items():
         # Concatenate if it is name
         if k == 'name' and 'name' in specified_config:
-            changed_config['name'] = f"{template_config['name']}+{specified_config['name']}"
+            flattened_changed_config['name'] = f"{template_config['name']}+{specified_config['name']}"
 
-        # Added to changed_config only if it is different from the tempalte
+        # Added to flattened_changed_config only if it is different from the tempalte
         elif k in flattened_template_config:
             if v != flattened_template_config[k]:
-                changed_config[k] = v
+                flattened_changed_config[k] = v
 
-        # Added to both added_config changed_config if it is new
+        # Added to both added_config flattened_changed_config if it is new
         else:
-            changed_config[k] = v
+            flattened_changed_config[k] = v
             added_config[k] = v
-    return changed_config, added_config
+    return flattened_changed_config, added_config
 
 
-def merge_template_and_flattened_changed_config(template_config, changed_config):
+def merge_template_and_flattened_changed_config(template_config, flattened_changed_config):
     """ Merge the template and changed config as a global_config. """
     merged_config = deepcopy(template_config)
-    for k, v in changed_config.items():
+    for k, v in flattened_changed_config.items():
         keys = k.split('/')
 
         # Trace the path by the key and current_dict
@@ -159,7 +159,8 @@ class SingleGlobalConfig(AttrDict):
         """ Compare specified_config and template_config to get changed_config/merged_config. """
         self._flattened_changed_config, self.added_config = \
             get_changed_and_added_config(self._template_config, self._specified_config)
-        self._merged_config = merge_template_and_flattened_changed_config(self._template_config, self._changed_config)
+        self._merged_config = merge_template_and_flattened_changed_config(
+            self._template_config, self._flattened_changed_config)
 
     def _extend_configs(self, config: dict, config_filenames: list):
         """ Extend a dict config with several config files. """
