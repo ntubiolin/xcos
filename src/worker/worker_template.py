@@ -109,7 +109,11 @@ class WorkerTemplate(ABC):
         return data
 
     def _iter_data(self, epoch):
-        """ Iterate through the dataset and do inference, calculate losses and metrics (and optimize the model) """
+        """
+        Iterate through the dataset and do inference.
+        Output of this worker will be init and updated(after a batch) here using
+        `self._output_init` and `self._output_update`.
+        """
         output = self._output_init()
         for batch_idx, data in enumerate(self.data_loader):
             batch_start_time = time.time()
