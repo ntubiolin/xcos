@@ -58,7 +58,10 @@ class WorkerTemplate(ABC):
         pass
 
     @abstractmethod
-    def _output_finalize(self, epoch_output):
+    def _output_finalize(self, epoch_output) -> dict:
+        """ The final output of worker.run() will be processed by this
+            function, whose responsibility is to create a dictionary contraining
+            log messages and/or saved inference outputs. """
         pass
 
     # ============ Implement the above functions ==============

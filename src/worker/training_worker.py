@@ -35,7 +35,7 @@ class TrainingWorker(WorkerTemplate):
         return avg_loss, avg_metrics
 
     def _output_finalize(self, output):
-        """ The output of trainer and validator are logged messages. """
+        """ Return log messages """
         epoch_start_time, total_loss, total_metrics = output
         avg_loss, avg_metrics = self._average_stats(total_loss, total_metrics)
         log = {

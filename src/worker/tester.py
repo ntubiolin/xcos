@@ -57,5 +57,6 @@ class Tester(WorkerTemplate):
         return epoch_output
 
     def _output_finalize(self, epoch_output):
+        """ Return saved inference results along with log messages """
         log = {'elasped_time (s)': time.time() - epoch_output['epoch_start_time']}
         return {'saved': epoch_output['saved'], 'log': log}
