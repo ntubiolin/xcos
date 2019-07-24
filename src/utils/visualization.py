@@ -1,22 +1,16 @@
-import importlib
-import warnings
+from torch.utils.tensorboard import SummaryWriter
 
 
-class WriterTensorboardX():
+class WriterTensorboard():
     def __init__(self, writer_dir, logger, enable):
         self.writer = None
         if enable:
             log_path = writer_dir
-            try:
-                self.writer = importlib.import_module('tensorboardX').SummaryWriter(log_path)
-            except ModuleNotFoundError:
-                message = """TensorboardX visualization is configured to use, but currently not installed on this machine. Please install the package by 'pip install tensorboardx' command or turn off the option in the 'config.json' file."""  # NOQA
-                warnings.warn(message, UserWarning)
-                logger.warn(message)
+            self.writer = SummaryWriter(log_path)
         self.step = 0
         self.mode = ''
 
-        self.tensorboard_writer_ftns = ['add_scalar', 'add_scalars', 'add_image',
+        self.tensorboard_writer_ftns = ['add_scalar', 'add_scalars', 'add_image', 'add_video',
                                         'add_audio', 'add_text', 'add_histogram', 'add_pr_curve', 'add_embedding']
 
     def set_step(self, step, mode='train'):
