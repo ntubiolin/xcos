@@ -12,7 +12,7 @@ from attrdict import AttrDict
 from .logging_config import logger
 
 
-def flatten_nested_dict(nested_dict: dict, root_path: str, flattened_dict: dict = {}):
+def flatten_nested_dict(nested_dict: dict, root_path: str, flattened_dict: dict):
     """ Recursively iterate all values in a nested dictionary and return a flatten one.
 
     Args:
@@ -50,8 +50,8 @@ def get_changed_and_added_config(template_config: dict, specified_config: dict):
     flattened_changed_config = {}
     added_config = {}
     # flattened nested dictionaries
-    flattened_template_config = flatten_nested_dict(template_config, "")
-    flattened_specified_config = flatten_nested_dict(specified_config, "")
+    flattened_template_config = flatten_nested_dict(template_config, "", dict())
+    flattened_specified_config = flatten_nested_dict(specified_config, "", dict())
 
     # Check each value in specified_config to see if it is different from the template
     for k, v in flattened_specified_config.items():
