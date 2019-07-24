@@ -1,8 +1,8 @@
 name: PytorchGoldenTemplate
 channels:
   - pytorch
-  - anaconda
   - conda-forge
+  - anaconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -57,4 +57,12 @@ dependencies:
   - xz=5.2.4=h14c3975_4
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
+  - pip:
+    - attrs==19.1.0
+    - entrypoints==0.3
+    - flake8==3.7.8
+    - flake8-bugbear==19.3.0
+    - mccabe==0.6.1
+    - pycodestyle==2.5.0
+    - pyflakes==2.1.1
 

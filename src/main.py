@@ -19,7 +19,7 @@ def main(args):
         resumed_checkpoint = torch.load(args.resume)
     else:
         resumed_checkpoint = None
-    setattr(args, 'resumed_checkpoint', resumed_checkpoint)
+    args.resumed_checkpoint = resumed_checkpoint
 
     global_config.setup(args.template_config, args.specified_configs, resumed_checkpoint)
     global_config.print_changed()
