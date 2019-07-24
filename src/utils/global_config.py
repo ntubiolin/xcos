@@ -116,9 +116,15 @@ class SingleGlobalConfig(AttrDict):
         if resumed_checkpoint is not None:
             self._template_config = resumed_checkpoint['config']
         else:
-            self._load_template_config(template_config_filename)
-        self._load_specified_configs(specified_config_filenames)
-        self._get_changed_and_merged_config()
+            self._template_config = self._load_template_config(template_config_filename)
+        self._specified_config = self._load_specified_configs(specified_config_filenames)
+
+        # Compare specified_config and template_config to get changed_config/merged_config
+        self._flattened_changed_config, self.added_config = \
+            get_changed_and_added_config(self._template_config, self._specified_config)
+        self._merged_config = merge_template_and_flattened_changed_config(
+            self._template_config, self._flattened_changed_config)
+
         self._setattr('_allow_invalid_attributes', False)
         self.set_config(self._merged_config)
 
@@ -147,20 +153,13 @@ class SingleGlobalConfig(AttrDict):
         # be put into the dictionary.
         with open(config_filename) as fin:
             logger.info(f"===== Using {config_filename} as template config =====")
-            self._template_config = json.load(fin)
+            return json.load(fin)
 
     def _load_specified_configs(self, config_filenames: list):
         """ Load specified config(s). """
         # Note that since this class is inherited from AttrDict, attributes without starting with a _ will
         # be put into the dictionary.
-        self._specified_config = self._extend_configs({}, config_filenames)
-
-    def _get_changed_and_merged_config(self):
-        """ Compare specified_config and template_config to get changed_config/merged_config. """
-        self._flattened_changed_config, self.added_config = \
-            get_changed_and_added_config(self._template_config, self._specified_config)
-        self._merged_config = merge_template_and_flattened_changed_config(
-            self._template_config, self._flattened_changed_config)
+        return self._extend_configs({}, config_filenames)
 
     def _extend_configs(self, config: dict, config_filenames: list):
         """ Extend a dict config with several config files. """
