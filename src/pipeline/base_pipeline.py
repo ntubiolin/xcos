@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 import torch
 
 from utils.util import get_instance
-from utils.visualization import WriterTensorboardX
+from utils.visualization import WriterTensorboard
 from utils.logging_config import logger
 from utils.global_config import global_config
 import data_loader.data_loaders as module_data
@@ -127,7 +127,7 @@ class BasePipeline(ABC):
     def _setup_writer(self):
         # setup visualization writer instance
         writer_dir = os.path.join(global_config['visualization']['log_dir'], global_config['name'], self.start_time)
-        self.writer = WriterTensorboardX(writer_dir, logger, global_config['visualization']['tensorboardX'])
+        self.writer = WriterTensorboard(writer_dir, logger, global_config['visualization']['tensorboardX'])
         self.start_epoch = 1
         self.train_iteration_count = 0
         self.valid_iteration_counts = [0] * len(self.valid_data_loaders)
