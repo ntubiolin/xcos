@@ -106,7 +106,7 @@ class BasePipeline(ABC):
 
     def _setup_evaluation_metrics(self):
         self.evaluation_metrics = [
-            getattr(module_metric, entry['type'])(**entry['args'])
+            getattr(module_metric, entry['type'])(**entry['args']).to(self.device)
             for entry in global_config['metrics'].values()
         ]
 
