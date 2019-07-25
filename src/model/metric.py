@@ -9,7 +9,7 @@ class TopKAcc(torch.nn.Module):
         self.output_key = output_key
         self.target_key = target_key
 
-    def __call__(self, data, output):
+    def forward(self, data, output):
         with torch.no_grad():
             logits = output[self.output_key]
             target = data[self.target_key]
