@@ -1,8 +1,9 @@
 import torch
 
 
-class TopKAcc():
+class TopKAcc(torch.nn.Module):
     def __init__(self, k, output_key, target_key, nickname=None):
+        super().__init__()
         self.k = k
         self.nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
         self.output_key = output_key

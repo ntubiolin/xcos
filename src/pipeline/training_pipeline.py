@@ -33,7 +33,7 @@ class TrainingPipeline(BasePipeline):
 
     def _setup_loss_functions(self):
         self.loss_functions = [
-            getattr(module_loss, entry['type'])(**entry['args'])
+            getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
             for key, entry in global_config['losses'].items()
         ]
 
