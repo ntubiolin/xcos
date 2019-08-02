@@ -96,7 +96,7 @@ class TrainingPipeline(BasePipeline):
         best_str = '-best' if save_best else ''
         monitored_name = f'{self.monitored_loader}_{self.monitored_metric}'
         filename = os.path.join(
-            self.saving_dir, f'ckpt-ep{epoch}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
+            self.saving_dir, f'ckpt-ep{epoch:04d}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
         )
         torch.save(state, filename)
         logger.info("Saving checkpoint: {} ...".format(filename))
