@@ -17,8 +17,6 @@ class TestingPipeline(BasePipeline):
         torch.multiprocessing.set_sharing_strategy('file_system')
         """
         super().__init__(args)
-        self.saved_keys = args.saved_keys
-        self.workers = self._create_workers()
 
     def _create_saving_dir(self, args):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.outputs_subdir,
@@ -42,8 +40,11 @@ class TestingPipeline(BasePipeline):
         pass
 
     def _create_workers(self):
-        tester = Tester(self, self.data_loader, 0)
-        workers = [tester]
+        workers = []
+        # Add a tester for each data loader
+        for valid_data_loader in self.valid_data_loaders:
+            tester = Tester(self, valid_data_loader, 0)
+            workers += [tester]
         return workers
 
     def _save_inference_results(self, name: str, worker_output: dict):
@@ -55,9 +56,8 @@ class TestingPipeline(BasePipeline):
         """
         Full testing pipeline logic
         """
-        worker_outputs = {}
         for worker in self.workers:
             worker_output = worker.run(0)
             self._save_inference_results(worker.data_loader.name, worker_output['saved'])
-            worker_outputs[worker.data_loader.name] = worker_output
-        self._print_and_record_log(0, worker_outputs)
+            self.worker_outputs[worker.data_loader.name] = worker_output
+        self._print_and_record_log(0, self.worker_outputs)

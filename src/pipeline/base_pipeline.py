@@ -46,8 +46,15 @@ class BasePipeline(ABC):
         if args.pretrained is not None:
             self._load_pretrained(args.pretrained)
 
+        self.worker_outputs = {}
+        self._before_create_workers()
+        self.workers = self._create_workers()
+
     @abstractmethod
     def _setup_config(self):
+        pass
+
+    def _before_create_workers(self):
         pass
 
     @abstractmethod

@@ -16,9 +16,10 @@ from utils.util import ensure_dir
 class TrainingPipeline(BasePipeline):
     def __init__(self, args):
         super().__init__(args)
+
+    def _before_create_workers(self):
         self._setup_loss_functions()
         self._setup_lr_scheduler()
-        self.workers = self._create_workers()
 
     def _create_saving_dir(self, args):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
@@ -128,8 +129,7 @@ class TrainingPipeline(BasePipeline):
         Full training pipeline logic
         """
         for epoch in range(self.start_epoch, self.epochs + 1):
-            worker_outputs = {}
             for worker in self.workers:
                 worker_output = worker.run(epoch)
-                worker_outputs[worker.data_loader.name] = worker_output
-            self._after_epoch(epoch, worker_outputs)
+                self.worker_outputs[worker.data_loader.name] = worker_output
+            self._after_epoch(epoch, self.worker_outputs)
