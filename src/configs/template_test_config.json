@@ -46,5 +46,6 @@
     },
     "log_step": 500,
     "verbosity": 2,
+    "saved_keys": ["data_input", "data_target", "model_output"],
     "name": "test_template_config"
 }
