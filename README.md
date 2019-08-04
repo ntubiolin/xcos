@@ -19,12 +19,15 @@ python main.py --resume ./saved/ckpts/template_config+CrossEntropy/0723_180600/c
 
 Example: generate testing results
 ```
+# For submission to the leaderboard, etc.
 python main.py -sc configs/data/mnist_test.json --mode test -p <pretrained_weight>
 ```
 
 Example: evaluate results
 ```
-python main.py --mode eval -tc configs/template_test_config.json
+# You could evaluate results by other models (corresponding data loader needs to be defined)
+# See configs/template_eval_config.json for details
+python main.py --mode eval -tc configs/template_eval_config.json
 ```
 
 ## Folder Structure
