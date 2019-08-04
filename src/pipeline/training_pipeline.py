@@ -1,6 +1,5 @@
 import math
 import os
-import json
 
 import torch
 
@@ -21,15 +20,11 @@ class TrainingPipeline(BasePipeline):
         self._setup_lr_scheduler()
         self.workers = self._create_workers()
 
-    def _setup_saving_dir(self, args):
-        self.saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
-                                       global_config['name'], self.start_time)
-        ensure_dir(self.saving_dir)
-
-        # Save configuration file into checkpoint directory
-        config_save_path = os.path.join(self.saving_dir, 'config.json')
-        with open(config_save_path, 'w') as handle:
-            json.dump(global_config, handle, indent=4, sort_keys=False)
+    def _create_saving_dir(self, args):
+        saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
+                                  global_config['name'], self.start_time)
+        ensure_dir(saving_dir)
+        return saving_dir
 
     def _setup_loss_functions(self):
         self.loss_functions = [

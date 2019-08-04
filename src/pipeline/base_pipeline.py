@@ -22,10 +22,12 @@ class BasePipeline(ABC):
     def __init__(
         self, args
     ):
+        global_config.setup(args.template_config, args.specified_configs, args.resumed_checkpoint)
         self.start_time = datetime.datetime.now().strftime('%m%d_%H%M%S')
-        self._setup_saving_dir(args)
-        self._save_config_file()
+        self.saving_dir = self._create_saving_dir(args)
         self._add_logging_file_handler()
+        self._save_config_file()
+        self._print_config_messages()
 
         self._setup_device()
         self._setup_data_loader()
@@ -53,6 +55,25 @@ class BasePipeline(ABC):
         return []
 
     # =============== functions for setting up attributes (start) ================
+
+    @abstractmethod
+    def _create_saving_dir(self, resume_path):
+        """ Create directory to save ckpt, config, and logges messags. Return the created path """
+        pass
+
+    def _save_config_file(self):
+        # Save configuration file into checkpoint directory
+        config_save_path = os.path.join(self.saving_dir, 'config.json')
+        with open(config_save_path, 'w') as handle:
+            json.dump(global_config, handle, indent=4, sort_keys=False)
+
+    def _add_logging_file_handler(self):
+        fileHandler = logging.FileHandler(os.path.join(self.saving_dir, 'log.txt'))
+        logger.addHandler(fileHandler)
+
+    def _print_config_messages(self):
+        global_config.print_changed()
+        logger.info(f'Experiment name: {global_config["name"]}')
 
     def _setup_device(self):
         def prepare_device(n_gpu_use):
@@ -115,20 +136,6 @@ class BasePipeline(ABC):
     def _setup_optimizer(self):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
         self.optimizer = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
-
-    @abstractmethod
-    def _setup_saving_dir(self, resume_path):
-        pass
-
-    def _save_config_file(self):
-        # Save configuration file into checkpoint directory
-        config_save_path = os.path.join(self.saving_dir, 'config.json')
-        with open(config_save_path, 'w') as handle:
-            json.dump(global_config, handle, indent=4, sort_keys=False)
-
-    def _add_logging_file_handler(self):
-        fileHandler = logging.FileHandler(os.path.join(self.saving_dir, 'log.txt'))
-        logger.addHandler(fileHandler)
 
     def _setup_writer(self):
         # setup visualization writer instance

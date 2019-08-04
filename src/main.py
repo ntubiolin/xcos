@@ -8,11 +8,6 @@ from pipeline import TrainingPipeline, TestingPipeline
 
 
 def main(args):
-
-    #######################
-    # Setup global config #
-    #######################
-    from utils.global_config import global_config
     # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
     if args.resume is not None:
         logger.info("Resuming checkpoint: {} ...".format(args.resume))
@@ -21,13 +16,8 @@ def main(args):
         resumed_checkpoint = None
     args.resumed_checkpoint = resumed_checkpoint
 
-    global_config.setup(args.template_config, args.specified_configs, resumed_checkpoint)
-    global_config.print_changed()
-
     if args.device:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
-
-    logger.info(f'Experiment name: {global_config["name"]}')
 
     ##################
     # Setup pipeline #
