@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import logging
 from abc import ABC, abstractmethod
 
 import torch
@@ -22,14 +23,15 @@ class BasePipeline(ABC):
         self, args
     ):
         self.start_time = datetime.datetime.now().strftime('%m%d_%H%M%S')
+        self._setup_saving_dir(args)
+        self._save_config_file()
+        self._add_logging_file_handler()
+
         self._setup_device()
         self._setup_data_loader()
         self._setup_valid_data_loaders()
 
         self._setup_model_and_optimizer()
-
-        self._setup_saving_dir(args)
-        self._save_config_file()
 
         self._setup_writer()
         self._setup_evaluation_metrics()
@@ -123,6 +125,10 @@ class BasePipeline(ABC):
         config_save_path = os.path.join(self.saving_dir, 'config.json')
         with open(config_save_path, 'w') as handle:
             json.dump(global_config, handle, indent=4, sort_keys=False)
+
+    def _add_logging_file_handler(self):
+        fileHandler = logging.FileHandler(os.path.join(self.saving_dir, 'log.txt'))
+        logger.addHandler(fileHandler)
 
     def _setup_writer(self):
         # setup visualization writer instance
