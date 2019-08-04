@@ -76,5 +76,6 @@
             }
         }
     },
+    "saved_keys": ["data_input", "data_target", "model_output"],
     "name": "template_config"
 }
