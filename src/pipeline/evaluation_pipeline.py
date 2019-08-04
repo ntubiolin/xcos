@@ -1,9 +1,11 @@
 from .base_pipeline import BasePipeline
 from worker.evaluator import Evaluator
+from utils.global_config import global_config
 
 
 class EvaluationPipeline(BasePipeline):
     def __init__(self, args):
+        global_config.setup(args.template_config, args.specified_configs, args.resumed_checkpoint)
         self.gt_data_loaders = self._setup_data_loaders('gt_data_loaders')
         self.result_data_loaders = self._setup_data_loaders('result_data_loaders')
         self.device, self.device_ids = self._setup_device()
@@ -15,6 +17,9 @@ class EvaluationPipeline(BasePipeline):
         pass
 
     def _setup_saving_dir(self, resume_path):
+        pass
+
+    def _create_saving_dir(self, resume_path):
         pass
 
     def _create_workers(self):
