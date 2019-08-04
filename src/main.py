@@ -4,7 +4,7 @@ import argparse
 import torch
 
 from utils.logging_config import logger
-from pipeline import TrainingPipeline, TestingPipeline
+from pipeline import TrainingPipeline, TestingPipeline, EvaluationPipeline
 
 
 def main(args):
@@ -26,6 +26,8 @@ def main(args):
         pipeline = TrainingPipeline(args)
     elif args.mode == 'test':
         pipeline = TestingPipeline(args)
+    elif args.mode == 'eval':
+        pipeline = EvaluationPipeline(args)
     else:
         raise NotImplementedError(f'Mode {args.mode} not defined.')
 
@@ -54,7 +56,7 @@ def parse_args():
                         help='path to pretrained checkpoint (default: None)')
     parser.add_argument('-d', '--device', default=None, type=str,
                         help='indices of GPUs to enable (default: all)')
-    parser.add_argument('--mode', type=str, choices=['train', 'test'], default='train')
+    parser.add_argument('--mode', type=str, choices=['train', 'test', 'eval'], default='train')
     parser.add_argument('--saved_keys', default=['data_target', 'model_output'], type=str, nargs='+',
                         help='Specify the keys to save at testing mode.')
     parser.add_argument('--ckpts_subdir', type=str, default='ckpts', help='Subdir name for ckpts saving.')

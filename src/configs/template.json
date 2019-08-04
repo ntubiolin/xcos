@@ -19,10 +19,8 @@
         "epochs": 100,
         "save_dir": "saved/",
         "save_freq": 1,
-        "verbosity": 2,
         "monitor": "valid_seen_loss",
         "monitor_mode": "min",
-        "log_step": 500,
         "monitored_loader": "valid_mnist",
         "monitored_metric": "avg_loss"
     },
@@ -43,6 +41,17 @@
             "validation_split": 0.1,
             "num_workers": 4,
             "name": "mnist"
+        }
+    },
+    "valid_data_loader": {
+        "0": {
+            "type": "MnistDataLoader",
+            "args": {
+                "data_dir": "../datasets/mnist",
+                "batch_size": 32,
+                "num_workers": 4,
+                "name": "all_mnist"
+            }
         }
     },
     "losses": {
@@ -76,6 +85,8 @@
             }
         }
     },
+    "log_step": 500,
+    "verbosity": 2,
     "saved_keys": ["data_input", "data_target", "model_output"],
     "name": "template_config"
 }

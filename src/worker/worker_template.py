@@ -23,9 +23,6 @@ class WorkerTemplate(ABC):
         for attr_name in ['device', 'model', 'evaluation_metrics', 'writer']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
-        self.log_step = global_config['trainer']['log_step']
-        self.verbosity = global_config['trainer']['verbosity']
-
         self.data_loader = data_loader
         self.step = step  # Tensorboard log step
 
@@ -54,8 +51,8 @@ class WorkerTemplate(ABC):
         pass
 
     @abstractmethod
-    def _update_output(self, output, products):
-        pass
+    def _update_output(self, output: dict, products: dict):
+        return output
 
     @abstractmethod
     def _finalize_output(self, epoch_output) -> dict:
@@ -97,7 +94,10 @@ class WorkerTemplate(ABC):
         acc_metrics = np.zeros(len(self.evaluation_metrics))
         for i, metric in enumerate(self.evaluation_metrics):
             acc_metrics[i] += metric(data, model_output)
-            self.writer.add_scalar(metric.nickname, acc_metrics[i])
+            try:
+                self.writer.add_scalar(metric.nickname, acc_metrics[i])
+            except AttributeError:
+                pass
         return acc_metrics
 
     def _data_to_device(self, data):
@@ -128,9 +128,9 @@ class WorkerTemplate(ABC):
                 'metrics': metrics
             }
 
-            if batch_idx % self.log_step == 0:
+            if batch_idx % global_config.log_step == 0:
                 self._write_data_to_tensorboard(data, model_output)
-                if self.verbosity >= 2:
+                if global_config.verbosity >= 2:
                     self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
 
             output = self._update_output(output, products)
