@@ -43,17 +43,6 @@
             "name": "mnist"
         }
     },
-    "valid_data_loader": {
-        "0": {
-            "type": "MnistDataLoader",
-            "args": {
-                "data_dir": "../datasets/mnist",
-                "batch_size": 32,
-                "num_workers": 4,
-                "name": "all_mnist"
-            }
-        }
-    },
     "losses": {
         "0": {
             "type": "CrossEntropyLoss",

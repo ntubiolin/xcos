@@ -6,7 +6,8 @@
             "args": {
                 "data_dir": "../datasets/mnist",
                 "batch_size": 32,
-                "validation_split": 0.1,
+                "validation_split": 0,
+                "shuffle": false,
                 "num_workers": 4,
                 "name": "mnist"
             }
@@ -16,7 +17,7 @@
         "0": {
             "type": "MnistResultDataLoader",
             "args": {
-                "result_filename": "saved/outputs/template_config/mnist_output.npz",
+                "result_filename": "saved/outputs/template_config/all_mnist_output.npz",
                 "batch_size": 32,
                 "num_workers": 4,
                 "name": "mnist_result"
