@@ -17,6 +17,16 @@ Example: resume from a checkpoint, inference and save outputs
 python main.py --resume ./saved/ckpts/template_config+CrossEntropy/0723_180600/ckpt-ep1-valid_mnist_avg_loss0.2885-best.pth --mode test
 ```
 
+Example: generate testing results
+```
+python main.py -sc configs/data/mnist_test.json --mode test -p <pretrained_weight>
+```
+
+Example: evaluate results
+```
+python main.py --mode eval -tc configs/template_test_config.json
+```
+
 ## Folder Structure
 
 ## Authors
