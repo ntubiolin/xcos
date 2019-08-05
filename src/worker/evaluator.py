@@ -82,7 +82,7 @@ class Evaluator(WorkerTemplate):
             batch_start_time = time.time()
             gt = self._data_to_device(gt)
             result = self._data_to_device(result)
-            metrics = self._get_and_write_metrics(gt, result)
+            metrics = self._get_and_write_metrics(gt, result, write=False)
             output = self._update_output(output, metrics)
 
             if batch_idx % global_config.log_step == 0:

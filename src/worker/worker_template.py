@@ -89,16 +89,13 @@ class WorkerTemplate(ABC):
         self.writer.add_scalar('total_loss', total_loss.item())
         return total_loss
 
-    def _get_and_write_metrics(self, data, model_output):
+    def _get_and_write_metrics(self, data, model_output, write=True):
         """ Calculate evaluation metrics and write them to Tensorboard """
         acc_metrics = np.zeros(len(self.evaluation_metrics))
         for i, metric in enumerate(self.evaluation_metrics):
             acc_metrics[i] += metric(data, model_output)
-            try:
+            if write:
                 self.writer.add_scalar(metric.nickname, acc_metrics[i])
-            except AttributeError:
-                # For evaluator, self.writer does not exist
-                pass
         return acc_metrics
 
     def _data_to_device(self, data):
