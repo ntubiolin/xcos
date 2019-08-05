@@ -118,7 +118,7 @@ class TrainingPipeline(BasePipeline):
             self._save_checkpoint(epoch, save_best=best)
 
     def _after_epoch(self, epoch, worker_outputs):
-        self._print_and_record_log(epoch, worker_outputs)
+        self._print_and_write_log(epoch, worker_outputs)
         self._check_and_save_best(epoch, worker_outputs)
 
         if self.lr_scheduler is not None:

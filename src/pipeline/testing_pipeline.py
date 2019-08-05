@@ -60,4 +60,4 @@ class TestingPipeline(BasePipeline):
             worker_output = worker.run(0)
             self._save_inference_results(worker.data_loader.name, worker_output['saved'])
             self.worker_outputs[worker.data_loader.name] = worker_output
-        self._print_and_record_log(0, self.worker_outputs, record=False)
+        self._print_and_write_log(0, self.worker_outputs, write=False)

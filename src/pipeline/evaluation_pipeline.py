@@ -38,4 +38,4 @@ class EvaluationPipeline(BasePipeline):
         for worker in self.workers:
             worker_output = worker.run(0)
             self.worker_outputs[worker.result_data_loader.name] = worker_output
-        self._print_and_record_log(0, self.worker_outputs, record=False)
+        self._print_and_write_log(0, self.worker_outputs, write=False)

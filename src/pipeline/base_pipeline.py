@@ -203,9 +203,9 @@ class BasePipeline(ABC):
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
-    def _print_and_record_log(self, epoch, worker_outputs, record=True):
+    def _print_and_write_log(self, epoch, worker_outputs, write=True):
         # print common worker logged info
-        if record:
+        if write:
             self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
         # print the logged info for each loader (corresponding to each worker)
@@ -216,6 +216,6 @@ class BasePipeline(ABC):
             for key, value in log.items():
                 if global_config.verbosity >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
-                if 'elapsed_time' not in key and record:
+                if 'elapsed_time' not in key and write:
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)
