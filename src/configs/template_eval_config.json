@@ -17,8 +17,10 @@
         "0": {
             "type": "MnistResultDataLoader",
             "args": {
-                "result_filename": "saved/outputs/template_test_config/all_mnist_output.npz",
-                "key": "model_output",
+                "dataset_args": {
+                    "result_filename": "saved/outputs/template_test_config/all_mnist_output.npz",
+                    "key": "model_output"
+                },
                 "batch_size": 32,
                 "num_workers": 4,
                 "name": "mnist_result"

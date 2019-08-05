@@ -31,9 +31,7 @@ class MnistResultDataLoader(BaseDataLoader):
     Customized MNIST result data loader demo
     Returned data will be in dictionary
     """
-    def __init__(self, result_filename, key, batch_size, num_workers=1, training=True, name=None):
-        self.result_filename = result_filename
-        self.key = key
-        self.dataset = MnistResultDataset(result_filename, key)
+    def __init__(self, dataset_args, batch_size, num_workers=1, training=True, name=None):
+        self.dataset = MnistResultDataset(**dataset_args)
         self.name = self.__class__.__name__ if name is None else name
         super().__init__(self.dataset, batch_size, False, 0, num_workers)
