@@ -26,9 +26,9 @@ class Trainer(TrainingWorker):
         return True
 
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
-        current_sample_idx = batch_idx * self.gt_data_loader.batch_size
-        total_sample_num = self.gt_data_loader.n_samples
-        sample_percentage = 100.0 * batch_idx / len(self.gt_data_loader)
+        current_sample_idx = batch_idx * self.data_loader.batch_size
+        total_sample_num = self.data_loader.n_samples
+        sample_percentage = 100.0 * batch_idx / len(self.data_loader)
         batch_time = time.time() - batch_start_time
         logger.info(
             f'Epoch: {epoch} [{current_sample_idx}/{total_sample_num} '
