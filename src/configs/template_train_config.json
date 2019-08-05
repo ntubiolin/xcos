@@ -76,5 +76,5 @@
     },
     "log_step": 500,
     "verbosity": 2,
-    "name": "template_config"
+    "name": "template_train_config"
 }
