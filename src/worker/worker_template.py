@@ -97,6 +97,7 @@ class WorkerTemplate(ABC):
             try:
                 self.writer.add_scalar(metric.nickname, acc_metrics[i])
             except AttributeError:
+                # For evaluator, self.writer does not exist
                 pass
         return acc_metrics
 
