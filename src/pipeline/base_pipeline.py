@@ -29,14 +29,14 @@ class BasePipeline(ABC):
         self._save_config_file()
         self._print_config_messages()
 
-        self._setup_device()
+        self.device, self.device_ids = self._setup_device()
         self._setup_data_loader()
         self._setup_valid_data_loaders()
 
         self._setup_model_and_optimizer()
 
         self._setup_writer()
-        self._setup_evaluation_metrics()
+        self.evaluation_metrics = self._setup_evaluation_metrics()
 
         self._setup_config()
 
@@ -46,8 +46,15 @@ class BasePipeline(ABC):
         if args.pretrained is not None:
             self._load_pretrained(args.pretrained)
 
+        self.worker_outputs = {}
+        self._before_create_workers()
+        self.workers = self._create_workers()
+
     @abstractmethod
     def _setup_config(self):
+        pass
+
+    def _before_create_workers(self):
         pass
 
     @abstractmethod
@@ -93,7 +100,8 @@ class BasePipeline(ABC):
             device = torch.device('cuda:0' if n_gpu_use > 0 else 'cpu')
             list_ids = list(range(n_gpu_use))
             return device, list_ids
-        self.device, self.device_ids = prepare_device(global_config['n_gpu'])
+        device, device_ids = prepare_device(global_config['n_gpu'])
+        return device, device_ids
 
     def _setup_model_and_optimizer(self):
         """ Setup model and optimizer
@@ -111,15 +119,20 @@ class BasePipeline(ABC):
         if len(self.device_ids) > 1:
             self.model = torch.nn.DataParallel(model, device_ids=self.device_ids)
 
-    def _setup_data_loader(self):
-        self.data_loader = get_instance(module_data, 'data_loader', global_config)
+    def _setup_data_loader(self, key='data_loader'):
+        self.data_loader = get_instance(module_data, key, global_config)
+
+    def _setup_data_loaders(self, key):
+        data_loaders = [
+            getattr(module_data, entry['type'])(**entry['args'])
+            for entry in global_config[key].values()
+        ]
+        return data_loaders
 
     def _setup_valid_data_loaders(self):
         if 'valid_data_loaders' in global_config.keys():
-            self.valid_data_loaders = [
-                getattr(module_data, entry['type'])(**entry['args'])
-                for entry in global_config['valid_data_loaders']
-            ]
+            self.valid_data_loaders = self._setup_data_loaders('valid_data_loaders')
+
             if self.data_loader.validation_split > 0:
                 raise ValueError(f'Split ratio should not > 0 when other validation loaders are specified.')
         elif self.data_loader.validation_split > 0:
@@ -128,10 +141,11 @@ class BasePipeline(ABC):
             self.valid_data_loaders = []
 
     def _setup_evaluation_metrics(self):
-        self.evaluation_metrics = [
+        evaluation_metrics = [
             getattr(module_metric, entry['type'])(**entry['args']).to(self.device)
             for entry in global_config['metrics'].values()
         ]
+        return evaluation_metrics
 
     def _setup_optimizer(self):
         trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
@@ -149,7 +163,7 @@ class BasePipeline(ABC):
 
     def _load_pretrained(self, pretrained_path):
         """ Load pretrained model not strictly """
-        logger.info("Loading pretrained checkpoint: {} ...".format(pretrained_path))
+        logger.info(f"Loading pretrained checkpoint: {pretrained_path} ...")
         checkpoint = torch.load(pretrained_path)
         self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 
@@ -189,18 +203,19 @@ class BasePipeline(ABC):
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
-    def _print_and_record_log(self, epoch, worker_outputs):
+    def _print_and_write_log(self, epoch, worker_outputs, write=True):
         # print common worker logged info
-        self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
+        if write:
+            self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
         # print the logged info for each loader (corresponding to each worker)
         for loader_name, output in worker_outputs.items():
             log = output['log']
-            if global_config['trainer']['verbosity'] >= 1:
+            if global_config.verbosity >= 1:
                 logger.info(f'  {loader_name}:')
             for key, value in log.items():
-                if global_config['trainer']['verbosity'] >= 1:
+                if global_config.verbosity >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
-                if 'elapsed_time' not in key:
+                if 'elapsed_time' not in key and write:
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)

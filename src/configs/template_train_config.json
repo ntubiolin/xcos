@@ -19,10 +19,8 @@
         "epochs": 100,
         "save_dir": "saved/",
         "save_freq": 1,
-        "verbosity": 2,
         "monitor": "valid_seen_loss",
         "monitor_mode": "min",
-        "log_step": 500,
         "monitored_loader": "valid_mnist",
         "monitored_metric": "avg_loss"
     },
@@ -76,5 +74,7 @@
             }
         }
     },
-    "name": "template_config"
+    "log_step": 500,
+    "verbosity": 2,
+    "name": "template_train_config"
 }

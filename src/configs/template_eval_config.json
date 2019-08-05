@@ -1,0 +1,54 @@
+{
+    "n_gpu": 1,
+    "gt_data_loaders": {
+        "0": {
+            "type": "MnistDataLoader",
+            "args": {
+                "data_dir": "../datasets/mnist",
+                "batch_size": 32,
+                "validation_split": 0,
+                "shuffle": false,
+                "num_workers": 4,
+                "name": "mnist"
+            }
+        }
+    },
+    "result_data_loaders": {
+        "0": {
+            "type": "MnistResultDataLoader",
+            "args": {
+                "dataset_args": {
+                    "result_filename": "saved/outputs/template_test_config/all_mnist_output.npz",
+                    "key": "model_output"
+                },
+                "batch_size": 32,
+                "num_workers": 4,
+                "name": "mnist_result"
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc",
+                "k": 1,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        },
+        "1": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc",
+                "k": 5,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        }
+    },
+    "log_step": 500,
+    "verbosity": 2,
+    "saved_keys": ["data_input", "data_target", "model_output"],
+    "name": "template_eval_config"
+}

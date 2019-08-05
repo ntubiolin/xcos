@@ -4,6 +4,7 @@ import torch
 
 from .worker_template import WorkerTemplate
 from pipeline.base_pipeline import BasePipeline
+from utils.global_config import global_config
 
 
 class Tester(WorkerTemplate):
@@ -15,9 +16,6 @@ class Tester(WorkerTemplate):
     """
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
-        # Some shared attributes are tester exclusive and therefore is initialized here
-        for attr_name in ['saved_keys']:
-            setattr(self, attr_name, getattr(pipeline, attr_name))
 
     @property
     def enable_grad(self):
@@ -37,7 +35,7 @@ class Tester(WorkerTemplate):
         """ Initialize a dictioary structure to save inferenced results. """
         return {
             'epoch_start_time': time.time(),
-            'saved': {k: [] for k in self.saved_keys}
+            'saved': {k: [] for k in global_config.saved_keys}
         }
 
     def _update_output(self, epoch_output, products):
@@ -46,7 +44,7 @@ class Tester(WorkerTemplate):
 
         def fetch_from_dict(dictionary):
             for key in dictionary.keys():
-                if key not in self.saved_keys:
+                if key not in global_config.saved_keys:
                     continue
                 value = dictionary[key]
                 saved_value = value.cpu().numpy() if torch.is_tensor(value) else value
