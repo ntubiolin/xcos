@@ -26,7 +26,7 @@ python main.py --mode test -p <pretrained_weight>
 Example: evaluate results
 ```
 # You could evaluate results by other models (corresponding data loader needs to be defined)
-# See configs/template_eval_config.json for details
+# See the result_data_loaders in configs/template_eval_config.json for details
 python main.py --mode eval
 ```
 
