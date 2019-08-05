@@ -163,7 +163,7 @@ class BasePipeline(ABC):
 
     def _load_pretrained(self, pretrained_path):
         """ Load pretrained model not strictly """
-        logger.info("Loading pretrained checkpoint: {} ...".format(pretrained_path))
+        logger.info(f"Loading pretrained checkpoint: {pretrained_path} ...")
         checkpoint = torch.load(pretrained_path)
         self.model.load_state_dict(checkpoint['state_dict'], strict=False)
 

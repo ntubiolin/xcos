@@ -66,10 +66,14 @@ class Evaluator(WorkerTemplate):
         return {}
 
     def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
+        current_sample_idx = batch_idx * self.gt_data_loader.batch_size
+        total_sample_num = self.gt_data_loader.n_samples
+        sample_percentage = 100.0 * batch_idx / len(self.gt_data_loader)
+        batch_time = time.time() - batch_start_time
         logger.info(
-            f'Epoch: {epoch} [{batch_idx * self.gt_data_loader.batch_size}/{self.gt_data_loader.n_samples} '
-            f' ({100.0 * batch_idx / len(self.gt_data_loader):.0f}%)] '
-            f'BT: {time.time() - batch_start_time:.2f}s'
+            f'Epoch: {epoch} [{current_sample_idx}/{total_sample_num} '
+            f' ({sample_percentage:.0f}%)] '
+            f'BT: {batch_time:.2f}s'
         )
 
     def _iter_data(self, epoch):

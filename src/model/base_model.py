@@ -26,5 +26,5 @@ class BaseModel(nn.Module):
         """
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
-        logger.info('Trainable parameters: {}'.format(params))
+        logger.info(f'Trainable parameters: {params}')
         logger.info(self)

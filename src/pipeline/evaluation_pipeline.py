@@ -24,7 +24,7 @@ class EvaluationPipeline(BasePipeline):
 
     def _create_workers(self):
         workers = []
-        # Add a tester for each data loader
+        # Add a evaluator for each data loader
         for gt_data_loader, result_data_loader in zip(self.gt_data_loaders, self.result_data_loaders):
             evaluator = Evaluator(self, gt_data_loader, result_data_loader)
             workers += [evaluator]
@@ -32,7 +32,7 @@ class EvaluationPipeline(BasePipeline):
 
     def run(self):
         """
-        Full testing pipeline logic
+        Full evaluation pipeline logic
         """
         for worker in self.workers:
             worker_output = worker.run(0)

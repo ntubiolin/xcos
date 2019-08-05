@@ -10,7 +10,7 @@ from pipeline import TrainingPipeline, TestingPipeline, EvaluationPipeline
 def main(args):
     # load config file from checkpoint, this will include the training information (epoch, optimizer parameters)
     if args.resume is not None:
-        logger.info("Resuming checkpoint: {} ...".format(args.resume))
+        logger.info(f"Resuming checkpoint: {args.resume} ...")
         resumed_checkpoint = torch.load(args.resume)
     else:
         resumed_checkpoint = None

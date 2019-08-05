@@ -95,7 +95,7 @@ class TrainingPipeline(BasePipeline):
             self.saving_dir, f'ckpt-ep{epoch:04d}-{monitored_name}{self.monitor_best:.4f}{best_str}.pth'
         )
         torch.save(state, filename)
-        logger.info("Saving checkpoint: {} ...".format(filename))
+        logger.info(f"Saving checkpoint: {filename} ...")
 
     def _check_and_save_best(self, epoch, worker_outputs):
         """
