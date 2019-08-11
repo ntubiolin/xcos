@@ -97,9 +97,10 @@ class MnistGAN(BaseModel):
     def forward(self, data_dict):
         x = data_dict['data_input']
         batch_size = x.size(0)
-        z = torch.randn((batch_size, 100)).view(-1, 100, 1, 1).to(self.device)
+        z = torch.randn((batch_size, 100)).view(-1, 100, 1, 1).to(x.device)
         G_z = self.generator(z)
         D_G_z = self.discriminator(G_z)
+        breakpoint()
         D_x = self.discriminator(x)
 
         model_output = {

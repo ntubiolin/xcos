@@ -63,4 +63,5 @@ class Trainer(TrainingWorker):
     def _setup_model(self):
         np.random.seed()
         self.model.train()
-        logger.info(f'Current lr: {get_lr(self.optimizer)}')
+        for key, optimizer in self.optimizer.items():
+            logger.info(f'Current lr of optimizer {key}: {get_lr(optimizer)}')
