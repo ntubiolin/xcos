@@ -32,6 +32,7 @@ class CrossEntropyLoss(BaseLoss):
 # Formulation reference: https://arxiv.org/pdf/1802.05957.pdf (eq. 17)
 class HingeLossG(nn.Module):
     def __init__(self, nickname=None, weight=1):
+        super().__init__()
         self.weight = weight
         self.nickname = self.__class__.__name__ if nickname is None else nickname
 
@@ -43,6 +44,7 @@ class HingeLossG(nn.Module):
 # Formulation reference: https://arxiv.org/pdf/1802.05957.pdf (eq. 16)
 class HingeLossD(nn.Module):
     def __init__(self, nickname=None, weight=1):
+        super().__init__()
         self.weight = weight
         self.nickname = self.__class__.__name__ if nickname is None else nickname
         self.relu = nn.ReLU()

@@ -1,0 +1,89 @@
+{
+    "n_gpu": 1,
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 5,
+            "gamma": 0.9
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 1,
+        "monitor": "valid_seen_loss",
+        "monitor_mode": "min",
+        "monitored_loader": "valid_mnist",
+        "monitored_metric": "avg_loss"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "MnistGAN",
+        "args": {
+            "spectral_normalization": true
+        }
+    },
+    "optimize_strategy": "GAN",
+    "data_loader": {
+        "type": "MnistDataLoader",
+        "args": {
+            "data_dir": "../datasets/mnist",
+            "batch_size": 32,
+            "validation_split": 0.1,
+            "num_workers": 4,
+            "img_size": 64,
+            "name": "mnist"
+        }
+    },
+    "losses": {
+        "0": {
+            "type": "HingeLossG",
+            "args": {
+                "nickname": "hinge_loss_generator",
+                "weight": 1
+            }
+        },
+        "1": {
+            "type": "HingeLossD",
+            "args": {
+                "nickname": "hinge_loss_discriminator",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top1Acc",
+                "k": 1,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        },
+        "1": {
+            "type": "TopKAcc",
+            "args": {
+                "nickname": "Top5Acc",
+                "k": 5,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        }
+    },
+    "log_step": 500,
+    "verbosity": 2,
+    "name": "template_train_config"
+}
