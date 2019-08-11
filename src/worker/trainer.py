@@ -18,7 +18,7 @@ class Trainer(TrainingWorker):
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
         # Some shared attributes are trainer exclusive and therefore is initialized here
-        for attr_name in ['optimizer', 'loss_functions']:
+        for attr_name in ['optimizer', 'loss_functions', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
     @property
@@ -38,12 +38,24 @@ class Trainer(TrainingWorker):
         )
 
     def _run_and_optimize_model(self, data):
-        self.optimizer.zero_grad()
         model_output = self.model(data)
         losses, total_loss = self._get_and_write_losses(data, model_output)
 
-        total_loss.backward()
-        self.optimizer.step()
+        if self.optimize_strategy == 'normal':
+            self.optimizer['all'].zero_grad()
+            total_loss.backward()
+            self.optimizer['all'].step()
+
+        elif self.optimize_strategy == 'GAN':
+            self.optimizer['D'].zero_grad()
+            loss_D = sum([loss for key, loss in losses.items() if 'discriminator' in key])
+            loss_D.backward(retain_graph=False)
+            self.optimizer['D'].step()
+
+            self.optimizer['G'].zero_grad()
+            loss_G = sum([loss for key, loss in losses.items() if 'discriminator' not in key])
+            loss_G.backward(retain_graph=True)
+            self.optimizer['G'].step()
 
         metrics = self._get_and_write_metrics(data, model_output)
         return model_output, total_loss, metrics

@@ -33,6 +33,7 @@ class BasePipeline(ABC):
         self._setup_data_loader()
         self._setup_valid_data_loaders()
 
+        self.optimize_strategy = global_config.get('optimize_strategy', 'normal')
         self._setup_model()
         self._setup_optimizer()
         self._setup_data_parallel()
@@ -106,9 +107,7 @@ class BasePipeline(ABC):
         return device, device_ids
 
     def _setup_model(self):
-        """ Setup model and optimizer
-
-        Load pretrained / resume checkpoint / data parallel if specified """
+        """ Setup model and print summary """
         model = get_instance(
             module_arch, 'arch', global_config,
         )
@@ -149,8 +148,14 @@ class BasePipeline(ABC):
         return evaluation_metrics
 
     def _setup_optimizer(self):
-        trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
-        self.optimizer = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
+        self.optimizer = {}
+        if self.optimize_strategy == 'normal':
+            trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
+            self.optimizer['all'] = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
+        elif self.optimize_strategy == 'GAN':
+            for key, module in zip(['G', 'D'], [self.model.generator_module, self.model.discriminator_module]):
+                trainable_params = filter(lambda p: p.requires_grad, module.parameters())
+                self.optimizer[key] = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
 
     def _setup_writer(self):
         # setup visualization writer instance
@@ -201,7 +206,8 @@ class BasePipeline(ABC):
         elif self.optimizer is None:
             logger.warning("Not loading optimizer state because it's not initialized.")
         else:
-            self.optimizer.load_state_dict(resumed_checkpoint['optimizer'])
+            for key, optimizer_state in resumed_checkpoint['optimizer'].items():
+                self.optimizer[key].load_state_dict(optimizer_state)
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 

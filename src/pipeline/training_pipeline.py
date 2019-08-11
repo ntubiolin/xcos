@@ -34,7 +34,9 @@ class TrainingPipeline(BasePipeline):
         ]
 
     def _setup_lr_scheduler(self):
-        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', global_config, self.optimizer)
+        self.lr_scheduler = {}
+        for key, optimizer in self.optimizer.items():
+            self.lr_scheduler[key] = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', global_config, optimizer)
 
     def _create_workers(self):
         trainer = Trainer(
@@ -82,7 +84,7 @@ class TrainingPipeline(BasePipeline):
             'arch': arch,
             'epoch': epoch,
             'state_dict': model_state,
-            'optimizer': self.optimizer.state_dict(),
+            'optimizer': self.optimizer,
             'monitor_best': self.monitor_best,
             'config': global_config,
             'train_iteration_count': self.train_iteration_count,
@@ -122,7 +124,8 @@ class TrainingPipeline(BasePipeline):
         self._check_and_save_best(epoch, worker_outputs)
 
         if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+            for scheduler in self.lr_scheduler.values():
+                scheduler.step()
 
     def run(self):
         """

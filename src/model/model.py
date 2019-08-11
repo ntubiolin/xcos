@@ -104,3 +104,11 @@ class MnistGAN(BaseModel):
             "D_G_z": D_G_z,
             "D_x": D_x
         }
+
+    @property
+    def generator_module(self):
+        return self.generator
+
+    @property
+    def discriminator_module(self):
+        return self.discriminator
