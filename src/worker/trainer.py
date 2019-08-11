@@ -40,12 +40,13 @@ class Trainer(TrainingWorker):
     def _run_and_optimize_model(self, data):
         self.optimizer.zero_grad()
         model_output = self.model(data)
-        loss = self._get_and_write_loss(data, model_output)
-        loss.backward()
+        losses, total_loss = self._get_and_write_losses(data, model_output)
+
+        total_loss.backward()
         self.optimizer.step()
 
         metrics = self._get_and_write_metrics(data, model_output)
-        return model_output, loss, metrics
+        return model_output, total_loss, metrics
 
     def _setup_model(self):
         np.random.seed()
