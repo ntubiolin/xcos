@@ -12,7 +12,7 @@
         "type": "StepLR",
         "args": {
             "step_size": 5,
-            "gamma": 0.6
+            "gamma": 0.9
         }
     },
     "trainer": {

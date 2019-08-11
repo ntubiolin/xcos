@@ -165,7 +165,8 @@ class BasePipeline(ABC):
         """ Load pretrained model not strictly """
         logger.info(f"Loading pretrained checkpoint: {pretrained_path} ...")
         checkpoint = torch.load(pretrained_path)
-        self.model.load_state_dict(checkpoint['state_dict'], strict=False)
+        model = self.model.module if len(self.device_ids) > 1 else self.model
+        model.load_state_dict(checkpoint['state_dict'], strict=False)
 
     def _resume_checkpoint(self, resumed_checkpoint):
         """
