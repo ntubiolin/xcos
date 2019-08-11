@@ -1,9 +1,0 @@
-{
-    "name": "InceptionV1_I3D_rgb",
-    "arch": {
-        "type": "InceptionV1I3D",
-        "args": {
-            "load_backbone_path": "../pretrained_model/inceptionV1_i3d_rgb_kinetics_charades.pt"
-        }
-    }
-}
