@@ -62,7 +62,7 @@ class MnistGenerator(nn.Module):
 
 class MnistDiscriminator(nn.Module):
     # architecture reference: https://github.com/znxlwm/pytorch-MNIST-CelebA-GAN-DCGAN/blob/master/pytorch_MNIST_DCGAN.py  # NOQA
-    def __init__(self, d=128):
+    def __init__(self, d=128, spectral_normalization=True):
         super().__init__()
         self.conv1 = nn.Conv2d(1, d, 4, 2, 1)
         self.conv2 = nn.Conv2d(d, d * 2, 4, 2, 1)
@@ -72,6 +72,11 @@ class MnistDiscriminator(nn.Module):
         self.conv4 = nn.Conv2d(d * 4, d * 8, 4, 2, 1)
         self.conv4_bn = nn.BatchNorm2d(d * 8)
         self.conv5 = nn.Conv2d(d * 8, 1, 4, 1, 0)
+
+        if spectral_normalization:
+            for attr_name in [f'conv{i}' for i in range(1, 6)]:
+                new_attr = spectral_norm(getattr(self, attr_name))
+                setattr(self, attr_name, new_attr)
 
     # forward method
     def forward(self, input):
@@ -85,11 +90,9 @@ class MnistDiscriminator(nn.Module):
 
 class MnistGAN(BaseModel):
     def __init__(self, spectral_normalization=True):
-        super.__init__()
+        super().__init__()
         self.generator = MnistGenerator()
-        self.discriminator = MnistDiscriminator()
-        if spectral_normalization:
-            self.discriminator = spectral_norm(self.discriminator)
+        self.discriminator = MnistDiscriminator(spectral_normalization=spectral_normalization)
 
     def forward(self, data_dict):
         x = data_dict['data_input']
@@ -99,11 +102,12 @@ class MnistGAN(BaseModel):
         D_G_z = self.discriminator(G_z)
         D_x = self.discriminator(x)
 
-        return {
+        model_output = {
             "G_z": G_z,
             "D_G_z": D_G_z,
             "D_x": D_x
         }
+        return model_output
 
     @property
     def generator_module(self):
