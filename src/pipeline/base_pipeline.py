@@ -33,7 +33,9 @@ class BasePipeline(ABC):
         self._setup_data_loader()
         self._setup_valid_data_loaders()
 
-        self._setup_model_and_optimizer()
+        self._setup_model()
+        self._setup_optimizer()
+        self._setup_data_parallel()
 
         self._setup_writer()
         self.evaluation_metrics = self._setup_evaluation_metrics()
@@ -103,7 +105,7 @@ class BasePipeline(ABC):
         device, device_ids = prepare_device(global_config['n_gpu'])
         return device, device_ids
 
-    def _setup_model_and_optimizer(self):
+    def _setup_model(self):
         """ Setup model and optimizer
 
         Load pretrained / resume checkpoint / data parallel if specified """
@@ -114,10 +116,9 @@ class BasePipeline(ABC):
         model.summary()
         self.model = model.to(self.device)
 
-        self._setup_optimizer()
-
+    def _setup_data_parallel(self):
         if len(self.device_ids) > 1:
-            self.model = torch.nn.DataParallel(model, device_ids=self.device_ids)
+            self.model = torch.nn.DataParallel(self.model, device_ids=self.device_ids)
 
     def _setup_data_loader(self, key='data_loader'):
         self.data_loader = get_instance(module_data, key, global_config)
