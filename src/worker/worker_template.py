@@ -67,7 +67,7 @@ class WorkerTemplate(ABC):
     def _write_data_to_tensorboard(self, data, model_output):
         """ Write images to Tensorboard """
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
-        self.writer.add_image("G_x", make_grid(model_output["G_x"], nrow=4, normalize=True))
+        self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
