@@ -100,7 +100,6 @@ class MnistGAN(BaseModel):
         z = torch.randn((batch_size, 100)).view(-1, 100, 1, 1).to(x.device)
         G_z = self.generator(z)
         D_G_z = self.discriminator(G_z)
-        breakpoint()
         D_x = self.discriminator(x)
 
         model_output = {

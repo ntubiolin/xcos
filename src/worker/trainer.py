@@ -49,12 +49,12 @@ class Trainer(TrainingWorker):
         elif self.optimize_strategy == 'GAN':
             self.optimizer['D'].zero_grad()
             loss_D = sum([loss for key, loss in losses.items() if 'discriminator' in key])
-            loss_D.backward(retain_graph=False)
+            loss_D.backward(retain_graph=True)
             self.optimizer['D'].step()
 
             self.optimizer['G'].zero_grad()
             loss_G = sum([loss for key, loss in losses.items() if 'discriminator' not in key])
-            loss_G.backward(retain_graph=True)
+            loss_G.backward(retain_graph=False)
             self.optimizer['G'].step()
 
         metrics = self._get_and_write_metrics(data, model_output)
