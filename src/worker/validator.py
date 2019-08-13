@@ -12,7 +12,7 @@ class Validator(TrainingWorker):
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
         # Some shared attributes are validator exclusive and therefore is initialized here
-        for attr_name in ['optimizers', 'loss_functions', 'optimize_strategy']:
+        for attr_name in ['loss_functions', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
         if self.optimize_strategy == 'GAN':
             attr_name = 'gan_loss_functions'
@@ -30,7 +30,6 @@ class Validator(TrainingWorker):
         elif self.optimize_strategy == 'GAN':
             total_loss = 0
             for network_name in self.model.network_names:
-                self.optimizers[network_name].zero_grad()
                 model_output = self.model(data, network_name)
                 loss = self._get_and_write_gan_loss(data, model_output, network_name)
                 total_loss += loss

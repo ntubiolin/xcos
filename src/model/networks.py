@@ -39,7 +39,7 @@ class MnistGenerator(nn.Module):
 
 class MnistDiscriminator(nn.Module):
     # architecture reference: https://github.com/znxlwm/pytorch-MNIST-CelebA-GAN-DCGAN/blob/master/pytorch_MNIST_DCGAN.py  # NOQA
-    def __init__(self, d=128, spectral_normalization=True):
+    def __init__(self, d=32, spectral_normalization=True):
         super().__init__()
         self.conv1 = nn.Conv2d(1, d, 4, 2, 1)
         self.conv2 = nn.Conv2d(d, d * 2, 4, 2, 1)
