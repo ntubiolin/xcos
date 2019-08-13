@@ -149,7 +149,7 @@ class BasePipeline(ABC):
 
     def _setup_optimizers(self):
         self.optimizers = {}
-        for network_name in self.model._modules.keys():
+        for network_name in self.model.network_names:
             trainable_params = filter(lambda p: p.requires_grad, getattr(self.model, network_name).parameters())
             optimizer_name = f'optimizer_{network_name}'
             if optimizer_name not in global_config:

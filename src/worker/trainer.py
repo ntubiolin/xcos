@@ -51,7 +51,7 @@ class Trainer(TrainingWorker):
 
         elif self.optimize_strategy == 'GAN':
             total_loss = 0
-            for network_name in self.model._modules.keys():
+            for network_name in self.model.network_names:
                 self.optimizers[network_name].zero_grad()
                 model_output = self.model(data, network_name)
                 loss = self._get_and_write_gan_loss(data, model_output, network_name)

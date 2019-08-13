@@ -61,9 +61,6 @@ class MnistGAN(BaseModel):
         return model_output
 
     @property
-    def generator_module(self):
-        return self.generator
-
-    @property
-    def discriminator_module(self):
+    def network_names(self):
+        return ['generator', 'discriminator']
         return self.discriminator
