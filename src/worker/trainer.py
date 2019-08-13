@@ -6,7 +6,6 @@ from .training_worker import TrainingWorker
 from utils.logging_config import logger
 from utils.util import get_lr
 from pipeline.base_pipeline import BasePipeline
-from utils.global_config import global_config
 
 
 class Trainer(TrainingWorker):
@@ -19,9 +18,8 @@ class Trainer(TrainingWorker):
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
         # Some shared attributes are trainer exclusive and therefore is initialized here
-        for attr_name in ['optimizer', 'loss_functions', 'optimize_strategy']:
+        for attr_name in ['optimizers', 'loss_functions', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
-        self.last_loss_D = 2.0
 
     @property
     def enable_grad(self):
@@ -41,34 +39,21 @@ class Trainer(TrainingWorker):
 
     def _run_and_optimize_model(self, data):
         if self.optimize_strategy == 'normal':
-            self.optimizer['all'].zero_grad()
+            self.optimizers['default'].zero_grad()
             model_output = self.model(data)
             losses, total_loss = self._get_and_write_losses(data, model_output)
 
             total_loss.backward()
-            self.optimizer['all'].step()
+            self.optimizers['default'].step()
 
         elif self.optimize_strategy == 'GAN':
-            if (self.last_loss_D > global_config['last_d_lower_bound']
-                    and data['batch_idx'] % global_config['train_d_every'] == 0):
-                self.optimizer['D'].zero_grad()
-                model_output = self.model(data)
-                losses, total_loss = self._get_and_write_losses(data, model_output)
+            for network_name in self.model._modules.keys():
+                self.optimizers[network_name].zero_grad()
+                model_output = getattr(self.model, network_name)(data)
+                losses, total_loss = self._get_and_write_losses(data, model_output, network_name)
+                total_loss.backward()
 
-                loss_D = sum([loss for key, loss in losses.items() if 'discriminator' in key])
-                loss_D.backward()
-                self.optimizer['D'].step()
-
-            self.optimizer['G'].zero_grad()
-            model_output = self.model(data)
-            losses, total_loss = self._get_and_write_losses(data, model_output)
-
-            loss_G = sum([loss for key, loss in losses.items() if 'discriminator' not in key])
-            loss_G.backward()
-            self.optimizer['G'].step()
-
-            loss_D = sum([loss for key, loss in losses.items() if 'discriminator' in key])
-            self.last_loss_D = loss_D.item()
+                self.optimizers[network_name].step()
 
         metrics = self._get_and_write_metrics(data, model_output)
         return model_output, total_loss, metrics
@@ -76,5 +61,5 @@ class Trainer(TrainingWorker):
     def _setup_model(self):
         np.random.seed()
         self.model.train()
-        for key, optimizer in self.optimizer.items():
+        for key, optimizer in self.optimizers.items():
             logger.info(f'Current lr of optimizer {key}: {get_lr(optimizer)}')

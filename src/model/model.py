@@ -110,19 +110,20 @@ class MnistGAN(BaseModel):
         self.generator.weight_init(mean=0.0, std=0.02)
         self.discriminator.weight_init(mean=0.0, std=0.02)
 
-    def forward(self, data_dict):
+    def forward(self, data_dict, model='G'):
         x = data_dict['data_input']
         batch_size = x.size(0)
         z = torch.randn((batch_size, 100)).view(-1, 100, 1, 1).to(x.device)
         G_z = self.generator(z)
-        D_G_z = self.discriminator(G_z).squeeze()
-        D_x = self.discriminator(x).squeeze()
-
         model_output = {
-            "G_z": G_z,
-            "D_G_z": D_G_z,
-            "D_x": D_x
+            "G_z": G_z
         }
+        if model == 'D':
+            D_G_z = self.discriminator(G_z).squeeze()
+            D_x = self.discriminator(x).squeeze()
+
+            model["D_G_z"] = D_G_z
+            model["D_x"] = D_x
         return model_output
 
     @property
