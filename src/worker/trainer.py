@@ -5,6 +5,7 @@ import numpy as np
 from .training_worker import TrainingWorker
 from utils.logging_config import logger
 from utils.util import get_lr
+from utils.global_config import global_config
 from pipeline.base_pipeline import BasePipeline
 
 
@@ -50,8 +51,9 @@ class Trainer(TrainingWorker):
 
         elif self.optimize_strategy == 'GAN':
             total_loss = 0
-            for network_name in self.model.network_names:
-                self.optimizers[network_name].zero_grad()
+            for optimizer_name in self.optimizers.keys():
+                self.optimizers[optimizer_name].zero_grad()
+                network_name = global_config['optimizers'][optimizer_name]['target_network']
                 model_output = self.model(data, network_name)
                 loss = self._get_and_write_gan_loss(data, model_output, network_name)
                 loss.backward()

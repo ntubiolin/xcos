@@ -149,9 +149,9 @@ class BasePipeline(ABC):
     def _setup_optimizers(self):
         self.optimizers = {}
         for optimizer_name in global_config['optimizers'].keys():
-            network = self.model if optimizer_name == 'default' else getattr(self.model, optimizer_name)
-            trainable_params = filter(lambda p: p.requires_grad, network.parameters())
             entry = global_config['optimizers'][optimizer_name]
+            network = getattr(self.model, entry['target_network']) if 'target_network' in entry.keys() else self.model
+            trainable_params = filter(lambda p: p.requires_grad, network.parameters())
             self.optimizers[optimizer_name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
 
     def _setup_writer(self):
@@ -183,6 +183,8 @@ class BasePipeline(ABC):
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
     def _resume_training_state(self, resumed_checkpoint):
+        """ States only for training pipeline like iteration counts, optimizers,
+        and lr_schedulers are resumed in this function """
         self.start_epoch = resumed_checkpoint['epoch'] + 1
         self.monitor_best = resumed_checkpoint['monitor_best']
 
@@ -204,6 +206,7 @@ class BasePipeline(ABC):
                 self.optimizers[key].load_state_dict(optimizers_ckpt[key])
 
     def _resume_model_params(self, resumed_checkpoint):
+        """ Load model parameters from resumed checkpoint """
         # load architecture params from resumed_checkpoint.
         if resumed_checkpoint['config']['arch'] != global_config['arch']:
             logger.warning(

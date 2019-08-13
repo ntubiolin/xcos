@@ -59,8 +59,3 @@ class MnistGAN(BaseModel):
             D_x = self.discriminator(x).squeeze()
             model_output["D_x"] = D_x
         return model_output
-
-    @property
-    def network_names(self):
-        return ['generator', 'discriminator']
-        return self.discriminator
