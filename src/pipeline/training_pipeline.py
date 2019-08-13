@@ -7,7 +7,6 @@ from .base_pipeline import BasePipeline
 from worker.trainer import Trainer
 from worker.validator import Validator
 import model.loss as module_loss
-from utils.util import get_instance
 from utils.global_config import global_config
 from utils.logging_config import logger
 from utils.util import ensure_dir
@@ -17,10 +16,11 @@ class TrainingPipeline(BasePipeline):
     def __init__(self, args):
         super().__init__(args)
 
-    def _before_create_workers(self):
+    def _setup_pipeline_specific_attributes(self):
         self._setup_loss_functions()
         if self.optimize_strategy == 'GAN':
             self._setup_gan_loss_functions()
+        self._setup_optimizers()
         self._setup_lr_schedulers()
 
     def _create_saving_dir(self, args):
@@ -43,16 +43,10 @@ class TrainingPipeline(BasePipeline):
 
     def _setup_lr_schedulers(self):
         self.lr_schedulers = {}
-        for network_name, optimizer in self.optimizers.items():
-            lr_scheduler_name = f"lr_scheduler_{network_name}"
-            if lr_scheduler_name not in global_config:
-                logger.warning(
-                    f"{lr_scheduler_name} not in global_config; using default lr_scheduler for {network_name}"
-                )
-                lr_scheduler_name = 'lr_scheduler'
-            self.lr_schedulers[network_name] = get_instance(
-                torch.optim.lr_scheduler, lr_scheduler_name, global_config, optimizer
-            )
+        for optimizer_name, optimizer in self.optimizers.items():
+            entry = global_config['lr_schedulers'][optimizer_name]
+            self.lr_schedulers[optimizer_name] = getattr(torch.optim.lr_scheduler, entry['type'])(
+                optimizer, **entry['args'])
 
     def _create_workers(self):
         trainer = Trainer(
@@ -100,7 +94,7 @@ class TrainingPipeline(BasePipeline):
             'arch': arch,
             'epoch': epoch,
             'state_dict': model_state,
-            'optimizers': self.optimizers,
+            'optimizers': {key: optimizer.state_dict() for key, optimizer in self.optimizers.items()},
             'monitor_best': self.monitor_best,
             'config': global_config,
             'train_iteration_count': self.train_iteration_count,

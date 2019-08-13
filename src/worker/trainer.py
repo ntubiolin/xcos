@@ -18,10 +18,9 @@ class Trainer(TrainingWorker):
     def __init__(self, pipeline: BasePipeline, *args):
         super().__init__(pipeline, *args)
         # Some shared attributes are trainer exclusive and therefore is initialized here
-        for attr_name in ['optimizers', 'loss_functions', 'optimize_strategy']:
-            setattr(self, attr_name, getattr(pipeline, attr_name))
-        if self.optimize_strategy == 'GAN':
-            attr_name = 'gan_loss_functions'
+        shared_attrs = ['optimizers', 'loss_functions']
+        shared_attrs += ['gan_loss_functions'] if self.optimize_strategy == 'GAN' else []
+        for attr_name in shared_attrs:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
     @property
