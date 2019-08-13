@@ -148,11 +148,10 @@ class BasePipeline(ABC):
 
     def _setup_optimizers(self):
         self.optimizers = {}
-        for optimizer_name in global_config['optimizers'].keys():
-            entry = global_config['optimizers'][optimizer_name]
+        for name, entry in global_config['optimizers'].items():
             network = getattr(self.model, entry['target_network']) if 'target_network' in entry.keys() else self.model
             trainable_params = filter(lambda p: p.requires_grad, network.parameters())
-            self.optimizers[optimizer_name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
+            self.optimizers[name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
 
     def _setup_writer(self):
         # setup visualization writer instance
