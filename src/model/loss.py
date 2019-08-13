@@ -33,18 +33,18 @@ class CrossEntropyLoss(BaseLoss):
 class GANLoss(BaseLoss):
     def __init__(
         self, network,
-        type='lsgan',
+        type_='lsgan',
         target_real_label=1.0, target_fake_label=0.0,
         *args, **kargs
     ):
         super().__init__(output_key=None, target_key=None, *args, **kargs)
-        if type == 'nsgan':
+        if type_ == 'nsgan':
             self.loss_fn = nn.BCELoss()
 
-        elif type == 'lsgan':
+        elif type_ == 'lsgan':
             self.loss_fn = nn.MSELoss()
 
-        elif type == 'l1':
+        elif type_ == 'l1':
             self.loss_fn = nn.L1Loss()
 
         else:

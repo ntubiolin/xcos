@@ -37,10 +37,10 @@ class MnistModel(BaseModel):
 
 
 class MnistGAN(BaseModel):
-    def __init__(self, spectral_normalization=True):
+    def __init__(self, spectral_normalization=True, d=128):
         super().__init__()
-        self.generator = MnistGenerator()
-        self.discriminator = MnistDiscriminator(spectral_normalization=spectral_normalization)
+        self.generator = MnistGenerator(d=d)
+        self.discriminator = MnistDiscriminator(spectral_normalization=spectral_normalization, d=d)
 
         self.generator.weight_init(mean=0.0, std=0.02)
         self.discriminator.weight_init(mean=0.0, std=0.02)
