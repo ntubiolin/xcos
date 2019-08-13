@@ -40,14 +40,6 @@ class Trainer(TrainingWorker):
             f'BT: {batch_time:.2f}s'
         )
 
-    def _get_and_write_gan_loss(self, data, model_output, network_name):
-        """ Calculate GAN loss and write them to Tensorboard
-        """
-        loss_function = self.gan_loss_functions[network_name]
-        loss = loss_function(data, model_output) * loss_function.weight
-        self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
-        return loss
-
     def _run_and_optimize_model(self, data):
         if self.optimize_strategy == 'normal':
             self.optimizers['default'].zero_grad()
