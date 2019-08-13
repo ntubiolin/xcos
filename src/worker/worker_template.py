@@ -117,6 +117,7 @@ class WorkerTemplate(ABC):
             batch_start_time = time.time()
             self._setup_writer()
             data = self._data_to_device(data)
+            data['batch_idx'] = batch_idx
             model_output, loss, metrics = self._run_and_optimize_model(data)
 
             products = {

@@ -1,6 +1,6 @@
 {
     "n_gpu": 1,
-    "optimizer": {
+    "optimizer_G": {
         "type": "Adam",
         "args": {
             "lr": 0.0001,
@@ -8,18 +8,27 @@
             "amsgrad": true
         }
     },
+    "optimizer_D": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.0001,
+            "weight_decay": 0,
+            "amsgrad": true
+        }
+    },
+    "train_d_every": 6,
+    "last_d_lower_bound": 1.4,
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
-            "step_size": 5,
-            "gamma": 0.9
+            "step_size": 9999,
+            "gamma": 1.0
         }
     },
     "trainer": {
-        "epochs": 100,
+        "epochs": 300,
         "save_dir": "saved/",
-        "save_freq": 1,
-        "monitor": "valid_seen_loss",
+        "save_freq": 10,
         "monitor_mode": "min",
         "monitored_loader": "valid_mnist",
         "monitored_metric": "avg_loss"
@@ -65,7 +74,7 @@
     },
     "metrics": {
     },
-    "log_step": 500,
+    "log_step": 200,
     "verbosity": 2,
     "name": "GAN_template_train_config"
 }

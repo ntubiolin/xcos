@@ -155,7 +155,7 @@ class BasePipeline(ABC):
         elif self.optimize_strategy == 'GAN':
             for key, module in zip(['G', 'D'], [self.model.generator_module, self.model.discriminator_module]):
                 trainable_params = filter(lambda p: p.requires_grad, module.parameters())
-                self.optimizer[key] = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
+                self.optimizer[key] = get_instance(torch.optim, f'optimizer_{key}', global_config, trainable_params)
 
     def _setup_writer(self):
         # setup visualization writer instance
