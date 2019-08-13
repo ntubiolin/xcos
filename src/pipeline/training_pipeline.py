@@ -19,7 +19,9 @@ class TrainingPipeline(BasePipeline):
 
     def _before_create_workers(self):
         self._setup_loss_functions()
-        self._setup_lr_scheduler()
+        if self.optimize_strategy == 'GAN':
+            self._setup_gan_loss_functions()
+        self._setup_lr_schedulers()
 
     def _create_saving_dir(self, args):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
@@ -33,10 +35,24 @@ class TrainingPipeline(BasePipeline):
             for key, entry in global_config['losses'].items()
         ]
 
-    def _setup_lr_scheduler(self):
-        self.lr_scheduler = {}
-        for key, optimizer in self.optimizer.items():
-            self.lr_scheduler[key] = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', global_config, optimizer)
+    def _setup_gan_loss_functions(self):
+        self.gan_loss_functions = {
+            key: getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
+            for key, entry in global_config['gan_losses'].items()
+        }
+
+    def _setup_lr_schedulers(self):
+        self.lr_schedulers = {}
+        for network_name, optimizer in self.optimizers.items():
+            lr_scheduler_name = f"lr_scheduler_{network_name}"
+            if lr_scheduler_name not in global_config:
+                logger.warning(
+                    f"{lr_scheduler_name} not in global_config; using default lr_scheduler for {network_name}"
+                )
+                lr_scheduler_name = 'lr_scheduler'
+            self.lr_schedulers[network_name] = get_instance(
+                torch.optim.lr_scheduler, lr_scheduler_name, global_config, optimizer
+            )
 
     def _create_workers(self):
         trainer = Trainer(
@@ -84,7 +100,7 @@ class TrainingPipeline(BasePipeline):
             'arch': arch,
             'epoch': epoch,
             'state_dict': model_state,
-            'optimizer': self.optimizer,
+            'optimizers': self.optimizers,
             'monitor_best': self.monitor_best,
             'config': global_config,
             'train_iteration_count': self.train_iteration_count,
@@ -123,8 +139,8 @@ class TrainingPipeline(BasePipeline):
         self._print_and_write_log(epoch, worker_outputs)
         self._check_and_save_best(epoch, worker_outputs)
 
-        if self.lr_scheduler is not None:
-            for scheduler in self.lr_scheduler.values():
+        if self.lr_schedulers is not None:
+            for scheduler in self.lr_schedulers.values():
                 scheduler.step()
 
     def run(self):

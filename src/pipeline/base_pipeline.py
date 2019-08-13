@@ -35,7 +35,7 @@ class BasePipeline(ABC):
 
         self.optimize_strategy = global_config.get('optimize_strategy', 'normal')
         self._setup_model()
-        self._setup_optimizer()
+        self._setup_optimizers()
         self._setup_data_parallel()
 
         self._setup_writer()
@@ -147,15 +147,15 @@ class BasePipeline(ABC):
         ]
         return evaluation_metrics
 
-    def _setup_optimizer(self):
-        self.optimizer = {}
-        if self.optimize_strategy == 'normal':
-            trainable_params = filter(lambda p: p.requires_grad, self.model.parameters())
-            self.optimizer['all'] = get_instance(torch.optim, 'optimizer', global_config, trainable_params)
-        elif self.optimize_strategy == 'GAN':
-            for key, module in zip(['G', 'D'], [self.model.generator_module, self.model.discriminator_module]):
-                trainable_params = filter(lambda p: p.requires_grad, module.parameters())
-                self.optimizer[key] = get_instance(torch.optim, f'optimizer_{key}', global_config, trainable_params)
+    def _setup_optimizers(self):
+        self.optimizers = {}
+        for network_name in self.model.network_names:
+            trainable_params = filter(lambda p: p.requires_grad, getattr(self.model, network_name).parameters())
+            optimizer_name = f'optimizer_{network_name}'
+            if optimizer_name not in global_config:
+                logger.warning(f"{optimizer_name} not in global_config; using default optimizer for {network_name}")
+                optimizer_name = 'optimizer'
+            self.optimizers[network_name] = get_instance(torch.optim, optimizer_name, global_config, trainable_params)
 
     def _setup_writer(self):
         # setup visualization writer instance
@@ -203,11 +203,11 @@ class BasePipeline(ABC):
         if resumed_checkpoint['config']['optimizer']['type'] != global_config['optimizer']['type']:
             logger.warning('Warning: Optimizer type given in config file is different from that of resumed_checkpoint. '
                            'Optimizer parameters not being resumed.')
-        elif self.optimizer is None:
+        elif self.optimizers is None:
             logger.warning("Not loading optimizer state because it's not initialized.")
         else:
-            for key, optimizer_state in resumed_checkpoint['optimizer'].items():
-                self.optimizer[key].load_state_dict(optimizer_state)
+            for key, optimizer_state in resumed_checkpoint['optimizers'].items():
+                self.optimizers[key].load_state_dict(optimizer_state)
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 

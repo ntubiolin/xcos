@@ -1,6 +1,6 @@
 {
     "n_gpu": 1,
-    "optimizer_G": {
+    "optimizer_generator": {
         "type": "Adam",
         "args": {
             "lr": 0.0001,
@@ -8,7 +8,7 @@
             "amsgrad": true
         }
     },
-    "optimizer_D": {
+    "optimizer_discriminator": {
         "type": "Adam",
         "args": {
             "lr": 0.0001,
@@ -16,8 +16,6 @@
             "amsgrad": true
         }
     },
-    "train_d_every": 6,
-    "last_d_lower_bound": 1.4,
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
@@ -57,18 +55,22 @@
         }
     },
     "losses": {
-        "0": {
-            "type": "HingeLossG",
+    },
+    "gan_losses": {
+        "generator": {
+            "type": "GANLoss",
             "args": {
-                "nickname": "hinge_loss_generator",
-                "weight": 1
+                "nickname": "lsgan_loss_generator",
+                "weight": 1,
+                "network": "generator"
             }
         },
-        "1": {
-            "type": "HingeLossD",
+        "discriminator": {
+            "type": "GANLoss",
             "args": {
-                "nickname": "hinge_loss_discriminator",
-                "weight": 1
+                "nickname": "lsgan_loss_discriminator",
+                "weight": 1,
+                "network": "discriminator"
             }
         }
     },
