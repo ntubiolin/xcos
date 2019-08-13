@@ -60,7 +60,7 @@
         "generator": {
             "type": "GANLoss",
             "args": {
-                "nickname": "hinge_loss_generator",
+                "nickname": "lsgan_loss_generator",
                 "weight": 1,
                 "network": "generator"
             }
@@ -68,7 +68,7 @@
         "discriminator": {
             "type": "GANLoss",
             "args": {
-                "nickname": "hinge_loss_discriminator",
+                "nickname": "lsgan_loss_discriminator",
                 "weight": 1,
                 "network": "discriminator"
             }
