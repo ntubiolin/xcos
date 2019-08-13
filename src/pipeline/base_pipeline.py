@@ -207,7 +207,7 @@ class BasePipeline(ABC):
             logger.warning("Not loading optimizer state because it's not initialized.")
         else:
             for key, optimizer_state in resumed_checkpoint['optimizers'].items():
-                self._setup_optimizers[key].load_state_dict(optimizer_state)
+                self.optimizers[key].load_state_dict(optimizer_state)
 
         logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
