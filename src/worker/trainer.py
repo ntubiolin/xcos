@@ -20,6 +20,9 @@ class Trainer(TrainingWorker):
         # Some shared attributes are trainer exclusive and therefore is initialized here
         for attr_name in ['optimizers', 'loss_functions', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
+        if self.optimize_strategy == 'GAN':
+            attr_name = 'gan_loss_functions'
+            setattr(self, attr_name, getattr(pipeline, attr_name))
 
     @property
     def enable_grad(self):
@@ -37,6 +40,14 @@ class Trainer(TrainingWorker):
             f'BT: {batch_time:.2f}s'
         )
 
+    def _get_and_write_gan_loss(self, data, model_output, network_name):
+        """ Calculate GAN loss and write them to Tensorboard
+        """
+        loss_function = self.gan_loss_functions[network_name]
+        loss = loss_function(data, model_output) * loss_function.weight
+        self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
+        return loss
+
     def _run_and_optimize_model(self, data):
         if self.optimize_strategy == 'normal':
             self.optimizers['default'].zero_grad()
@@ -47,11 +58,13 @@ class Trainer(TrainingWorker):
             self.optimizers['default'].step()
 
         elif self.optimize_strategy == 'GAN':
+            total_loss = 0
             for network_name in self.model._modules.keys():
                 self.optimizers[network_name].zero_grad()
-                model_output = getattr(self.model, network_name)(data)
-                losses, total_loss = self._get_and_write_losses(data, model_output, network_name)
-                total_loss.backward()
+                model_output = self.model(data, network_name)
+                loss = self._get_and_write_gan_loss(data, model_output, network_name)
+                loss.backward()
+                total_loss += loss
 
                 self.optimizers[network_name].step()
 

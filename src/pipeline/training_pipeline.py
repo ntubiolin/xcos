@@ -20,7 +20,7 @@ class TrainingPipeline(BasePipeline):
     def _before_create_workers(self):
         self._setup_loss_functions()
         if self.optimize_strategy == 'GAN':
-            self._setup_gan_loss()
+            self._setup_gan_loss_functions()
         self._setup_lr_schedulers()
 
     def _create_saving_dir(self, args):
@@ -35,9 +35,11 @@ class TrainingPipeline(BasePipeline):
             for key, entry in global_config['losses'].items()
         ]
 
-    def _setup_gan_loss(self):
-        entry = global_config['gan_loss']
-        self.gan_loss = getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
+    def _setup_gan_loss_functions(self):
+        self.gan_loss_functions = {
+            key: getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
+            for key, entry in global_config['gan_losses'].items()
+        }
 
     def _setup_lr_schedulers(self):
         self.lr_schedulers = {}
