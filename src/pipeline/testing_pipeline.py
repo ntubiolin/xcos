@@ -22,7 +22,8 @@ class TestingPipeline(BasePipeline):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.outputs_subdir,
                                   global_config['name'])
         if os.path.exists(saving_dir):
-            logger.warning('The saving directory already exists. If continued, some files might be overwriten.')
+            logger.warning(f'The saving directory "{saving_dir}" already exists. '
+                           f'If continued, some files might be overwriten.')
             response = input('Proceed? [y/N]')
             if response != 'y':
                 logger.info('Exit.')
