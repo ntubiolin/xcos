@@ -34,8 +34,7 @@ class Validator(TrainingWorker):
                 loss = self._get_and_write_gan_loss(data, model_output, network_name)
                 total_loss += loss
 
-        metrics = self._get_and_write_metrics(data, model_output)
-        return model_output, total_loss, metrics
+        return model_output, total_loss
 
     def _setup_model(self):
         self.model.eval()
