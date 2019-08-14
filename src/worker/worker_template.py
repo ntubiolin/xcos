@@ -20,7 +20,7 @@ class WorkerTemplate(ABC):
         self, pipeline: BasePipeline, data_loader: BaseDataLoader, step: int
     ):
         # Attributes listed below are shared from pipeline among all different workers.
-        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer']:
+        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
         self.data_loader = data_loader
@@ -67,7 +67,8 @@ class WorkerTemplate(ABC):
     def _write_data_to_tensorboard(self, data, model_output):
         """ Write images to Tensorboard """
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
-        self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
+        if self.optimize_strategy == 'GAN':
+            self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """

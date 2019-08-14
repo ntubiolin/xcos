@@ -1,30 +1,43 @@
 {
     "n_gpu": 1,
-    "optimizer_generator": {
-        "type": "Adam",
-        "args": {
-            "lr": 0.0002,
-            "betas": [0.5, 0.999]
+    "optimizers": {
+        "generator": {
+            "target_network": "generator",
+            "type": "Adam",
+            "args": {
+                "lr": 0.0002,
+                "betas": [0.5, 0.999]
+            }
+        },
+        "discriminator": {
+            "target_network": "discriminator",
+            "type": "Adam",
+            "args": {
+                "lr": 0.0002,
+                "betas": [0.5, 0.999]
+            }
         }
     },
-    "optimizer_discriminator": {
-        "type": "Adam",
-        "args": {
-            "lr": 0.0002,
-            "betas": [0.5, 0.999]
-        }
-    },
-    "lr_scheduler": {
-        "type": "StepLR",
-        "args": {
-            "step_size": 9999,
-            "gamma": 1.0
+    "lr_schedulers": {
+        "generator": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 9999,
+                "gamma": 1.0
+            }
+        },
+        "discriminator": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 9999,
+                "gamma": 1.0
+            }
         }
     },
     "trainer": {
-        "epochs": 300,
+        "epochs": 50,
         "save_dir": "saved/",
-        "save_freq": 10,
+        "save_freq": 1,
         "monitor_mode": "min",
         "monitored_loader": "valid_mnist",
         "monitored_metric": "avg_loss"

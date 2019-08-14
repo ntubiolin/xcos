@@ -35,13 +35,13 @@ class BasePipeline(ABC):
 
         self.optimize_strategy = global_config.get('optimize_strategy', 'normal')
         self._setup_model()
-        self._setup_optimizers()
         self._setup_data_parallel()
 
         self._setup_writer()
         self.evaluation_metrics = self._setup_evaluation_metrics()
 
         self._setup_config()
+        self._setup_pipeline_specific_attributes()
 
         if args.resumed_checkpoint is not None:
             self._resume_checkpoint(args.resumed_checkpoint)
@@ -50,14 +50,13 @@ class BasePipeline(ABC):
             self._load_pretrained(args.pretrained)
 
         self.worker_outputs = {}
-        self._before_create_workers()
         self.workers = self._create_workers()
 
     @abstractmethod
     def _setup_config(self):
         pass
 
-    def _before_create_workers(self):
+    def _setup_pipeline_specific_attributes(self):
         pass
 
     @abstractmethod
@@ -148,14 +147,20 @@ class BasePipeline(ABC):
         return evaluation_metrics
 
     def _setup_optimizers(self):
+        """ Setup optimizers according to configuration.
+            Each optimizer has its corresponding network(s) to train, specified by 'target_network' in configuraion.
+            If no `target_network` is specified, all parameters of self.model will be included.
+        """
         self.optimizers = {}
-        for network_name in self.model.network_names:
-            trainable_params = filter(lambda p: p.requires_grad, getattr(self.model, network_name).parameters())
-            optimizer_name = f'optimizer_{network_name}'
-            if optimizer_name not in global_config:
-                logger.warning(f"{optimizer_name} not in global_config; using default optimizer for {network_name}")
-                optimizer_name = 'optimizer'
-            self.optimizers[network_name] = get_instance(torch.optim, optimizer_name, global_config, trainable_params)
+        for name, entry in global_config['optimizers'].items():
+            if 'target_network' in entry.keys():
+                network = getattr(self.model, entry['target_network'])
+            else:
+                network = self.model
+                logger.warning(f'Target network of optimizer "{name}" not specified. '
+                               f'All params of self.model will be included.')
+            trainable_params = filter(lambda p: p.requires_grad, network.parameters())
+            self.optimizers[name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
 
     def _setup_writer(self):
         # setup visualization writer instance
@@ -177,9 +182,17 @@ class BasePipeline(ABC):
     def _resume_checkpoint(self, resumed_checkpoint):
         """
         Resume from saved resumed_checkpoints
-
         :param resume_path: resumed_checkpoint path to be resumed
         """
+        self._resume_model_params(resumed_checkpoint)
+        from .training_pipeline import TrainingPipeline
+        if isinstance(self, TrainingPipeline):
+            self._resume_training_state(resumed_checkpoint)
+        logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
+
+    def _resume_training_state(self, resumed_checkpoint):
+        """ States only for training pipeline like iteration counts, optimizers,
+        and lr_schedulers are resumed in this function """
         self.start_epoch = resumed_checkpoint['epoch'] + 1
         self.monitor_best = resumed_checkpoint['monitor_best']
 
@@ -190,6 +203,18 @@ class BasePipeline(ABC):
             'valid_iteration_counts', [0] * len(self.valid_data_loaders))
         self.valid_iteration_counts = list(self.valid_iteration_counts)
 
+        # load optimizer state from resumed_checkpoint only when optimizer type is not changed.
+        optimizers_ckpt = resumed_checkpoint['optimizers']
+        for key in global_config['optimizers'].keys():
+            if key not in optimizers_ckpt.keys():
+                logger.warning(f'Optimizer name {key} in config file is not in checkpoint (not resumed)')
+            elif resumed_checkpoint['config']['optimizers'][key]['type'] != global_config['optimizers'][key]['type']:
+                logger.warning(f'Optimizer type in config file is different from that of checkpoint (not resumed)')
+            else:
+                self.optimizers[key].load_state_dict(optimizers_ckpt[key])
+
+    def _resume_model_params(self, resumed_checkpoint):
+        """ Load model parameters from resumed checkpoint """
         # load architecture params from resumed_checkpoint.
         if resumed_checkpoint['config']['arch'] != global_config['arch']:
             logger.warning(
@@ -198,18 +223,6 @@ class BasePipeline(ABC):
             )
         model = self.model.module if len(self.device_ids) > 1 else self.model
         model.load_state_dict(resumed_checkpoint['state_dict'])
-
-        # load optimizer state from resumed_checkpoint only when optimizer type is not changed.
-        if resumed_checkpoint['config']['optimizer']['type'] != global_config['optimizer']['type']:
-            logger.warning('Warning: Optimizer type given in config file is different from that of resumed_checkpoint. '
-                           'Optimizer parameters not being resumed.')
-        elif self.optimizers is None:
-            logger.warning("Not loading optimizer state because it's not initialized.")
-        else:
-            for key, optimizer_state in resumed_checkpoint['optimizers'].items():
-                self.optimizers[key].load_state_dict(optimizer_state)
-
-        logger.info(f"resumed_checkpoint (trained epoch {self.start_epoch - 1}) loaded")
 
     def _print_and_write_log(self, epoch, worker_outputs, write=True):
         # print common worker logged info

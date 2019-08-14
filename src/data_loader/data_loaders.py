@@ -16,7 +16,7 @@ class MnistDataLoader(BaseDataLoader):
     """
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
                  num_workers=1, training=True, name=None,
-                 img_size=28, norm_mean=[0.1307], norm_std=[0.3081]):
+                 img_size=28, norm_mean=(0.1307,), norm_std=(0.3081,)):
         trsfm = transforms.Compose([
             transforms.Scale(img_size),
             transforms.ToTensor(),
