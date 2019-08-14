@@ -1,5 +1,6 @@
 import torch
 from abc import abstractmethod
+from utils.util import UnNormalize
 
 
 class BaseMetric(torch.nn.Module):
@@ -47,3 +48,25 @@ class TopKAcc(BaseMetric):
 
     def finalize(self):
         return self.total_correct / self.total_number
+
+
+class FIDScore(torch.nn.Module):
+    def __init__(self, k, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname=None):
+        super().__init__()
+        self.k = k
+        self.nickname = f'FID_InceptionV3' if nickname is None else nickname
+        self.output_key = output_key
+        self.target_key = target_key
+        self.unnormalizer = UnNormalize(unnorm_mean, unnorm_mean)
+
+    def clear(self):
+        # TODO: create temporary files using TemporaryDirectory, etc. in package tempfile
+        pass
+
+    def update(self, data, output):
+        # TODO: unnormalize real and fake images, save them to temporary files.
+        pass
+
+    def finalize(self):
+        # TODO: calculate fid scores using functions in libs/pytorch_fid/fid_score.py
+        pass
