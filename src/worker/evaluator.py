@@ -45,10 +45,7 @@ class Evaluator(WorkerTemplate):
 
     def _update_output(self, output, batch_products, write_metric=True):
         epoch_start_time = output
-        for metric in self.evaluation_metrics:
-            value = metric.update(batch_products['gt'], batch_products['result'])
-            if write_metric and value is not None:  # some metrics do not have per-batch evaluation (e.g. FID)
-                self.writer.add_scalar(metric.nickname, value)
+        self._update_all_metrics(batch_products['gt'], batch_products['result'], write=write_metric)
         return epoch_start_time
 
     def _finalize_output(self, output):

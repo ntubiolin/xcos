@@ -23,12 +23,7 @@ class TrainingWorker(WorkerTemplate):
         loss = products['loss']
         epoch_start_time, total_loss = output
         total_loss += loss.item()
-
-        for metric in self.evaluation_metrics:
-            value = metric.update(products['data'], products['model_output'])
-            if write_metric and value is not None:  # some metrics do not have per-batch evaluation (e.g. FID)
-                self.writer.add_scalar(metric.nickname, value)
-
+        self._update_all_metrics(products['data'], products['model_output'], write=write_metric)
         return epoch_start_time, total_loss
 
     def _average_stats(self, total_loss):
