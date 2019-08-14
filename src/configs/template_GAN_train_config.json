@@ -3,6 +3,7 @@
     "optimizers": {
         "generator": {
             "target_network": "generator",
+            "forward_scenario": "generator",
             "type": "Adam",
             "args": {
                 "lr": 0.0002,
@@ -11,6 +12,7 @@
         },
         "discriminator": {
             "target_network": "discriminator",
+            "forward_scenario": "discriminator",
             "type": "Adam",
             "args": {
                 "lr": 0.0002,
