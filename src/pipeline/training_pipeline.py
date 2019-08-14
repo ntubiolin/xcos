@@ -36,12 +36,16 @@ class TrainingPipeline(BasePipeline):
         ]
 
     def _setup_gan_loss_functions(self):
+        """ Setup GAN loss functions. Will only be called when self.optimize_strategy == 'GAN' """
         self.gan_loss_functions = {
             key: getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
             for key, entry in global_config['gan_losses'].items()
         }
 
     def _setup_lr_schedulers(self):
+        """ Setup learning rate schedulers according to configuration. Note that the naming of
+        optimizers and lr_schedulers in configuration should have a strict one-to-one mapping.
+        """
         self.lr_schedulers = {}
         for optimizer_name, optimizer in self.optimizers.items():
             entry = global_config['lr_schedulers'][optimizer_name]

@@ -147,9 +147,18 @@ class BasePipeline(ABC):
         return evaluation_metrics
 
     def _setup_optimizers(self):
+        """ Setup optimizers according to configuration.
+            Each optimizer has its corresponding network(s) to train, specified by 'target_network' in configuraion.
+            If no `target_network` is specified, all parameters of self.model will be included.
+        """
         self.optimizers = {}
         for name, entry in global_config['optimizers'].items():
-            network = getattr(self.model, entry['target_network']) if 'target_network' in entry.keys() else self.model
+            if 'target_network' in entry.keys():
+                network = getattr(self.model, entry['target_network'])
+            else:
+                network = self.model
+                logger.warning(f'Target network of optimizer {name} not specified.'
+                               f'All params of self.model will be included.')
             trainable_params = filter(lambda p: p.requires_grad, network.parameters())
             self.optimizers[name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
 
