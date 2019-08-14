@@ -157,7 +157,7 @@ class BasePipeline(ABC):
                 network = getattr(self.model, entry['target_network'])
             else:
                 network = self.model
-                logger.warning(f'Target network of optimizer {name} not specified.'
+                logger.warning(f'Target network of optimizer "{name}" not specified. '
                                f'All params of self.model will be included.')
             trainable_params = filter(lambda p: p.requires_grad, network.parameters())
             self.optimizers[name] = getattr(torch.optim, entry['type'])(trainable_params, **entry['args'])
