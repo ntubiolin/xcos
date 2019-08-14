@@ -9,7 +9,11 @@ class TopKAcc(torch.nn.Module):
         self.output_key = output_key
         self.target_key = target_key
 
-    def forward(self, data, output):
+    def clear(self):
+        self.total_correct = 0
+        self.total_number = 0
+
+    def update(self, data, output):
         with torch.no_grad():
             logits = output[self.output_key]
             target = data[self.target_key]
@@ -18,4 +22,9 @@ class TopKAcc(torch.nn.Module):
             correct = 0
             for i in range(self.k):
                 correct += torch.sum(pred[:, i] == target).item()
+        self.total_correct += correct
+        self.total_number += len(target)
         return correct / len(target)
+
+    def finalize(self):
+        return self.total_correct / self.total_number
