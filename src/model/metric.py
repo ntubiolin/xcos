@@ -106,8 +106,8 @@ class FIDScoreOnline(BaseMetric):
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
         self._unNormalizer = UnNormalize(unnorm_mean, unnorm_mean)
-        block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[1024]
-        self.model = inception.InceptionV3([block_idx])
+        block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
+        self.inception_model = inception.InceptionV3([block_idx])
         self._gt_activations = []
         self._out_activations = []
 
@@ -115,11 +115,20 @@ class FIDScoreOnline(BaseMetric):
         self._gt_activations = []
         self._out_activations = []
 
+    def _preprocess_tensor(self, tensor):
+        tensor = self._unNormalizer(tensor)  # domain: [-1, 1] -> [0, 1]
+        tensor = tensor.repeat(1, 3, 1, 1)   # convert 1-channel images to 3-channels
+        return tensor
+
+    def _get_activation(self, tensors):
+        return self.inception_model(tensors)[0].squeeze().cpu().numpy()
+
     def update(self, data, output):
-        gt_tensors = self._unNormalizer(data[self.target_key])
-        out_tensors = self._unNormalizer(output[self.output_key]).clamp(0, 1)
-        self._gt_activations.append(self.model(gt_tensors).cpu().numpy())
-        self._out_activations.append(self.model(out_tensors).cpu().numpy())
+        with torch.no_grad():
+            gt_tensors = self._preprocess_tensor(data[self.target_key])
+            out_tensors = self._preprocess_tensor(output[self.output_key].clamp(-1, 1))
+            self._gt_activations.append(self._get_activation(gt_tensors))
+            self._out_activations.append(self._get_activation(out_tensors))
         return None
 
     def finalize(self):
