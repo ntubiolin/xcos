@@ -99,5 +99,7 @@ class FIDScoreOffline(torch.nn.Module):
 
     def finalize(self):
         # TODO: calculate fid scores using functions in libs/pytorch_fid/fid_score.py
-        self.fid_score.calculate_fid_given_paths()
-        return 0
+        fid_score = self.fid_score.calculate_fid_given_paths(
+            paths=[self.tmp_gt_dir.name, self.tmp_out_dir.name],
+            batch_size=10, cuda=True, dims=2048)
+        return fid_score

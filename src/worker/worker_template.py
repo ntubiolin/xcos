@@ -91,7 +91,10 @@ class WorkerTemplate(ABC):
             loss = loss_function(data, model_output) * loss_function.weight
             losses[loss_function.nickname] = loss
             self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
-        total_loss = torch.stack(list(losses.values()), dim=0).sum(dim=0)
+        if len(self.loss_functions) == 0:
+            total_loss = torch.zeros([1])
+        else:
+            total_loss = torch.stack(list(losses.values()), dim=0).sum(dim=0)
         self.writer.add_scalar('total_loss', total_loss.item())
         return losses, total_loss
 
