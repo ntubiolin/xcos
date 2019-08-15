@@ -39,7 +39,7 @@
     "trainer": {
         "epochs": 50,
         "save_dir": "saved/",
-        "save_freq": 10,
+        "save_freq": 5,
         "monitor_mode": "min",
         "monitored_loader": "valid_mnist",
         "monitored_metric": "avg_fid_score"
@@ -92,8 +92,16 @@
         }
     },
     "metrics": {
+        "fid_score": {
+            "type": "FIDScoreOnline",
+            "args": {
+                "output_key": "G_z",
+                "target_key": "data_input",
+                "nickname": "fid_score"
+            }
+        }
     },
     "log_step": 100,
     "verbosity": 2,
-    "name": "GAN_template_train_config_SN"
+    "name": "GAN_template_train_config"
 }
