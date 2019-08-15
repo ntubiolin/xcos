@@ -1,6 +1,7 @@
 import os
 import os.path as op
 from glob import glob
+import importlib.util
 
 import torch
 
@@ -63,3 +64,10 @@ class UnNormalize(object):
             t.mul_(s).add_(m)
             # The normalize code -> t.sub_(m).div_(s)
         return tensor
+
+
+def import_given_path(module_name, path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

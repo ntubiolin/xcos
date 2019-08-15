@@ -1,12 +1,15 @@
 import os
 import torch
 from abc import abstractmethod
-import importlib.util
 import tempfile
 
+import numpy as np
 from torchvision import transforms
 
-from utils.util import UnNormalize, lib_path
+from utils.util import UnNormalize, lib_path, import_given_path
+
+inception = import_given_path("inception", os.path.join(lib_path, 'pytorch_fid/inception.py'))
+fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
 
 
 class BaseMetric(torch.nn.Module):
@@ -58,7 +61,7 @@ class TopKAcc(BaseMetric):
 
 class FIDScoreOffline(BaseMetric):
     """
-    Module calculating FID score
+    Module calculating FID score by saving all images into temporary directory
     """
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
@@ -69,11 +72,6 @@ class FIDScoreOffline(BaseMetric):
         ])
         self.tmp_gt_dir = tempfile.TemporaryDirectory(prefix='gt_')
         self.tmp_out_dir = tempfile.TemporaryDirectory(prefix='out_')
-
-        # Load module fid_score given path
-        spec = importlib.util.spec_from_file_location("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
-        self.fid_score = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.fid_score)
 
     def clear(self):
         self.tmp_gt_dir.cleanup()
@@ -95,7 +93,47 @@ class FIDScoreOffline(BaseMetric):
         return None
 
     def finalize(self):
-        fid_score = self.fid_score.calculate_fid_given_paths(
+        return fid_score.calculate_fid_given_paths(
             paths=[self.tmp_gt_dir.name, self.tmp_out_dir.name],
             batch_size=10, cuda=True, dims=2048)
-        return fid_score
+
+
+class FIDScoreOnline(BaseMetric):
+    """
+    Module calculating FID score online (store inception activation in memory)
+    """
+
+    def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
+        super().__init__(output_key, target_key, nickname)
+        self._unNormalizer = UnNormalize(unnorm_mean, unnorm_mean)
+        block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[1024]
+        self.model = inception.InceptionV3([block_idx])
+        self._gt_activations = []
+        self._out_activations = []
+
+    def clear(self):
+        self._gt_activations = []
+        self._out_activations = []
+
+    def update(self, data, output):
+        gt_tensors = self._unNormalizer(data[self.target_key])
+        out_tensors = self._unNormalizer(output[self.output_key]).clamp(0, 1)
+        self._gt_activations.append(self.model(gt_tensors).cpu().numpy())
+        self._out_activations.append(self.model(out_tensors).cpu().numpy())
+        return None
+
+    def finalize(self):
+        gt_activations = np.concatenate(self._gt_activations)
+        out_activations = np.concatenate(self._out_activations)
+        score = self._get_fid_score(gt_activations, out_activations)
+        return score
+
+    def _get_fid_score(self, gt_activations, out_activations):
+        """
+        Given two distribution of features, compute the FID score between them
+        """
+        m1 = np.mean(gt_activations, axis=0)
+        m2 = np.mean(out_activations, axis=0)
+        s1 = np.cov(gt_activations, rowvar=False)
+        s2 = np.cov(out_activations, rowvar=False)
+        return fid_score.calculate_frechet_distance(m1, s1, m2, s2)
