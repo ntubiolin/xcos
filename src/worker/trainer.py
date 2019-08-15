@@ -28,7 +28,7 @@ class Trainer(TrainingWorker):
     def enable_grad(self):
         return True
 
-    def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
+    def _print_log(self, epoch, batch_idx, batch_start_time, loss):
         current_sample_idx = batch_idx * self.data_loader.batch_size
         total_sample_num = self.data_loader.n_samples
         sample_percentage = 100.0 * batch_idx / len(self.data_loader)
@@ -61,8 +61,7 @@ class Trainer(TrainingWorker):
 
                 self.optimizers[network_name].step()
 
-        metrics = self._get_and_write_metrics(data, model_output)
-        return model_output, total_loss, metrics
+        return model_output, total_loss
 
     def _setup_model(self):
         np.random.seed()

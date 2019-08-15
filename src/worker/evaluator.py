@@ -1,7 +1,5 @@
 import time
 
-import numpy as np
-
 from .worker_template import WorkerTemplate
 from pipeline.base_pipeline import BasePipeline
 from data_loader.base_data_loader import BaseDataLoader
@@ -41,31 +39,29 @@ class Evaluator(WorkerTemplate):
 
     def _init_output(self):
         epoch_start_time = time.time()
-        total_metrics = np.zeros(len(self.evaluation_metrics))
-        return epoch_start_time, total_metrics
+        for metric in self.evaluation_metrics:
+            metric.clear()
+        return epoch_start_time
 
-    def _update_output(self, output, metrics):
-        epoch_start_time, total_metrics = output
-        total_metrics += metrics
-        return epoch_start_time, total_metrics
+    def _update_output(self, output, batch_products, write_metric=True):
+        epoch_start_time = output
+        self._update_all_metrics(batch_products['gt'], batch_products['result'], write=write_metric)
+        return epoch_start_time
 
     def _finalize_output(self, output):
-        epoch_start_time, total_metrics = output
-        avg_metrics = (total_metrics / len(self.gt_data_loader)).tolist()
+        epoch_start_time = output
+        avg_metrics = {metric.nickname: metric.finalize() for metric in self.evaluation_metrics}
         log = {
             'elapsed_time (s)': time.time() - epoch_start_time,
         }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics'].values()):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
-
+        for key, value in avg_metrics.items():
+            log[f"avg_{key}"] = value
         return {'log': log}
 
     def _to_log(self, epoch_stats):
         return {}
 
-    def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
+    def _print_log(self, epoch, batch_idx, batch_start_time, loss):
         current_sample_idx = batch_idx * self.gt_data_loader.batch_size
         total_sample_num = self.gt_data_loader.n_samples
         sample_percentage = 100.0 * batch_idx / len(self.gt_data_loader)
@@ -82,10 +78,10 @@ class Evaluator(WorkerTemplate):
             batch_start_time = time.time()
             gt = self._data_to_device(gt)
             result = self._data_to_device(result)
-            metrics = self._get_and_write_metrics(gt, result, write=False)
-            output = self._update_output(output, metrics)
+            batch_products = {'gt': gt, 'result': result}
+            output = self._update_output(output, batch_products, write_metric=False)
 
             if batch_idx % global_config.log_step == 0:
                 if global_config.verbosity >= 2:
-                    self._print_log(epoch, batch_idx, batch_start_time, 0, metrics)
+                    self._print_log(epoch, batch_idx, batch_start_time, 0)
         return output

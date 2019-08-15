@@ -1,9 +1,6 @@
 import time
 
-import numpy as np
-
 from .worker_template import WorkerTemplate
-from utils.global_config import global_config
 
 
 class TrainingWorker(WorkerTemplate):
@@ -17,35 +14,34 @@ class TrainingWorker(WorkerTemplate):
         """ Initialize epoch statistics like elapsed time, total loss, and metrics """
         epoch_start_time = time.time()
         total_loss = 0
-        total_metrics = np.zeros(len(self.evaluation_metrics))
-        return epoch_start_time, total_loss, total_metrics
+        for metric in self.evaluation_metrics:
+            metric.clear()
+        return epoch_start_time, total_loss
 
-    def _update_output(self, output, products):
+    def _update_output(self, output: dict, products: dict, write_metric=True):
         """ Update epoch statistics """
-        loss, metrics = products['loss'], products['metrics']
-        epoch_start_time, total_loss, total_metrics = output
+        loss = products['loss']
+        epoch_start_time, total_loss = output
         total_loss += loss.item()
-        total_metrics += metrics
-        return epoch_start_time, total_loss, total_metrics
+        self._update_all_metrics(products['data'], products['model_output'], write=write_metric)
+        return epoch_start_time, total_loss
 
-    def _average_stats(self, total_loss, total_metrics):
+    def _average_stats(self, total_loss):
         """ Calculate the average loss/metrics in this epoch """
         avg_loss = total_loss / len(self.data_loader)
-        avg_metrics = (total_metrics / len(self.data_loader)).tolist()
+        avg_metrics = {metric.nickname: metric.finalize() for metric in self.evaluation_metrics}
         return avg_loss, avg_metrics
 
     def _finalize_output(self, output):
         """ Return saved inference results along with log messages """
-        epoch_start_time, total_loss, total_metrics = output
-        avg_loss, avg_metrics = self._average_stats(total_loss, total_metrics)
+        epoch_start_time, total_loss = output
+        avg_loss, avg_metrics = self._average_stats(total_loss)
         log = {
             'elapsed_time (s)': time.time() - epoch_start_time,
             'avg_loss': avg_loss,
         }
-        # Metrics is a list
-        for i, item in enumerate(global_config['metrics'].values()):
-            key = item["args"]["nickname"]
-            log[f"avg_{key}"] = avg_metrics[i]
+        for key, value in avg_metrics.items():
+            log[f"avg_{key}"] = value
 
         return {'log': log}
 
