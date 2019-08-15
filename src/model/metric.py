@@ -108,6 +108,7 @@ class FIDScoreOnline(BaseMetric):
         self._unNormalizer = UnNormalize(unnorm_mean, unnorm_mean)
         block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
         self.inception_model = inception.InceptionV3([block_idx])
+        self.inception_model.eval()
         self._gt_activations = []
         self._out_activations = []
 
@@ -126,7 +127,7 @@ class FIDScoreOnline(BaseMetric):
     def update(self, data, output):
         with torch.no_grad():
             gt_tensors = self._preprocess_tensor(data[self.target_key])
-            out_tensors = self._preprocess_tensor(output[self.output_key].clamp(-1, 1))
+            out_tensors = self._preprocess_tensor(output[self.output_key])
             self._gt_activations.append(self._get_activation(gt_tensors))
             self._out_activations.append(self._get_activation(out_tensors))
         return None

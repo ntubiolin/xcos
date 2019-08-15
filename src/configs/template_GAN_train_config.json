@@ -39,10 +39,10 @@
     "trainer": {
         "epochs": 50,
         "save_dir": "saved/",
-        "save_freq": 1,
+        "save_freq": 10,
         "monitor_mode": "min",
         "monitored_loader": "valid_mnist",
-        "monitored_metric": "avg_loss"
+        "monitored_metric": "avg_fid_score"
     },
     "trainer_args": {},
     "visualization": {
@@ -52,7 +52,7 @@
     "arch": {
         "type": "MnistGAN",
         "args": {
-            "spectral_normalization": false
+            "spectral_normalization": true
         }
     },
     "optimize_strategy": "GAN",
@@ -61,7 +61,7 @@
         "args": {
             "data_dir": "../datasets/mnist",
             "batch_size": 128,
-            "validation_split": 0.0,
+            "validation_split": 0.2,
             "num_workers": 4,
             "img_size": 64,
             "name": "mnist",
@@ -92,16 +92,8 @@
         }
     },
     "metrics": {
-        "fid_score": {
-            "type": "FIDScoreOffline",
-            "args": {
-                "output_key": "G_z",
-                "target_key": "data_input",
-                "nickname": "fid_score"
-            }
-        }
     },
-    "log_step": 200,
+    "log_step": 100,
     "verbosity": 2,
-    "name": "GAN_template_train_config"
+    "name": "GAN_template_train_config_SN"
 }

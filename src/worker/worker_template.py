@@ -74,6 +74,8 @@ class WorkerTemplate(ABC):
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
         if self.optimize_strategy == 'GAN':
             self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
+            self.writer.add_histogram("dist_G_z", model_output["G_z"])
+            self.writer.add_histogram("dist_x", data["data_input"])
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """

@@ -4,6 +4,7 @@ from glob import glob
 import importlib.util
 
 import torch
+import numpy as np
 
 lib_path = op.abspath(op.join(__file__, op.pardir, op.pardir, op.pardir, 'libs'))
 
@@ -56,13 +57,25 @@ class UnNormalize(object):
     def __call__(self, tensor):
         """
         Args:
-            tensor (Tensor): Tensor image of size (B, C, H, W) to be normalized.
+            tensor (Tensor): Tensor image(s) to be normalized.
+            Should be in size [B, C, W, H] (a batch of images) or [C, W, H] (single image)
         Returns:
             Tensor: Normalized image.
         """
-        for t, m, s in zip(tensor, self.mean, self.std):
-            t.mul_(s).add_(m)
-            # The normalize code -> t.sub_(m).div_(s)
+
+        if len(tensor.shape) == 4:  # [B, C, W, H]
+            c_dim = 1
+        elif len(tensor.shape) == 3:  # [C, W, H]
+            c_dim = 0
+        else:
+            raise NotImplementedError()
+
+        tensors = tensor.split(1, dim=c_dim)
+        out = []
+        for t, m, s in zip(tensors, self.mean, self.std):
+            # Normalization: (t - m) / s
+            out.append(t * s + m)
+        tensor = torch.cat(out, dim=c_dim)
         return tensor
 
 
@@ -71,3 +84,7 @@ def import_given_path(module_name, path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def tensor_np_histogram(tensor):
+    return np.histogram(tensor.cpu().numpy().flatten())
