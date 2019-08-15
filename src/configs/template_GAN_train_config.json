@@ -93,7 +93,7 @@
     },
     "metrics": {
         "fid_score": {
-            "type": "FIDScore",
+            "type": "FIDScoreOffline",
             "args": {
                 "output_key": "G_z",
                 "target_key": "data_input",
