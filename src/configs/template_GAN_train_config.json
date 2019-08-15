@@ -92,6 +92,14 @@
         }
     },
     "metrics": {
+        "fid_score": {
+            "type": "FIDScore",
+            "args": {
+                "output_key": "G_z",
+                "target_key": "data_input",
+                "nickname": "fid_score"
+            }
+        }
     },
     "log_step": 200,
     "verbosity": 2,

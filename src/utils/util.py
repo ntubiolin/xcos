@@ -1,7 +1,10 @@
 import os
+import os.path as op
 from glob import glob
 
 import torch
+
+lib_path = op.abspath(op.join(__file__, op.pardir, op.pardir, op.pardir, 'libs'))
 
 
 def get_instance(module, name, config, *args, **kargs):
