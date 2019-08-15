@@ -56,16 +56,13 @@ class TopKAcc(BaseMetric):
         return self.total_correct / self.total_number
 
 
-class FIDScoreOffline(torch.nn.Module):
+class FIDScoreOffline(BaseMetric):
     """
     Module calculating FID score
     """
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
-        super().__init__()
-        self.nickname = nickname
-        self.output_key = output_key
-        self.target_key = target_key
+        super().__init__(output_key, target_key, nickname)
         self.from_tensor_to_pil = transforms.Compose([
             UnNormalize(unnorm_mean, unnorm_mean),
             transforms.ToPILImage()
@@ -98,7 +95,6 @@ class FIDScoreOffline(torch.nn.Module):
         return None
 
     def finalize(self):
-        # TODO: calculate fid scores using functions in libs/pytorch_fid/fid_score.py
         fid_score = self.fid_score.calculate_fid_given_paths(
             paths=[self.tmp_gt_dir.name, self.tmp_out_dir.name],
             batch_size=10, cuda=True, dims=2048)
