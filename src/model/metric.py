@@ -1,13 +1,32 @@
 import torch
+from abc import abstractmethod
 
 
-class TopKAcc(torch.nn.Module):
-    def __init__(self, k, output_key, target_key, nickname=None):
+class BaseMetric(torch.nn.Module):
+    def __init__(self, output_key, target_key, nickname):
         super().__init__()
-        self.k = k
-        self.nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
+        self.nickname = nickname
         self.output_key = output_key
         self.target_key = target_key
+
+    @abstractmethod
+    def clear(self):
+        pass
+
+    @abstractmethod
+    def update(self, data, output):
+        pass
+
+    @abstractmethod
+    def finalize(self):
+        pass
+
+
+class TopKAcc(BaseMetric):
+    def __init__(self, k, output_key, target_key, nickname=None):
+        nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
+        super().__init__(output_key, target_key, nickname)
+        self.k = k
 
     def clear(self):
         self.total_correct = 0
