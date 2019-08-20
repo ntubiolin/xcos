@@ -45,17 +45,25 @@ class MnistGAN(BaseModel):
         self.generator.weight_init(mean=0.0, std=0.02)
         self.discriminator.weight_init(mean=0.0, std=0.02)
 
-    def forward(self, data_dict, network_name):
+    def forward(self, data_dict, scenario):
         x = data_dict['data_input']
         batch_size = x.size(0)
+
+        # Generate images from random vector z. When inferencing, it's the only thing we need.
         z = torch.randn((batch_size, 100)).view(-1, 100, 1, 1).to(x.device)
         G_z = self.generator(z)
+        model_output = {"G_z": G_z}
+        if scenario == 'generator_only':
+            return model_output
+
+        # Feed fake images to the discriminator. When training generator, it's the last thing we need.
         D_G_z = self.discriminator(G_z).squeeze()
-        model_output = {
-            "G_z": G_z,
-            "D_G_z": D_G_z
-        }
-        if network_name == 'discriminator':
-            D_x = self.discriminator(x).squeeze()
-            model_output["D_x"] = D_x
+        model_output["D_G_z"] = D_G_z
+        if scenario == 'generator':
+            return model_output
+
+        # Feed real images the discriminator. Only when training discriminator will this be needed.
+        assert scenario == 'discriminator'
+        D_x = self.discriminator(x).squeeze()
+        model_output["D_x"] = D_x
         return model_output

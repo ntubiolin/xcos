@@ -36,7 +36,8 @@ class TrainingPipeline(BasePipeline):
         ]
 
     def _setup_gan_loss_functions(self):
-        """ Setup GAN loss functions. Will only be called when self.optimize_strategy == 'GAN' """
+        """ Setup GAN loss functions. Will only be called when self.optimize_strategy == 'GAN'
+        The keys of gan_losses in config should have strict one-to-one mapping with names of optimizers. """
         self.gan_loss_functions = {
             key: getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
             for key, entry in global_config['gan_losses'].items()

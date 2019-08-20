@@ -26,13 +26,9 @@ class Validator(TrainingWorker):
         if self.optimize_strategy == 'normal':
             model_output = self.model(data)
             losses, total_loss = self._get_and_write_losses(data, model_output)
-
         elif self.optimize_strategy == 'GAN':
-            total_loss = 0
-            for network_name in self.model.network_names:
-                model_output = self.model(data, network_name)
-                loss = self._get_and_write_gan_loss(data, model_output, network_name)
-                total_loss += loss
+            model_output = self.model(data, scenario='generator_only')
+            losses, total_loss = self._get_and_write_losses(data, model_output)
 
         return model_output, total_loss
 

@@ -53,13 +53,13 @@ class Trainer(TrainingWorker):
             total_loss = 0
             for optimizer_name in self.optimizers.keys():
                 self.optimizers[optimizer_name].zero_grad()
-                network_name = global_config['optimizers'][optimizer_name]['target_network']
-                model_output = self.model(data, network_name)
-                loss = self._get_and_write_gan_loss(data, model_output, network_name)
+                forward_scenario = global_config['optimizers'][optimizer_name]['forward_scenario']
+                model_output = self.model(data, forward_scenario)
+                loss = self._get_and_write_gan_loss(data, model_output, optimizer_name)
                 loss.backward()
                 total_loss += loss
 
-                self.optimizers[network_name].step()
+                self.optimizers[optimizer_name].step()
 
         return model_output, total_loss
 

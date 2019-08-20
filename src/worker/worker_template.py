@@ -74,6 +74,8 @@ class WorkerTemplate(ABC):
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
         if self.optimize_strategy == 'GAN':
             self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
+            self.writer.add_histogram("dist_G_z", model_output["G_z"])
+            self.writer.add_histogram("dist_x", data["data_input"])
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
@@ -91,7 +93,10 @@ class WorkerTemplate(ABC):
             loss = loss_function(data, model_output) * loss_function.weight
             losses[loss_function.nickname] = loss
             self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
-        total_loss = torch.stack(list(losses.values()), dim=0).sum(dim=0)
+        if len(self.loss_functions) == 0:
+            total_loss = torch.zeros([1])
+        else:
+            total_loss = torch.stack(list(losses.values()), dim=0).sum(dim=0)
         self.writer.add_scalar('total_loss', total_loss.item())
         return losses, total_loss
 

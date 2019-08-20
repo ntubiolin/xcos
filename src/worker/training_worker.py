@@ -45,10 +45,10 @@ class TrainingWorker(WorkerTemplate):
 
         return {'log': log}
 
-    def _get_and_write_gan_loss(self, data, model_output, network_name):
+    def _get_and_write_gan_loss(self, data, model_output, optimize_name):
         """ Calculate GAN loss and write them to Tensorboard
         """
-        loss_function = self.gan_loss_functions[network_name]
+        loss_function = self.gan_loss_functions[optimize_name]
         loss = loss_function(data, model_output) * loss_function.weight
         self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
         return loss
