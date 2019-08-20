@@ -6,7 +6,7 @@ import tempfile
 import numpy as np
 from torchvision import transforms
 
-from utils.util import InverseNormalize, lib_path, import_given_path
+from utils.util import DeNormalize, lib_path, import_given_path
 
 inception = import_given_path("inception", os.path.join(lib_path, 'pytorch_fid/inception.py'))
 fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
@@ -67,7 +67,7 @@ class FIDScoreOffline(BaseMetric):
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
         self.from_tensor_to_pil = transforms.Compose([
-            InverseNormalize(unnorm_mean, unnorm_mean),
+            DeNormalize(unnorm_mean, unnorm_mean),
             transforms.ToPILImage()
         ])
         self.tmp_gt_dir = tempfile.TemporaryDirectory(prefix='gt_')
@@ -105,7 +105,7 @@ class FIDScore(BaseMetric):
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
-        self._unNormalizer = InverseNormalize(unnorm_mean, unnorm_mean)
+        self._deNormalizer = DeNormalize(unnorm_mean, unnorm_mean)
         self._gt_activations = []
         self._out_activations = []
 
@@ -114,7 +114,7 @@ class FIDScore(BaseMetric):
         self._out_activations = []
 
     def _preprocess_tensor(self, tensor):
-        tensor = self._unNormalizer(tensor)  # domain: [-1, 1] -> [0, 1]
+        tensor = self._deNormalizer(tensor)  # domain: [-1, 1] -> [0, 1]
         tensor = tensor.repeat(1, 3, 1, 1)   # convert 1-channel images to 3-channels
         return tensor
 
