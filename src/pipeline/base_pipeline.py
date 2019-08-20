@@ -118,6 +118,10 @@ class BasePipeline(ABC):
         if len(self.device_ids) > 1:
             self.model = torch.nn.DataParallel(self.model, device_ids=self.device_ids)
 
+    def _get_non_parallel_model(self):
+        model = self.model.module if isinstance(self.model, torch.nn.DataParallel) else self.model
+        return model
+
     def _setup_data_loader(self, key='data_loader'):
         self.data_loader = get_instance(module_data, key, global_config)
 
@@ -153,10 +157,11 @@ class BasePipeline(ABC):
         """
         self.optimizers = {}
         for name, entry in global_config['optimizers'].items():
+            model = self._get_non_parallel_model()
             if 'target_network' in entry.keys():
-                network = getattr(self.model, entry['target_network'])
+                network = getattr(model, entry['target_network'])
             else:
-                network = self.model
+                network = model
                 logger.warning(f'Target network of optimizer "{name}" not specified. '
                                f'All params of self.model will be included.')
             trainable_params = filter(lambda p: p.requires_grad, network.parameters())
@@ -176,7 +181,7 @@ class BasePipeline(ABC):
         """ Load pretrained model not strictly """
         logger.info(f"Loading pretrained checkpoint: {pretrained_path} ...")
         checkpoint = torch.load(pretrained_path)
-        model = self.model.module if len(self.device_ids) > 1 else self.model
+        model = self._get_non_parallel_model()
         model.load_state_dict(checkpoint['state_dict'], strict=False)
 
     def _resume_checkpoint(self, resumed_checkpoint):
@@ -221,7 +226,7 @@ class BasePipeline(ABC):
                 'Warning: Architecture config given in config file is different from that of resumed_checkpoint. '
                 'This may yield an exception while state_dict is being loaded.'
             )
-        model = self.model.module if len(self.device_ids) > 1 else self.model
+        model = self._get_non_parallel_model()
         model.load_state_dict(resumed_checkpoint['state_dict'])
 
     def _print_and_write_log(self, epoch, worker_outputs, write=True):
