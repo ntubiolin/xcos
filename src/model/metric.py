@@ -6,7 +6,7 @@ import tempfile
 import numpy as np
 from torchvision import transforms
 
-from utils.util import UnNormalize, lib_path, import_given_path
+from utils.util import InverseNormalize, lib_path, import_given_path
 
 inception = import_given_path("inception", os.path.join(lib_path, 'pytorch_fid/inception.py'))
 fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
@@ -67,7 +67,7 @@ class FIDScoreOffline(BaseMetric):
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
         self.from_tensor_to_pil = transforms.Compose([
-            UnNormalize(unnorm_mean, unnorm_mean),
+            InverseNormalize(unnorm_mean, unnorm_mean),
             transforms.ToPILImage()
         ])
         self.tmp_gt_dir = tempfile.TemporaryDirectory(prefix='gt_')
@@ -105,7 +105,7 @@ class FIDScoreOnline(BaseMetric):
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
-        self._unNormalizer = UnNormalize(unnorm_mean, unnorm_mean)
+        self._unNormalizer = InverseNormalize(unnorm_mean, unnorm_mean)
         block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
         self.inception_model = inception.InceptionV3([block_idx])
         self.inception_model.eval()

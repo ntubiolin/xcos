@@ -49,7 +49,7 @@ def one_hot_embedding(labels, num_classes):
     return y[labels]
 
 
-class UnNormalize(object):
+class InverseNormalize(object):
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
