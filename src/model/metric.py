@@ -61,7 +61,7 @@ class TopKAcc(BaseMetric):
 
 class FIDScoreOffline(BaseMetric):
     """
-    Module calculating FID score by saving all images into temporary directory
+    Module calculating FID score by saving all images into temporary directories
     """
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
@@ -98,17 +98,14 @@ class FIDScoreOffline(BaseMetric):
             batch_size=10, cuda=True, dims=2048)
 
 
-class FIDScoreOnline(BaseMetric):
+class FIDScore(BaseMetric):
     """
-    Module calculating FID score online (store inception activation in memory)
+    Abstract class of FID score calculator (store inception activation in memory)
     """
 
     def __init__(self, output_key, target_key, unnorm_mean=(0.5,), unnorm_std=(0.5,), nickname="FID_InceptionV3"):
         super().__init__(output_key, target_key, nickname)
         self._unNormalizer = InverseNormalize(unnorm_mean, unnorm_mean)
-        block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
-        self.inception_model = inception.InceptionV3([block_idx])
-        self.inception_model.eval()
         self._gt_activations = []
         self._out_activations = []
 
@@ -121,8 +118,9 @@ class FIDScoreOnline(BaseMetric):
         tensor = tensor.repeat(1, 3, 1, 1)   # convert 1-channel images to 3-channels
         return tensor
 
+    @abstractmethod
     def _get_activation(self, tensors):
-        return self.inception_model(tensors)[0].squeeze().cpu().numpy()
+        pass
 
     def update(self, data, output):
         with torch.no_grad():
@@ -147,3 +145,14 @@ class FIDScoreOnline(BaseMetric):
         s1 = np.cov(gt_activations, rowvar=False)
         s2 = np.cov(out_activations, rowvar=False)
         return fid_score.calculate_frechet_distance(m1, s1, m2, s2)
+
+
+class FIDScoreInceptionV3(FIDScore):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
+        self._backbone = inception.InceptionV3([block_idx])
+        self._backbone.eval()
+
+    def _get_activation(self, tensors):
+        return self._backbone(tensors)[0].squeeze().cpu().numpy()
