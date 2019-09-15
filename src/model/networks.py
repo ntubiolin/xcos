@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import spectral_norm
@@ -33,7 +34,7 @@ class MnistGenerator(nn.Module):
         x = F.relu(self.deconv2_bn(self.deconv2(x)))
         x = F.relu(self.deconv3_bn(self.deconv3(x)))
         x = F.relu(self.deconv4_bn(self.deconv4(x)))
-        x = F.tanh(self.deconv5(x))
+        x = torch.tanh(self.deconv5(x))
         return x
 
 
@@ -64,5 +65,5 @@ class MnistDiscriminator(nn.Module):
         x = F.leaky_relu(self.conv2_bn(self.conv2(x)), 0.2)
         x = F.leaky_relu(self.conv3_bn(self.conv3(x)), 0.2)
         x = F.leaky_relu(self.conv4_bn(self.conv4(x)), 0.2)
-        x = F.sigmoid(self.conv5(x))
+        x = torch.sigmoid(self.conv5(x))
         return x
