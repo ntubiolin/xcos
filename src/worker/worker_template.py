@@ -1,7 +1,6 @@
 import time
 from abc import ABC, abstractmethod
 
-import numpy as np
 import torch
 from torchvision.utils import make_grid
 
@@ -20,7 +19,7 @@ class WorkerTemplate(ABC):
         self, pipeline: BasePipeline, data_loader: BaseDataLoader, step: int
     ):
         # Attributes listed below are shared from pipeline among all different workers.
-        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer']:
+        for attr_name in ['device', 'model', 'evaluation_metrics', 'writer', 'optimize_strategy']:
             setattr(self, attr_name, getattr(pipeline, attr_name))
 
         self.data_loader = data_loader
@@ -35,9 +34,9 @@ class WorkerTemplate(ABC):
     @abstractmethod
     def _run_and_optimize_model(self, data):
         """ Put data into model and optimize the model"""
-        return {}, None, []
+        return {}, None
 
-    def _print_log(self, epoch, batch_idx, batch_start_time, loss, metrics):
+    def _print_log(self, epoch, batch_idx, batch_start_time, loss):
         """ Print messages on terminal. """
         pass
 
@@ -62,41 +61,44 @@ class WorkerTemplate(ABC):
         pass
 
     # ============ Implement the above functions ==============
+    def _update_all_metrics(self, data_input, model_output, write=True):
+        for metric in self.evaluation_metrics:
+            value = metric.update(data_input, model_output)
+            # some metrics do not have per-batch evaluation (e.g. FID), then value would be None
+            if write and value is not None:
+                self.writer.add_scalar(metric.nickname, value)
 
     # Generally, the following function should not be changed.
     def _write_data_to_tensorboard(self, data, model_output):
         """ Write images to Tensorboard """
         self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
+        if self.optimize_strategy == 'GAN':
+            self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
+            self.writer.add_histogram("dist_G_z", model_output["G_z"])
+            self.writer.add_histogram("dist_x", data["data_input"])
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
         self.writer.set_step(self.step, self.data_loader.name)
         self.step += 1
 
-    def _get_and_write_loss(self, data, model_output):
+    def _get_and_write_losses(self, data, model_output):
         """ Calculate losses and write them to Tensorboard
-
-        Losses will be summed and returned.
+        Losses (dict: nickname -> loss tensor) and total loss (tensor) will be returned.
         """
-        losses = []
+        losses = {}
         for loss_function in self.loss_functions:
             if loss_function.weight <= 0.0:
                 continue
             loss = loss_function(data, model_output) * loss_function.weight
-            losses.append(loss)
+            losses[loss_function.nickname] = loss
             self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
-        total_loss = sum(losses)
+        if len(self.loss_functions) == 0:
+            total_loss = torch.zeros([1])
+        else:
+            total_loss = torch.stack(list(losses.values()), dim=0).sum(dim=0)
         self.writer.add_scalar('total_loss', total_loss.item())
-        return total_loss
-
-    def _get_and_write_metrics(self, data, model_output, write=True):
-        """ Calculate evaluation metrics and write them to Tensorboard """
-        acc_metrics = np.zeros(len(self.evaluation_metrics))
-        for i, metric in enumerate(self.evaluation_metrics):
-            acc_metrics[i] += metric(data, model_output)
-            if write:
-                self.writer.add_scalar(metric.nickname, acc_metrics[i])
-        return acc_metrics
+        return losses, total_loss
 
     def _data_to_device(self, data):
         """ Put data into CPU/GPU """
@@ -117,19 +119,19 @@ class WorkerTemplate(ABC):
             batch_start_time = time.time()
             self._setup_writer()
             data = self._data_to_device(data)
-            model_output, loss, metrics = self._run_and_optimize_model(data)
+            data['batch_idx'] = batch_idx
+            model_output, loss = self._run_and_optimize_model(data)
 
             products = {
                 'data': data,
                 'model_output': model_output,
                 'loss': loss,
-                'metrics': metrics
             }
 
             if batch_idx % global_config.log_step == 0:
                 self._write_data_to_tensorboard(data, model_output)
                 if global_config.verbosity >= 2:
-                    self._print_log(epoch, batch_idx, batch_start_time, loss, metrics)
+                    self._print_log(epoch, batch_idx, batch_start_time, loss)
 
             output = self._update_output(output, products)
         return output

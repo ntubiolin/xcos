@@ -23,7 +23,7 @@ class Tester(WorkerTemplate):
 
     def _run_and_optimize_model(self, data):
         model_output = self.model(data)
-        return model_output, None, None
+        return model_output, None
 
     def _setup_model(self):
         self.model.eval()

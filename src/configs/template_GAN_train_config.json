@@ -1,0 +1,107 @@
+{
+    "n_gpu": 1,
+    "optimizers": {
+        "generator": {
+            "target_network": "generator",
+            "forward_scenario": "generator",
+            "type": "Adam",
+            "args": {
+                "lr": 0.0002,
+                "betas": [0.5, 0.999]
+            }
+        },
+        "discriminator": {
+            "target_network": "discriminator",
+            "forward_scenario": "discriminator",
+            "type": "Adam",
+            "args": {
+                "lr": 0.0002,
+                "betas": [0.5, 0.999]
+            }
+        }
+    },
+    "lr_schedulers": {
+        "generator": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 9999,
+                "gamma": 1.0
+            }
+        },
+        "discriminator": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 9999,
+                "gamma": 1.0
+            }
+        }
+    },
+    "trainer": {
+        "epochs": 50,
+        "save_dir": "saved/",
+        "save_freq": 5,
+        "monitor_mode": "min",
+        "monitored_loader": "valid_mnist",
+        "monitored_metric": "avg_fid_score"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "MnistGAN",
+        "args": {
+            "spectral_normalization": true
+        }
+    },
+    "optimize_strategy": "GAN",
+    "data_loader": {
+        "type": "MnistDataLoader",
+        "args": {
+            "data_dir": "../datasets/mnist",
+            "batch_size": 128,
+            "validation_split": 0.2,
+            "num_workers": 4,
+            "img_size": 64,
+            "name": "mnist",
+            "norm_std": [0.5],
+            "norm_mean": [0.5]
+        }
+    },
+    "losses": {
+    },
+    "gan_losses": {
+        "generator": {
+            "type": "GANLoss",
+            "args": {
+                "nickname": "nsgan_loss_generator",
+                "weight": 1,
+                "network": "generator",
+                "type_": "nsgan"
+            }
+        },
+        "discriminator": {
+            "type": "GANLoss",
+            "args": {
+                "nickname": "nsgan_loss_discriminator",
+                "weight": 1,
+                "network": "discriminator",
+                "type_": "nsgan"
+            }
+        }
+    },
+    "metrics": {
+        "fid_score": {
+            "type": "FIDScoreInceptionV3",
+            "args": {
+                "output_key": "G_z",
+                "target_key": "data_input",
+                "nickname": "fid_score"
+            }
+        }
+    },
+    "log_step": 100,
+    "verbosity": 2,
+    "name": "GAN_template_train_config"
+}

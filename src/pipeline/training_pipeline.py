@@ -7,7 +7,6 @@ from .base_pipeline import BasePipeline
 from worker.trainer import Trainer
 from worker.validator import Validator
 import model.loss as module_loss
-from utils.util import get_instance
 from utils.global_config import global_config
 from utils.logging_config import logger
 from utils.util import ensure_dir
@@ -17,9 +16,12 @@ class TrainingPipeline(BasePipeline):
     def __init__(self, args):
         super().__init__(args)
 
-    def _before_create_workers(self):
+    def _setup_pipeline_specific_attributes(self):
         self._setup_loss_functions()
-        self._setup_lr_scheduler()
+        if self.optimize_strategy == 'GAN':
+            self._setup_gan_loss_functions()
+        self._setup_optimizers()
+        self._setup_lr_schedulers()
 
     def _create_saving_dir(self, args):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
@@ -33,8 +35,23 @@ class TrainingPipeline(BasePipeline):
             for key, entry in global_config['losses'].items()
         ]
 
-    def _setup_lr_scheduler(self):
-        self.lr_scheduler = get_instance(torch.optim.lr_scheduler, 'lr_scheduler', global_config, self.optimizer)
+    def _setup_gan_loss_functions(self):
+        """ Setup GAN loss functions. Will only be called when self.optimize_strategy == 'GAN'
+        The keys of gan_losses in config should have strict one-to-one mapping with names of optimizers. """
+        self.gan_loss_functions = {
+            key: getattr(module_loss, entry['type'])(**entry['args']).to(self.device)
+            for key, entry in global_config['gan_losses'].items()
+        }
+
+    def _setup_lr_schedulers(self):
+        """ Setup learning rate schedulers according to configuration. Note that the naming of
+        optimizers and lr_schedulers in configuration should have a strict one-to-one mapping.
+        """
+        self.lr_schedulers = {}
+        for optimizer_name, optimizer in self.optimizers.items():
+            entry = global_config['lr_schedulers'][optimizer_name]
+            self.lr_schedulers[optimizer_name] = getattr(torch.optim.lr_scheduler, entry['type'])(
+                optimizer, **entry['args'])
 
     def _create_workers(self):
         trainer = Trainer(
@@ -82,7 +99,7 @@ class TrainingPipeline(BasePipeline):
             'arch': arch,
             'epoch': epoch,
             'state_dict': model_state,
-            'optimizer': self.optimizer.state_dict(),
+            'optimizers': {key: optimizer.state_dict() for key, optimizer in self.optimizers.items()},
             'monitor_best': self.monitor_best,
             'config': global_config,
             'train_iteration_count': self.train_iteration_count,
@@ -121,8 +138,9 @@ class TrainingPipeline(BasePipeline):
         self._print_and_write_log(epoch, worker_outputs)
         self._check_and_save_best(epoch, worker_outputs)
 
-        if self.lr_scheduler is not None:
-            self.lr_scheduler.step()
+        if self.lr_schedulers is not None:
+            for scheduler in self.lr_schedulers.values():
+                scheduler.step()
 
     def run(self):
         """
