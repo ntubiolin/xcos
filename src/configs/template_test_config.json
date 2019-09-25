@@ -1,20 +1,5 @@
 {
     "n_gpu": 1,
-    "optimizer": {
-        "type": "Adam",
-        "args": {
-            "lr": 0.0001,
-            "weight_decay": 0,
-            "amsgrad": true
-        }
-    },
-    "lr_scheduler": {
-        "type": "StepLR",
-        "args": {
-            "step_size": 5,
-            "gamma": 0.6
-        }
-    },
     "trainer": {
         "epochs": 100,
         "save_dir": "saved/",
@@ -43,7 +28,7 @@
             "name": "mnist"
         }
     },
-    "valid_data_loaders": {
+    "test_data_loaders": {
         "0": {
             "type": "MnistDataLoader",
             "args": {
