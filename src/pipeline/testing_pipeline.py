@@ -43,8 +43,8 @@ class TestingPipeline(BasePipeline):
     def _create_workers(self):
         workers = []
         # Add a tester for each data loader
-        for valid_data_loader in self.valid_data_loaders:
-            tester = Tester(self, valid_data_loader, 0)
+        for test_data_loader in self.test_data_loaders:
+            tester = Tester(self, test_data_loader, 0)
             workers += [tester]
         return workers
 
@@ -52,6 +52,13 @@ class TestingPipeline(BasePipeline):
         path = os.path.join(self.saving_dir, f'{name}_output.npz')
         logger.info(f'Saving {path}...')
         np.savez(path, **worker_output)
+
+    def _setup_test_data_loaders(self):
+        if 'test_data_loaders' in global_config.keys():
+            test_data_loaders = self._setup_data_loaders('test_data_loaders')
+            return test_data_loaders
+        else:
+            raise ValueError(f"No test_data_loaders key in config")
 
     def run(self):
         """

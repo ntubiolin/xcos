@@ -30,8 +30,9 @@ class BasePipeline(ABC):
         self._print_config_messages()
 
         self.device, self.device_ids = self._setup_device()
-        self._setup_data_loader()
-        self._setup_valid_data_loaders()
+        self.data_loader = self._setup_data_loader()
+        self.valid_data_loaders = self._setup_valid_data_loaders()
+        self.test_data_loaders = self._setup_test_data_loaders()
 
         self.optimize_strategy = global_config.get('optimize_strategy', 'normal')
         self._setup_model()
@@ -123,7 +124,7 @@ class BasePipeline(ABC):
         return model
 
     def _setup_data_loader(self, key='data_loader'):
-        self.data_loader = get_instance(module_data, key, global_config)
+        return get_instance(module_data, key, global_config)
 
     def _setup_data_loaders(self, key):
         data_loaders = [
@@ -134,14 +135,18 @@ class BasePipeline(ABC):
 
     def _setup_valid_data_loaders(self):
         if 'valid_data_loaders' in global_config.keys():
-            self.valid_data_loaders = self._setup_data_loaders('valid_data_loaders')
+            valid_data_loaders = self._setup_data_loaders('valid_data_loaders')
 
             if self.data_loader.validation_split > 0:
                 raise ValueError(f'Split ratio should not > 0 when other validation loaders are specified.')
         elif self.data_loader.validation_split > 0:
-            self.valid_data_loaders = [self.data_loader.split_validation()]
+            valid_data_loaders = [self.data_loader.split_validation()]
         else:
-            self.valid_data_loaders = []
+            valid_data_loaders = []
+        return valid_data_loaders
+
+    def _setup_test_data_loaders(self):
+        return None
 
     def _setup_evaluation_metrics(self):
         evaluation_metrics = [
