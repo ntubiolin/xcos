@@ -18,16 +18,6 @@
         "type": "MnistModel",
         "args": {}
     },
-    "data_loader": {
-        "type": "MnistDataLoader",
-        "args": {
-            "data_dir": "../datasets/mnist",
-            "batch_size": 32,
-            "validation_split": 0,
-            "num_workers": 4,
-            "name": "mnist"
-        }
-    },
     "test_data_loaders": {
         "0": {
             "type": "MnistDataLoader",
@@ -73,6 +63,7 @@
     },
     "log_step": 500,
     "verbosity": 2,
-    "saved_keys": ["data_input", "data_target", "model_output"],
+    "saved_keys": ["data_input", "data_target", "model_output", "index"],
+    "save_while_infer": true,
     "name": "template_test_config"
 }

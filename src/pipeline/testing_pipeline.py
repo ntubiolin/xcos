@@ -24,7 +24,7 @@ class TestingPipeline(BasePipeline):
         if os.path.exists(saving_dir):
             logger.warning(f'The saving directory "{saving_dir}" already exists. '
                            f'If continued, some files might be overwriten.')
-            response = input('Proceed? [y/N]')
+            response = input('Proceed? [y/N] ')
             if response != 'y':
                 logger.info('Exit.')
                 exit()
@@ -37,6 +37,12 @@ class TestingPipeline(BasePipeline):
             os.symlink(os.path.abspath(args.resume), link)
         return saving_dir
 
+    def _setup_data_loader(self):
+        return None
+
+    def _setup_valid_data_loaders(self):
+        return []
+
     def _setup_config(self):
         pass
 
@@ -44,13 +50,13 @@ class TestingPipeline(BasePipeline):
         workers = []
         # Add a tester for each data loader
         for test_data_loader in self.test_data_loaders:
-            tester = Tester(self, test_data_loader, 0)
+            tester = Tester(pipeline=self, test_data_loader=test_data_loader)
             workers += [tester]
         return workers
 
     def _save_inference_results(self, name: str, worker_output: dict):
         path = os.path.join(self.saving_dir, f'{name}_output.npz')
-        logger.info(f'Saving {path}...')
+        logger.info(f'Saving {path} ...')
         np.savez(path, **worker_output)
 
     def _setup_test_data_loaders(self):
@@ -66,6 +72,7 @@ class TestingPipeline(BasePipeline):
         """
         for worker in self.workers:
             worker_output = worker.run(0)
-            self._save_inference_results(worker.data_loader.name, worker_output['saved'])
+            if not global_config.save_while_infer:
+                self._save_inference_results(worker.data_loader.name, worker_output['saved'])
             self.worker_outputs[worker.data_loader.name] = worker_output
         self._print_and_write_log(0, self.worker_outputs, write=False)

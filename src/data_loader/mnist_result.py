@@ -17,6 +17,7 @@ class MnistResultDataset(Dataset):
         """ Overwrite __getitem__ to return dictionary """
         result = self.results[index]
         return {
+            "index": index,
             self.key: result
         }
 
