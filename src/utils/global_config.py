@@ -120,7 +120,7 @@ class SingleGlobalConfig(AttrDict):
         self._specified_config = self._load_specified_configs(specified_config_filenames)
 
         # Compare specified_config and template_config to get changed_config/merged_config
-        self._flattened_changed_config, self.added_config = \
+        self._flattened_changed_config, self._added_config = \
             get_changed_and_added_config(self._template_config, self._specified_config)
         self._merged_config = merge_template_and_flattened_changed_config(
             self._template_config, self._flattened_changed_config)
@@ -141,7 +141,7 @@ class SingleGlobalConfig(AttrDict):
     def print_changed(self):
         """ Print all changed/added values. """
         for k, v in self._flattened_changed_config.items():
-            if k in self.added_config:
+            if k in self._added_config:
                 logger.info(f"Added key: {k} ({v})")
             else:
                 original_value = get_value_in_nested_dict(self._template_config, k.split('/'))
