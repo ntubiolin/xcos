@@ -66,12 +66,16 @@ class Tester(WorkerTemplate):
         if global_config.save_while_infer:
             # Save results
             name = self.data_loader.name
-            for i, output in enumerate(epoch_output['saved']['model_output']):
+
+            for i in range(len(epoch_output['saved']['model_output'])):
                 index = epoch_output['saved']['index'][i]
-                output_path = os.path.join(self.saving_dir, f'{name}_index{index:06d}.npy')
-                np.save(output_path, output)
+                output = {}
+                for saved_key in epoch_output['saved'].keys():
+                    output[saved_key] = epoch_output['saved'][saved_key][i]
+                output_path = os.path.join(self.saving_dir, f'{name}_index{index:06d}.npz')
+                np.savez(output_path, **output)
                 if index % 1000 == 0:
-                    logger.info(f'Saving output {output_path}...')
+                    logger.info(f'Saving output {output_path} ...')
 
         return epoch_output
 

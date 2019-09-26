@@ -24,7 +24,7 @@ class TestingPipeline(BasePipeline):
         if os.path.exists(saving_dir):
             logger.warning(f'The saving directory "{saving_dir}" already exists. '
                            f'If continued, some files might be overwriten.')
-            response = input('Proceed? [y/N]')
+            response = input('Proceed? [y/N] ')
             if response != 'y':
                 logger.info('Exit.')
                 exit()
@@ -56,7 +56,7 @@ class TestingPipeline(BasePipeline):
 
     def _save_inference_results(self, name: str, worker_output: dict):
         path = os.path.join(self.saving_dir, f'{name}_output.npz')
-        logger.info(f'Saving {path}...')
+        logger.info(f'Saving {path} ...')
         np.savez(path, **worker_output)
 
     def _setup_test_data_loaders(self):
