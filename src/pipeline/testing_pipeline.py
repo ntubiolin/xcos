@@ -37,6 +37,12 @@ class TestingPipeline(BasePipeline):
             os.symlink(os.path.abspath(args.resume), link)
         return saving_dir
 
+    def _setup_data_loader(self):
+        return None
+
+    def _setup_valid_data_loaders(self):
+        return []
+
     def _setup_config(self):
         pass
 
@@ -44,7 +50,7 @@ class TestingPipeline(BasePipeline):
         workers = []
         # Add a tester for each data loader
         for test_data_loader in self.test_data_loaders:
-            tester = Tester(self, test_data_loader, 0)
+            tester = Tester(pipeline=self, test_data_loader=test_data_loader)
             workers += [tester]
         return workers
 

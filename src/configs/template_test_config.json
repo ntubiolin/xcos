@@ -73,6 +73,7 @@
     },
     "log_step": 500,
     "verbosity": 2,
-    "saved_keys": ["data_input", "data_target", "model_output"],
+    "saved_keys": ["data_input", "data_target", "model_output", "index"],
+    "save_while_infer": true,
     "name": "template_test_config"
 }

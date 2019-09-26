@@ -12,6 +12,7 @@ class MnistDataset(datasets.MNIST):
         """ Overwrite __getitem__ to return dictionary """
         data = super().__getitem__(index)
         return {
+            "index": index,
             "data_input": data[0],
             "data_target": data[1]
         }
