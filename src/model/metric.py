@@ -21,14 +21,24 @@ class BaseMetric(torch.nn.Module):
 
     @abstractmethod
     def clear(self):
+        """ Initialize variables needed for metrics calculations.
+
+        This function would be called in TrainingWorker._init_output()
+        See the TopKAcc below for example.
+        """
         pass
 
     @abstractmethod
     def update(self, data, output):
+        """ Update metric values in each batch.
+
+        This function would be called inside torch.no_grad() in WorkerTemplate._update_all_metrics()
+        """
         pass
 
     @abstractmethod
     def finalize(self):
+        """ Calculate the final metric values given the variables updated in each batch. """
         pass
 
 
@@ -43,14 +53,13 @@ class TopKAcc(BaseMetric):
         self.total_number = 0
 
     def update(self, data, output):
-        with torch.no_grad():
-            logits = output[self.output_key]
-            target = data[self.target_key]
-            pred = torch.topk(logits, self.k, dim=1)[1]
-            assert pred.shape[0] == len(target)
-            correct = 0
-            for i in range(self.k):
-                correct += torch.sum(pred[:, i] == target).item()
+        logits = output[self.output_key]
+        target = data[self.target_key]
+        pred = torch.topk(logits, self.k, dim=1)[1]
+        assert pred.shape[0] == len(target)
+        correct = 0
+        for i in range(self.k):
+            correct += torch.sum(pred[:, i] == target).item()
         self.total_correct += correct
         self.total_number += len(target)
         return correct / len(target)
@@ -123,11 +132,10 @@ class FIDScore(BaseMetric):
         pass
 
     def update(self, data, output):
-        with torch.no_grad():
-            gt_tensors = self._preprocess_tensor(data[self.target_key])
-            out_tensors = self._preprocess_tensor(output[self.output_key])
-            self._gt_activations.append(self._get_activation(gt_tensors))
-            self._out_activations.append(self._get_activation(out_tensors))
+        gt_tensors = self._preprocess_tensor(data[self.target_key])
+        out_tensors = self._preprocess_tensor(output[self.output_key])
+        self._gt_activations.append(self._get_activation(gt_tensors))
+        self._out_activations.append(self._get_activation(out_tensors))
         return None
 
     def finalize(self):
