@@ -63,10 +63,11 @@ class WorkerTemplate(ABC):
     # ============ Implement the above functions ==============
     def _update_all_metrics(self, data_input, model_output, write=True):
         for metric in self.evaluation_metrics:
-            value = metric.update(data_input, model_output)
-            # some metrics do not have per-batch evaluation (e.g. FID), then value would be None
-            if write and value is not None:
-                self.writer.add_scalar(metric.nickname, value)
+            with torch.no_grad():
+                value = metric.update(data_input, model_output)
+                # some metrics do not have per-batch evaluation (e.g. FID), then value would be None
+                if write and value is not None:
+                    self.writer.add_scalar(metric.nickname, value)
 
     # Generally, the following function should not be changed.
     def _write_data_to_tensorboard(self, data, model_output):
