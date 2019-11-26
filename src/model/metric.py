@@ -8,9 +8,6 @@ from torchvision import transforms
 
 from utils.util import DeNormalize, lib_path, import_given_path
 
-inception = import_given_path("inception", os.path.join(lib_path, 'pytorch_fid/inception.py'))
-fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
-
 
 class BaseMetric(torch.nn.Module):
     def __init__(self, output_key, target_key, nickname):
@@ -102,6 +99,7 @@ class FIDScoreOffline(BaseMetric):
         return None
 
     def finalize(self):
+        fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
         return fid_score.calculate_fid_given_paths(
             paths=[self.tmp_gt_dir.name, self.tmp_out_dir.name],
             batch_size=10, cuda=True, dims=2048)
@@ -152,12 +150,14 @@ class FIDScore(BaseMetric):
         m2 = np.mean(out_activations, axis=0)
         s1 = np.cov(gt_activations, rowvar=False)
         s2 = np.cov(out_activations, rowvar=False)
+        fid_score = import_given_path("fid_score", os.path.join(lib_path, 'pytorch_fid/fid_score.py'))
         return fid_score.calculate_frechet_distance(m1, s1, m2, s2)
 
 
 class FIDScoreInceptionV3(FIDScore):
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
+        inception = import_given_path("inception", os.path.join(lib_path, 'pytorch_fid/inception.py'))
         block_idx = inception.InceptionV3.BLOCK_INDEX_BY_DIM[2048]
         self._backbone = inception.InceptionV3([block_idx])
         self._backbone.eval()
