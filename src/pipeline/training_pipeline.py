@@ -73,6 +73,9 @@ class TrainingPipeline(BasePipeline):
 
         # configuration to monitor model performance and save best
         self.monitored_loader = global_config['trainer']['monitored_loader']
+        valid_loader_names = [loader.name for loader in self.valid_data_loaders]
+        assert self.monitored_loader in valid_loader_names, \
+            f"Monitored loader '{self.monitored_loader}' not in validation data loaders {valid_loader_names}"
         self.monitored_metric = global_config['trainer']['monitored_metric']
         self.monitor_mode = global_config['trainer']['monitor_mode']
         assert self.monitor_mode in ['min', 'max', 'off']
