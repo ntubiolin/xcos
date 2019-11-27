@@ -31,7 +31,7 @@ def parse_args():
 def main(args):
     abs_patterns = os.path.abspath(args.pattern)
     logger.info(abs_patterns)
-    paths = glob(abs_patterns)
+    paths = sorted(glob(abs_patterns))
     logger.info(f"There are totally {len(paths)} files")
     with open(args.output_filename, 'w') as fout:
         fout.writelines([f"{p}\n" for p in paths])
