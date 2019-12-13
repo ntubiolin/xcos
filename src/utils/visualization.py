@@ -1,4 +1,8 @@
-from torch.utils.tensorboard import SummaryWriter
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    print("Using tensorboardX instead of built-in tensorboard (need PyTorch 1.2+ with Tensorboard 1.14+)")
+    from tensorboardX import SummaryWriter
 
 
 class WriterTensorboard():
