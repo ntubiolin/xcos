@@ -41,8 +41,8 @@ class BasePipeline(ABC):
         self._setup_writer()
         self.evaluation_metrics = self._setup_evaluation_metrics()
 
-        self._setup_config()
         self._setup_pipeline_specific_attributes()
+        self._setup_config()
 
         if args.resumed_checkpoint is not None:
             self._resume_checkpoint(args.resumed_checkpoint)
