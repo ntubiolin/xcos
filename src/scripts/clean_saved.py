@@ -13,18 +13,26 @@ def num_checkpoints(path):
 
 def collect_satisfied(args):
     collected = []
-    arch_paths = sorted(glob(os.path.join(args.root_dir_ckpts, args.pattern)))
-    for arch_path in arch_paths:
-        assert os.path.isdir(arch_path)
-        assert os.path.basename(arch_path) != 'runs'
-        exp_paths = sorted(glob(os.path.join(arch_path, '*')))
-        assert all([os.path.isdir(exp_path) for exp_path in exp_paths])
+    if args.exact_path is not None:
+        exp_paths = sorted(glob(os.path.join(args.root_dir_ckpts, args.exact_path)))
+        if len(exp_paths) > 0:
+            assert len(exp_paths) == 1
+            exp_path = exp_paths[0]
+            if num_checkpoints(exp_path) < args.at_least:
+                collected.append(exp_path)
+    else:
+        arch_paths = sorted(glob(os.path.join(args.root_dir_ckpts, args.pattern)))
+        for arch_path in arch_paths:
+            assert os.path.isdir(arch_path)
+            assert os.path.basename(arch_path) != 'runs'
+            exp_paths = sorted(glob(os.path.join(arch_path, '*')))
+            assert all([os.path.isdir(exp_path) for exp_path in exp_paths])
 
-        exp_paths = [
-            exp_path for exp_path in exp_paths
-            if num_checkpoints(exp_path) < args.at_least
-        ]
-        collected.extend(exp_paths)
+            exp_paths = [
+                exp_path for exp_path in exp_paths
+                if num_checkpoints(exp_path) < args.at_least
+            ]
+            collected.extend(exp_paths)
     return collected
 
 
@@ -105,8 +113,12 @@ parser.add_argument(
     '-all', '--all_in_once', action='store_true',
     help='Set this to disable the one-by-one comformation'
 )
+parser.add_argument(
+    '--exact_path', type=str, default=None,
+    help='Set this to a specific experiment path (exp_name/exp_time) to delete.'
+)
 args = parser.parse_args()
-assert args.pattern is not None, 'Pattern must be provided.'
+assert args.pattern is not None or args.exact_path is not None, 'A pattern or an exact exp path must be provided.'
 assert args.pattern != '', 'Pattern can not be empty.'
 
 
