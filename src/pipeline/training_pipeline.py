@@ -27,6 +27,12 @@ class TrainingPipeline(BasePipeline):
         saving_dir = os.path.join(global_config['trainer']['save_dir'], args.ckpts_subdir,
                                   global_config['name'], self.start_time)
         ensure_dir(saving_dir)
+
+        # create a link to the resumed checkpoint as a reference
+        if args.resume is not None:
+            link = os.path.join(saving_dir, 'resumed_ckpt.pth')
+            os.symlink(os.path.abspath(args.resume), link)
+
         return saving_dir
 
     def _setup_loss_functions(self):
