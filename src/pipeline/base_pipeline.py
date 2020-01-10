@@ -236,7 +236,8 @@ class BasePipeline(ABC):
         model.load_state_dict(resumed_checkpoint['state_dict'])
 
     def _print_and_write_log(self, epoch, worker_outputs, write=True):
-        # print common worker logged info
+        # This function is to print out epoch summary of workers
+        # and append these summary values on the summary csv file.
         if write:
             self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
