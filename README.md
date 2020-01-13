@@ -19,7 +19,11 @@ bash Miniconda3-latest-Linux-x86_64.sh
 3. Build conda environment from file
 ```
 cd pytorch-golden-template
-conda env create -f environment.yml
+conda create -n PytorchGoldenTemplate python">=3.6" pytorch">=1.0" torchvision tensorboard pillow">=6.1" pandas coloredlogs imageio scipy -c pytorch
+source activate PytorchGoldenTemplate
+pip install attrdict tensorboardX
+# Or
+conda env create -f environment.yaml
 ```
 
 4. Update submodules
