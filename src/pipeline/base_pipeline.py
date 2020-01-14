@@ -5,6 +5,7 @@ import logging
 from abc import ABC, abstractmethod
 
 import torch
+import pandas as pd
 
 from utils.util import get_instance
 from utils.visualization import WriterTensorboard
@@ -235,10 +236,12 @@ class BasePipeline(ABC):
         model.load_state_dict(resumed_checkpoint['state_dict'])
 
     def _print_and_write_log(self, epoch, worker_outputs, write=True):
-        # print common worker logged info
+        # This function is to print out epoch summary of workers
+        # and append these summary values on the summary csv file.
         if write:
             self.writer.set_step(epoch, 'epoch_average')  # TODO: See if we can use tree-structured tensorboard logging
         logger.info(f'  epoch: {epoch:d}')
+        epoch_record = {'epoch': epoch}
         # print the logged info for each loader (corresponding to each worker)
         for loader_name, output in worker_outputs.items():
             log = output['log']
@@ -248,5 +251,13 @@ class BasePipeline(ABC):
                 if global_config.verbosity >= 1:
                     logger.info(f'    {str(key):20s}: {value:.4f}')
                 if 'elapsed_time' not in key and write:
+                    value = value.item() if isinstance(value, torch.Tensor) else value
+                    epoch_record[f'{loader_name}_{key}'] = [value]
                     # TODO: See if we can use tree-structured tensorboard logging
                     self.writer.add_scalar(f'{loader_name}_{key}', value)
+
+        # concatenate summary of this epoch into 'epochs_summary.csv'
+        new_df = pd.DataFrame(epoch_record)
+        csv_file = os.path.join(self.saving_dir, 'epochs_summary.csv')
+        df = pd.concat([pd.read_csv(csv_file), new_df]) if os.path.exists(csv_file) else new_df
+        df.to_csv(csv_file, index=False)
