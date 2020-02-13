@@ -39,6 +39,25 @@ class BaseMetric(torch.nn.Module):
         pass
 
 
+class TestMetric(BaseMetric):
+    def __init__(self, k, output_key, target_key, nickname=None):
+        nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
+        super().__init__(output_key, target_key, nickname)
+        self.k = k
+
+    def clear(self):
+        self.total_correct = 0
+        self.total_number = 0
+
+    def update(self, data, output):
+        self.total_correct += 2
+        self.total_number += 1
+        return self.total_correct / self.total_number
+
+    def finalize(self):
+        return self.total_correct / self.total_number
+
+
 class TopKAcc(BaseMetric):
     def __init__(self, k, output_key, target_key, nickname=None):
         nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname

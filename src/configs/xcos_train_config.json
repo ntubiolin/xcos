@@ -1,0 +1,86 @@
+{
+    "n_gpu": 1,
+    "optimizers": {
+        "default": {
+            "type": "Adam",
+            "args": {
+                "lr": 0.001,
+                "weight_decay": 0,
+                "amsgrad": true
+            }
+        }
+    },
+    "lr_schedulers": {
+        "default": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 5,
+                "gamma": 0.9
+            }
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 1,
+        "monitor": "valid_seen_loss",
+        "monitored_metric": "avg_loss",
+        "monitor_mode": "min",
+        "monitored_loader":"valid_casia"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "xCosModel",
+        "args": {
+            "class_num": 10572
+        }
+    },
+    "data_loader": {
+        "type": "FaceDataLoader",
+        "args": {
+            "data_dir": "../datasets/face/CASIA",
+            "batch_size": 48,
+            "validation_split": 0.8,
+            "num_workers": 6,
+            "name": "casia"
+        }
+    },
+    "losses": {
+        "0": {
+            "type": "SiameseCrossEntropyLoss",
+            "args": {
+                "output_key": "thetas",
+                "target_key": "targeted_id_labels",
+                "nickname": "CrossEntropy",
+                "weight": 1
+            }
+        },
+        "1": {
+            "type": "SiameseMSELoss",
+            "args": {
+                "output_key": "x_coses",
+                "target_key": "targeted_cos",
+                "nickname": "MSE",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "TestMetric",
+            "args": {
+                "nickname": "myTestMetric",
+                "k": 1,
+                "output_key": "model_output",
+                "target_key": "data_target"
+            }
+        }
+    },
+    "log_step": 1,
+    "verbosity": 2,
+    "name": "xcos_train_config"
+}
