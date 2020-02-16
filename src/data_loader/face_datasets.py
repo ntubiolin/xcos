@@ -6,6 +6,7 @@ from glob import glob
 import numpy as np
 import pandas as pd
 from PIL import Image
+import bcolz
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
@@ -34,6 +35,41 @@ class myImageFolder(ImageFolder):
         super(myImageFolder, self).__init__(root, transform, target_transform)
 
 
+class InsightFaceBinaryImg(Dataset):
+    def __init__(self, root_folder, dataset_name, transform=None):
+        self.root = root_folder
+        self.name = dataset_name
+        self.transform = transform
+        self.img_arr, self.is_same_arr = self.get_val_pair(self.root, self.name)
+
+    def __getitem__(self, index):
+        img_pair = self.img_arr[index * 2: (index + 1) * 2]
+        # Shape: from [2, c, h, w] to [2, h, w, c]
+        img_pair = np.transpose(img_pair, (0, 2, 3, 1))
+        # Range: [-1, +1] --> [0, 255]
+        img_pair = ((img_pair + 1) * 0.5 * 255).astype(np.uint8)
+        # BGR2RGB
+        img_pair_tmp = []
+        for img in img_pair:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
+            if self.transform is not None:
+                img = self.transform(img)
+            else:
+                raise NotImplementedError
+            img_pair_tmp.append(img)
+        img_pair = torch.stack(img_pair_tmp)
+        is_same_label = self.is_same_arr[index]
+        return {"data_input": img_pair, "is_same_labels": is_same_label}
+
+    def __len__(self):
+        return len(self.is_same_arr)
+
+    def get_val_pair(self, path, name):
+        carray = bcolz.carray(rootdir=op.join(path, name), mode="r")
+        issame = np.load(op.join(path, "{}_list.npy".format(name)))
+        return carray, issame
+
+
 class SiameseDFWImageFolder(Dataset):
     """
     Train: For each sample creates randomly a positive or a negative pair
@@ -46,12 +82,19 @@ class SiameseDFWImageFolder(Dataset):
         self.root = imgs_folder_dir
         self.dataset_type = dataset_type
         matrix_txt_path = os.path.join(
-            self.root, "Mask_matrices", dataset_type, f"{dataset_type}_data_mask_matrix.txt",
+            self.root,
+            "Mask_matrices",
+            dataset_type,
+            f"{dataset_type}_data_mask_matrix.txt",
         )
         self.data_mask_matrix = np.loadtxt(matrix_txt_path)
-        img_path_list_path = os.path.join(self.root, f"{dataset_type.capitalize()}_data_face_name.txt")
+        img_path_list_path = os.path.join(
+            self.root, f"{dataset_type.capitalize()}_data_face_name.txt"
+        )
         self.img_path_list = read_lines_into_list(img_path_list_path)
-        self.img_label_list, self.name2label = self.img_path_to_label_list(self.img_path_list)
+        self.img_label_list, self.name2label = self.img_path_to_label_list(
+            self.img_path_list
+        )
         self.transform = transform
         # ############################################
         # self.wFace_dataset = ImageFolder(imgs_folder_dir, transform)
@@ -212,7 +255,9 @@ class SiameseImageFolder(Dataset):
         #    self.train_data = self.wFace_dataset.train_data
 
         self.labels_set = set(self.train_labels)
-        self.label_to_indices = {label: np.where(self.train_labels == label)[0] for label in self.labels_set}
+        self.label_to_indices = {
+            label: np.where(self.train_labels == label)[0] for label in self.labels_set
+        }
         print(">>> Init SiameseImageFolder done!")
 
     def __getitem__(self, index):
@@ -232,10 +277,7 @@ class SiameseImageFolder(Dataset):
 
         # XXX stack
         # stack (img1, img2), (label1, label2), cos_gt
-        return {
-            "data_input": (img1, img2),
-            "targeted_id_labels": (label1, label2)
-        }
+        return {"data_input": (img1, img2), "targeted_id_labels": (label1, label2)}
 
     def __len__(self):
         return len(self.wFace_dataset)
@@ -270,7 +312,8 @@ class SiameseWholeFace(Dataset):
 
             self.labels_set = set(self.train_labels.numpy())
             self.label_to_indices = {
-                label: np.where(self.train_labels.numpy() == label)[0] for label in self.labels_set
+                label: np.where(self.train_labels.numpy() == label)[0]
+                for label in self.labels_set
             }
         else:
             # generate fixed pairs for testing
@@ -280,12 +323,21 @@ class SiameseWholeFace(Dataset):
             if self.memoryAll:
                 self.test_data = self.wFace_dataset.test_data
             self.labels_set = set(self.test_labels.numpy())
-            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0] for label in self.labels_set}
+            self.label_to_indices = {
+                label: np.where(self.test_labels.numpy() == label)[0]
+                for label in self.labels_set
+            }
 
             random_state = np.random.RandomState(29)
 
             positive_pairs = [
-                [i, random_state.choice(self.label_to_indices[self.test_labels[i].item()]), 1, ]
+                [
+                    i,
+                    random_state.choice(
+                        self.label_to_indices[self.test_labels[i].item()]
+                    ),
+                    1,
+                ]
                 for i in range(0, len(self.test_data), 2)
             ]
 
@@ -294,7 +346,11 @@ class SiameseWholeFace(Dataset):
                     i,
                     random_state.choice(
                         self.label_to_indices[
-                            np.random.choice(list(self.labels_set - set([self.test_labels[i].item()])))
+                            np.random.choice(
+                                list(
+                                    self.labels_set - set([self.test_labels[i].item()])
+                                )
+                            )
                         ]
                     ),
                     0,
@@ -351,7 +407,8 @@ class SiameseENM(Dataset):
             self.train_data = self.ENM_dataset.train_data
             self.labels_set = set(self.train_labels.numpy())
             self.label_to_indices = {
-                label: np.where(self.train_labels.numpy() == label)[0] for label in self.labels_set
+                label: np.where(self.train_labels.numpy() == label)[0]
+                for label in self.labels_set
             }
         else:
             # generate fixed pairs for testing
@@ -359,12 +416,21 @@ class SiameseENM(Dataset):
             self.test_labels = self.ENM_dataset.test_labels
             self.test_data = self.ENM_dataset.test_data
             self.labels_set = set(self.test_labels.numpy())
-            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0] for label in self.labels_set}
+            self.label_to_indices = {
+                label: np.where(self.test_labels.numpy() == label)[0]
+                for label in self.labels_set
+            }
 
             random_state = np.random.RandomState(29)
 
             positive_pairs = [
-                [i, random_state.choice(self.label_to_indices[self.test_labels[i].item()]), 1, ]
+                [
+                    i,
+                    random_state.choice(
+                        self.label_to_indices[self.test_labels[i].item()]
+                    ),
+                    1,
+                ]
                 for i in range(0, len(self.test_data), 2)
             ]
 
@@ -373,7 +439,11 @@ class SiameseENM(Dataset):
                     i,
                     random_state.choice(
                         self.label_to_indices[
-                            np.random.choice(list(self.labels_set - set([self.test_labels[i].item()])))
+                            np.random.choice(
+                                list(
+                                    self.labels_set - set([self.test_labels[i].item()])
+                                )
+                            )
                         ]
                     ),
                     0,
@@ -420,7 +490,8 @@ class TripletENM(Dataset):
             self.train_data = self.ENM_dataset.train_data
             self.labels_set = set(self.train_labels.numpy())
             self.label_to_indices = {
-                label: np.where(self.train_labels.numpy() == label)[0] for label in self.labels_set
+                label: np.where(self.train_labels.numpy() == label)[0]
+                for label in self.labels_set
             }
 
         else:
@@ -428,17 +499,26 @@ class TripletENM(Dataset):
             self.test_data = self.ENM_dataset.test_data
             # generate fixed triplets for testing
             self.labels_set = set(self.test_labels.numpy())
-            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0] for label in self.labels_set}
+            self.label_to_indices = {
+                label: np.where(self.test_labels.numpy() == label)[0]
+                for label in self.labels_set
+            }
 
             random_state = np.random.RandomState(29)
 
             triplets = [
                 [
                     i,
-                    random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
+                    random_state.choice(
+                        self.label_to_indices[self.test_labels[i].item()]
+                    ),
                     random_state.choice(
                         self.label_to_indices[
-                            np.random.choice(list(self.labels_set - set([self.test_labels[i].item()])))
+                            np.random.choice(
+                                list(
+                                    self.labels_set - set([self.test_labels[i].item()])
+                                )
+                            )
                         ]
                     ),
                 ]
@@ -484,19 +564,29 @@ class SiameseMNIST(Dataset):
             self.train_data = self.mnist_dataset.train_data
             self.labels_set = set(self.train_labels.numpy())
             self.label_to_indices = {
-                label: np.where(self.train_labels.numpy() == label)[0] for label in self.labels_set
+                label: np.where(self.train_labels.numpy() == label)[0]
+                for label in self.labels_set
             }
         else:
             # generate fixed pairs for testing
             self.test_labels = self.mnist_dataset.test_labels
             self.test_data = self.mnist_dataset.test_data
             self.labels_set = set(self.test_labels.numpy())
-            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0] for label in self.labels_set}
+            self.label_to_indices = {
+                label: np.where(self.test_labels.numpy() == label)[0]
+                for label in self.labels_set
+            }
 
             random_state = np.random.RandomState(29)
 
             positive_pairs = [
-                [i, random_state.choice(self.label_to_indices[self.test_labels[i].item()]), 1, ]
+                [
+                    i,
+                    random_state.choice(
+                        self.label_to_indices[self.test_labels[i].item()]
+                    ),
+                    1,
+                ]
                 for i in range(0, len(self.test_data), 2)
             ]
 
@@ -505,7 +595,11 @@ class SiameseMNIST(Dataset):
                     i,
                     random_state.choice(
                         self.label_to_indices[
-                            np.random.choice(list(self.labels_set - set([self.test_labels[i].item()])))
+                            np.random.choice(
+                                list(
+                                    self.labels_set - set([self.test_labels[i].item()])
+                                )
+                            )
                         ]
                     ),
                     0,
@@ -558,7 +652,8 @@ class TripletMNIST(Dataset):
             self.train_data = self.mnist_dataset.train_data
             self.labels_set = set(self.train_labels.numpy())
             self.label_to_indices = {
-                label: np.where(self.train_labels.numpy() == label)[0] for label in self.labels_set
+                label: np.where(self.train_labels.numpy() == label)[0]
+                for label in self.labels_set
             }
 
         else:
@@ -566,17 +661,26 @@ class TripletMNIST(Dataset):
             self.test_data = self.mnist_dataset.test_data
             # generate fixed triplets for testing
             self.labels_set = set(self.test_labels.numpy())
-            self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0] for label in self.labels_set}
+            self.label_to_indices = {
+                label: np.where(self.test_labels.numpy() == label)[0]
+                for label in self.labels_set
+            }
 
             random_state = np.random.RandomState(29)
 
             triplets = [
                 [
                     i,
-                    random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
+                    random_state.choice(
+                        self.label_to_indices[self.test_labels[i].item()]
+                    ),
                     random_state.choice(
                         self.label_to_indices[
-                            np.random.choice(list(self.labels_set - set([self.test_labels[i].item()])))
+                            np.random.choice(
+                                list(
+                                    self.labels_set - set([self.test_labels[i].item()])
+                                )
+                            )
                         ]
                     ),
                 ]
@@ -621,7 +725,10 @@ class BalancedBatchSampler(BatchSampler):
     def __init__(self, labels, n_classes, n_samples):
         self.labels = labels
         self.labels_set = list(set(self.labels.numpy()))
-        self.label_to_indices = {label: np.where(self.labels.numpy() == label)[0] for label in self.labels_set}
+        self.label_to_indices = {
+            label: np.where(self.labels.numpy() == label)[0]
+            for label in self.labels_set
+        }
         for l in self.labels_set:
             np.random.shuffle(self.label_to_indices[l])
         self.used_label_indices_count = {label: 0 for label in self.labels_set}
@@ -639,11 +746,16 @@ class BalancedBatchSampler(BatchSampler):
             for class_ in classes:
                 indices.extend(
                     self.label_to_indices[class_][
-                        self.used_label_indices_count[class_]: self.used_label_indices_count[class_] + self.n_samples
+                        self.used_label_indices_count[
+                            class_
+                        ]: self.used_label_indices_count[class_]
+                        + self.n_samples
                     ]
                 )
                 self.used_label_indices_count[class_] += self.n_samples
-                if self.used_label_indices_count[class_] + self.n_samples > len(self.label_to_indices[class_]):
+                if self.used_label_indices_count[class_] + self.n_samples > len(
+                    self.label_to_indices[class_]
+                ):
                     np.random.shuffle(self.label_to_indices[class_])
                     self.used_label_indices_count[class_] = 0
             yield indices
@@ -664,11 +776,16 @@ class IJBCVerificationBaseDataset(Dataset):
         self.ijbc_data_root = ijbc_data_root
         dtype_sid_tid = {"SUBJECT_ID": str, "TEMPLATE_ID": str}
         self.metadata = pd.read_csv(
-            op.join(ijbc_data_root, "protocols", "ijbc_metadata_with_age.csv"), dtype=dtype_sid_tid,
+            op.join(ijbc_data_root, "protocols", "ijbc_metadata_with_age.csv"),
+            dtype=dtype_sid_tid,
         )
         test1_dir = op.join(ijbc_data_root, "protocols", "test1")
-        self.enroll_templates = pd.read_csv(op.join(test1_dir, "enroll_templates.csv"), dtype=dtype_sid_tid)
-        self.verif_templates = pd.read_csv(op.join(test1_dir, "verif_templates.csv"), dtype=dtype_sid_tid)
+        self.enroll_templates = pd.read_csv(
+            op.join(test1_dir, "enroll_templates.csv"), dtype=dtype_sid_tid
+        )
+        self.verif_templates = pd.read_csv(
+            op.join(test1_dir, "verif_templates.csv"), dtype=dtype_sid_tid
+        )
         self.match = pd.read_csv(op.join(test1_dir, "match.csv"), dtype=str)
 
         if leave_ratio < 1.0:  # shrink the number of verified pairs
@@ -681,8 +798,12 @@ class IJBCVerificationBaseDataset(Dataset):
     def _get_both_entries(self, idx):
         enroll_tid = self.match.iloc[idx]["ENROLL_TEMPLATE_ID"]
         verif_tid = self.match.iloc[idx]["VERIF_TEMPLATE_ID"]
-        enroll_entries = self.enroll_templates[self.enroll_templates.TEMPLATE_ID == enroll_tid]
-        verif_entries = self.verif_templates[self.verif_templates.TEMPLATE_ID == verif_tid]
+        enroll_entries = self.enroll_templates[
+            self.enroll_templates.TEMPLATE_ID == enroll_tid
+        ]
+        verif_entries = self.verif_templates[
+            self.verif_templates.TEMPLATE_ID == verif_tid
+        ]
         return enroll_entries, verif_entries
 
     def _get_cropped_path_suffix(self, entry):
@@ -720,11 +841,15 @@ class IJBCVerificationDataset(IJBCVerificationBaseDataset):
 
     def _get_cropped_face_image_by_entry(self, entry):
         cropped_path_suffix = self._get_cropped_path_suffix(entry)
-        cropped_path = op.join(self.ijbc_data_root, "cropped_faces", cropped_path_suffix)
+        cropped_path = op.join(
+            self.ijbc_data_root, "cropped_faces", cropped_path_suffix
+        )
         return Image.open(cropped_path)
 
     def _get_tensor_by_entries(self, entries):
-        faces_imgs = [self._get_cropped_face_image_by_entry(e) for idx, e in entries.iterrows()]
+        faces_imgs = [
+            self._get_cropped_face_image_by_entry(e) for idx, e in entries.iterrows()
+        ]
         faces_tensors = [self.transforms(img) for img in faces_imgs]
         return torch.stack(faces_tensors, dim=0)
 
@@ -752,7 +877,9 @@ class IJBCVerificationPathDataset(IJBCVerificationBaseDataset):
     def __init__(self, ijbc_data_root, occlusion_lower_bound=0, leave_ratio=1.0):
         super().__init__(ijbc_data_root, leave_ratio=leave_ratio)
         self.occlusion_lower_bound = occlusion_lower_bound
-        self.metadata["OCC_sum"] = self.metadata[[f"OCC{i}" for i in range(1, 19)]].sum(axis=1)
+        self.metadata["OCC_sum"] = self.metadata[[f"OCC{i}" for i in range(1, 19)]].sum(
+            axis=1
+        )
         self.reindexed_meta = self.metadata.set_index(["SUBJECT_ID", "FILENAME"])
 
     def _filter_out_occlusion_insufficient_entries(self, entries):
@@ -761,7 +888,9 @@ class IJBCVerificationPathDataset(IJBCVerificationBaseDataset):
 
         out = []
         for _, entry in entries.iterrows():
-            occlusion_sum = self.reindexed_meta.loc[(entry["SUBJECT_ID"], entry["FILENAME"]), "OCC_sum"]
+            occlusion_sum = self.reindexed_meta.loc[
+                (entry["SUBJECT_ID"], entry["FILENAME"]), "OCC_sum"
+            ]
             if occlusion_sum.values[0] >= self.occlusion_lower_bound:
                 out.append(entry)
         return out
@@ -769,7 +898,9 @@ class IJBCVerificationPathDataset(IJBCVerificationBaseDataset):
     def __getitem__(self, idx):
         enroll_entries, verif_entries = self._get_both_entries(idx)
 
-        is_same = enroll_entries["SUBJECT_ID"].iloc[0] == verif_entries["SUBJECT_ID"].iloc[0]
+        is_same = (
+            enroll_entries["SUBJECT_ID"].iloc[0] == verif_entries["SUBJECT_ID"].iloc[0]
+        )
         is_same = 1 if is_same else 0
         enroll_template_id = (enroll_entries["TEMPLATE_ID"].iloc[0],)
         verif_template_id = (verif_entries["TEMPLATE_ID"].iloc[0],)
@@ -804,13 +935,23 @@ class IJBVerificationPathDataset(Dataset):
     def __init__(self, ijb_dataset_root, leave_ratio=1.0, dataset_type="IJBB"):
         # TODO implement the leave_ratio method
         if dataset_type == "IJBB":
-            match_filename = op.join(ijb_dataset_root, "meta", "ijbb_template_pair_label.txt")
+            match_filename = op.join(
+                ijb_dataset_root, "meta", "ijbb_template_pair_label.txt"
+            )
         elif dataset_type == "IJBC":
-            match_filename = op.join(ijb_dataset_root, "meta", "ijbc_template_pair_label.txt")
+            match_filename = op.join(
+                ijb_dataset_root, "meta", "ijbc_template_pair_label.txt"
+            )
         else:
             raise NotImplementedError
         col_name = ["TEMPLATE_ID1", "TEMPLATE_ID2", "IS_SAME"]
-        self.match = pd.read_csv(match_filename, delim_whitespace=True, header=None, dtype=str, names=col_name,)
+        self.match = pd.read_csv(
+            match_filename,
+            delim_whitespace=True,
+            header=None,
+            dtype=str,
+            names=col_name,
+        )
 
         if leave_ratio < 1.0:  # shrink the number of verified pairs
             indice = np.arange(len(self.match))
@@ -857,9 +998,13 @@ class IJBCAllCroppedFacesDataset(Dataset):
                 transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
             ]
         )
-        self.all_cropped_paths_img = sorted(glob(op.join(self.ijbc_data_root, "cropped_faces", "img", "*.jpg")))
+        self.all_cropped_paths_img = sorted(
+            glob(op.join(self.ijbc_data_root, "cropped_faces", "img", "*.jpg"))
+        )
         self.len_set1 = len(self.all_cropped_paths_img)
-        self.all_cropped_paths_frames = sorted(glob(op.join(self.ijbc_data_root, "cropped_faces", "frames", "*.jpg")))
+        self.all_cropped_paths_frames = sorted(
+            glob(op.join(self.ijbc_data_root, "cropped_faces", "frames", "*.jpg"))
+        )
 
     def __getitem__(self, idx):
         if idx < self.len_set1:
@@ -902,7 +1047,9 @@ class IJBCroppedFacesDataset(Dataset):
         else:
             landmark_txt = "ijbc_name_5pts_score.txt"
         landmark_path = op.join(self.ijbc_data_root, "meta", landmark_txt)
-        self.imgs_list, self.landmarks_list = self.loadImgPathAndLandmarks(landmark_path)
+        self.imgs_list, self.landmarks_list = self.loadImgPathAndLandmarks(
+            landmark_path
+        )
         self.alignment = Alignment()
 
     def loadImgPathAndLandmarks(self, path):
@@ -913,7 +1060,9 @@ class IJBCroppedFacesDataset(Dataset):
             for line in lines:
                 name_lmk_score = line.strip().split(" ")
                 img_name = os.path.join(self.img_dir, name_lmk_score[0])
-                lmk = np.array([float(x) for x in name_lmk_score[1:-1]], dtype=np.float32)
+                lmk = np.array(
+                    [float(x) for x in name_lmk_score[1:-1]], dtype=np.float32
+                )
                 lmk = lmk.reshape((5, 2))
 
                 imgs_list.append(img_name)
@@ -969,9 +1118,13 @@ class IJBAVerificationDataset(Dataset):
         split_root = op.join(ijba_data_root, "IJB-A_11_sets", split_name)
         self.only_first_image = only_first_image
 
-        self.metadata = pd.read_csv(op.join(split_root, f"verify_metadata_{split_name[5:]}.csv"))
+        self.metadata = pd.read_csv(
+            op.join(split_root, f"verify_metadata_{split_name[5:]}.csv")
+        )
         self.metadata = self.metadata.set_index("TEMPLATE_ID")
-        self.comparisons = pd.read_csv(op.join(split_root, f"verify_comparisons_{split_name[5:]}.csv"), header=None)
+        self.comparisons = pd.read_csv(
+            op.join(split_root, f"verify_comparisons_{split_name[5:]}.csv"), header=None
+        )
 
         self.transform = transforms.Compose(
             [
@@ -1057,7 +1210,9 @@ class IJBAVerificationDataset(Dataset):
 class ARVerificationAllPathDataset(Dataset):
     "/tmp3/biolin/datasets/face/ARFace/test2"
 
-    def __init__(self, dataset_root="/tmp2/zhe2325138/dataset/ARFace/mtcnn_aligned_and_cropped/"):
+    def __init__(
+        self, dataset_root="/tmp2/zhe2325138/dataset/ARFace/mtcnn_aligned_and_cropped/"
+    ):
         self.dataset_root = dataset_root
         self.face_image_paths = sorted(glob(op.join(self.dataset_root, "*.png")))
 

@@ -7,7 +7,7 @@ from torchvision import transforms
 from .base_data_loader import BaseDataLoader
 from .mnist import MnistDataset
 from .mnist_result import MnistResultDataset
-from .face_datasets import SiameseImageFolder
+from .face_datasets import SiameseImageFolder, InsightFaceBinaryImg
 
 
 class FaceDataLoader(BaseDataLoader):
@@ -16,8 +16,8 @@ class FaceDataLoader(BaseDataLoader):
     Returned data will be in dictionary
     """
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
-                 num_workers=1, training=True, name=None,
-                 img_size=28, norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]):
+                 num_workers=1, name=None,
+                 norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]):
         trsfm = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -25,6 +25,24 @@ class FaceDataLoader(BaseDataLoader):
         ])
         self.data_dir = data_dir
         self.dataset = SiameseImageFolder(data_dir, trsfm)
+        self.name = self.__class__.__name__ if name is None else name
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+class FaceBinDataLoader(BaseDataLoader):
+    """
+    Customized Face data loader that load val data from bin files
+    Returned data will be in dictionary
+    """
+    def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
+                 num_workers=1, name="LFW",
+                 norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]):
+        trsfm = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=norm_mean, std=norm_std)
+        ])
+        self.data_dir = data_dir
+        self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm)
         self.name = self.__class__.__name__ if name is None else name
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
 
