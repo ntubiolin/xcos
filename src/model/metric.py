@@ -7,6 +7,7 @@ import numpy as np
 from torchvision import transforms
 
 from utils.util import DeNormalize, lib_path, import_given_path
+from utils.verification import evaluate_accuracy
 
 
 class BaseMetric(torch.nn.Module):
@@ -56,6 +57,45 @@ class TestMetric(BaseMetric):
 
     def finalize(self):
         return self.total_correct / self.total_number
+
+
+class VerificationMetric(BaseMetric):
+    def __init__(self, output_key, target_key, nickname=None, num_of_folds=5):
+        nickname = f"verificatoin_acc_{target_key}" if nickname is None else nickname
+        super().__init__(output_key, target_key, nickname)
+        self.num_of_folds = num_of_folds
+        self.cos_values = []
+        self.is_same_ground_truth = []
+
+    def clear(self):
+        self.cos_values = []
+        self.is_same_ground_truth = []
+
+    def update(self, data, output):
+        self.cos_values.append(output[self.output_key])
+        self.is_same_ground_truth.append(data[self.target_key].cpu().numpy())
+        return None
+
+    def finalize(self):
+        print(">>> In metric validation finalize()")
+        print(len(self.cos_values), len(self.is_same_ground_truth))
+        print(self.cos_values[0].shape)
+        print(self.is_same_ground_truth[0].shape)
+        self.cos_values = np.concatenate(self.cos_values, axis=None)
+        self.is_same_ground_truth = np.concatenate(self.is_same_ground_truth, axis=None)
+        accuracy, threshold, roc_tensor = self.evaluate_and_plot_roc(
+            self.cos_values, self.is_same_ground_truth, self.num_of_folds
+        )
+        return accuracy
+
+    def evaluate_and_plot_roc(self, coses, issame, nrof_folds=5):
+        print(">>>> In evaluate_and_plot_roc")
+        print(coses.shape)
+        print(issame.shape)
+        accuracy, best_thresholds, roc_curve_tensor = evaluate_accuracy(
+            coses, issame, nrof_folds
+        )
+        return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
 
 
 class TopKAcc(BaseMetric):
