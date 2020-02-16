@@ -36,6 +36,7 @@ class BasePipeline(ABC):
         self.test_data_loaders = self._setup_test_data_loaders()
 
         self.optimize_strategy = global_config.get('optimize_strategy', 'normal')
+        self.validation_strategy = global_config.get('validation_strategy', self.optimize_strategy)
         self._setup_model()
         self._setup_data_parallel()
 

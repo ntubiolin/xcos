@@ -26,7 +26,7 @@
         "monitor": "valid_seen_loss",
         "monitored_metric": "avg_loss",
         "monitor_mode": "min",
-        "monitored_loader":"valid_casia"
+        "monitored_loader":"lfw"
     },
     "trainer_args": {},
     "visualization": {
@@ -44,9 +44,23 @@
         "args": {
             "data_dir": "../datasets/face/CASIA",
             "batch_size": 48,
-            "validation_split": 0.8,
+            "validation_split": 0,
             "num_workers": 6,
             "name": "casia"
+        }
+    },
+    "validation_strategy": "bypass_loss_calculation",
+    "valid_data_loaders": {
+        "1": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "lfw"
+            }
         }
     },
     "losses": {
@@ -71,12 +85,11 @@
     },
     "metrics": {
         "0": {
-            "type": "TestMetric",
+            "type": "VerificationMetric",
             "args": {
-                "nickname": "myTestMetric",
-                "k": 1,
-                "output_key": "model_output",
-                "target_key": "data_target"
+                "nickname": "verificationMetric",
+                "output_key": "x_coses",
+                "target_key": "is_same_labels"
             }
         }
     },
