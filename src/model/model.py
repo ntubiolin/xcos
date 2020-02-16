@@ -40,32 +40,47 @@ class xCosModel(BaseModel):
         self.backbone.weight_init(mean=0.0, std=0.02)
         self.backbone_target.weight_init(mean=0.0, std=0.02)
 
-    def forward(self, data_dict):
-        img1s, img2s = data_dict['data_input']
-        label1s, label2s = data_dict['targeted_id_labels']
+    def forward(self, data_dict, scenario="normal"):
         model_output = {}
-        ###############
-        # imgs = torch.cat((img1s, img2s), 0)
-        # labels = torch.cat((label1s, label2s), 0)
+        if scenario == 'normal':
+            img1s, img2s = data_dict['data_input']
+            label1s, label2s = data_dict['targeted_id_labels']
+            ###############
+            # imgs = torch.cat((img1s, img2s), 0)
+            # labels = torch.cat((label1s, label2s), 0)
 
-        flatten_feat1s, grid_feat1s = self.backbone(img1s)
-        flatten_feat2s, grid_feat2s = self.backbone(img2s)
-        # Part1: FR
-        theta1s = self.head(flatten_feat1s, label1s)
-        theta2s = self.head(flatten_feat2s, label2s)
-        # labels = torch.cat((label1s, label2s), 0)
-        thetas = torch.cat((theta1s, theta2s), 0)
-        # model_output["labels"] = labels
-        model_output["thetas"] = thetas
-        # loss1 = self.loss_fr(thetas, labels)
+            flatten_feat1s, grid_feat1s = self.backbone(img1s)
+            flatten_feat2s, grid_feat2s = self.backbone(img2s)
+            # Part1: FR
+            theta1s = self.head(flatten_feat1s, label1s)
+            theta2s = self.head(flatten_feat2s, label2s)
+            # labels = torch.cat((label1s, label2s), 0)
+            thetas = torch.cat((theta1s, theta2s), 0)
+            # model_output["labels"] = labels
+            model_output["thetas"] = thetas
+            # loss1 = self.loss_fr(thetas, labels)
 
-        # Part2: xCos
-        attention_maps = self.attention(grid_feat1s, grid_feat2s)
-        grid_cos_maps = self.grid_cos(grid_feat1s, grid_feat2s)
-        x_coses = self.frobenius_inner_product(grid_cos_maps, attention_maps)
-        targeted_coses = self.getCos(img1s, img2s)
-        model_output["x_coses"] = x_coses
-        model_output["targeted_cos"] = targeted_coses
+            # Part2: xCos
+            attention_maps = self.attention(grid_feat1s, grid_feat2s)
+            grid_cos_maps = self.grid_cos(grid_feat1s, grid_feat2s)
+            x_coses = self.frobenius_inner_product(grid_cos_maps, attention_maps)
+            targeted_coses = self.getCos(img1s, img2s)
+            model_output["x_coses"] = x_coses
+            model_output["targeted_cos"] = targeted_coses
+        elif scenario == 'get_feature_and_xcos':
+            img1s, img2s = data_dict['data_input']
+            flatten_feat1s, grid_feat1s = self.backbone(img1s)
+            flatten_feat2s, grid_feat2s = self.backbone(img2s)
+
+            model_output["flatten_feats"] = (flatten_feat1s, flatten_feat2s)
+            model_output["grid_feats"] = (grid_feat1s, grid_feat2s)
+
+            attention_maps = self.attention(grid_feat1s, grid_feat2s)
+            grid_cos_maps = self.grid_cos(grid_feat1s, grid_feat2s)
+            x_coses = self.frobenius_inner_product(grid_cos_maps, attention_maps)
+            model_output["x_coses"] = x_coses.cpu().numpy()
+            targeted_coses = self.getCos(img1s, img2s)
+            model_output["targeted_cos"] = targeted_coses.cpu().numpy()
         return model_output
 
     def getCos(self, img1s, img2s):
