@@ -57,9 +57,12 @@ class InsightFaceBinaryImg(Dataset):
             else:
                 raise NotImplementedError
             img_pair_tmp.append(img)
-        img_pair = torch.stack(img_pair_tmp)
+        # img_pair = torch.stack(img_pair_tmp)
         is_same_label = self.is_same_arr[index]
-        return {"data_input": img_pair, "is_same_labels": is_same_label}
+        return {
+            "data_input": (img_pair_tmp[0], img_pair_tmp[1]),
+            "is_same_labels": is_same_label
+        }
 
     def __len__(self):
         return len(self.is_same_arr)

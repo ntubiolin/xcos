@@ -35,7 +35,7 @@ class FaceBinDataLoader(BaseDataLoader):
     Returned data will be in dictionary
     """
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
-                 num_workers=1, name="LFW",
+                 num_workers=1, name="lfw",
                  norm_mean=[0.5, 0.5, 0.5], norm_std=[0.5, 0.5, 0.5]):
         trsfm = transforms.Compose([
             transforms.ToTensor(),
