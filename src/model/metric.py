@@ -77,10 +77,6 @@ class VerificationMetric(BaseMetric):
         return None
 
     def finalize(self):
-        print(">>> In metric validation finalize()")
-        print(len(self.cos_values), len(self.is_same_ground_truth))
-        print(self.cos_values[0].shape)
-        print(self.is_same_ground_truth[0].shape)
         self.cos_values = np.concatenate(self.cos_values, axis=None)
         self.is_same_ground_truth = np.concatenate(self.is_same_ground_truth, axis=None)
         accuracy, threshold, roc_tensor = self.evaluate_and_plot_roc(
@@ -89,9 +85,6 @@ class VerificationMetric(BaseMetric):
         return accuracy
 
     def evaluate_and_plot_roc(self, coses, issame, nrof_folds=5):
-        print(">>>> In evaluate_and_plot_roc")
-        print(coses.shape)
-        print(issame.shape)
         accuracy, best_thresholds, roc_curve_tensor = evaluate_accuracy(
             coses, issame, nrof_folds
         )
