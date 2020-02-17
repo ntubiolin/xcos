@@ -150,6 +150,10 @@ class Backbone(Module):
         x = self.output_layer(x)
         return l2_norm(x)
 
+    def weight_init(self, mean, std):
+        for m in self._modules:
+            normal_init(self._modules[m], mean, std)
+
 
 class Backbone_FC2Conv(Module):
     def __init__(self, num_layers, drop_ratio, mode='ir', returnGrid=True):

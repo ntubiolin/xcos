@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from .base_model import BaseModel
 from .networks import MnistGenerator, MnistDiscriminator
 
-from .face_recog import Backbone_FC2Conv, Am_softmax
+from .face_recog import Backbone_FC2Conv, Backbone, Am_softmax
 from .xcos_modules import XCosAttention, FrobeniusInnerProduct, GridCos, l2normalize
 # from utils.global_config import global_config
 
@@ -29,10 +29,9 @@ class xCosModel(BaseModel):
         # TODO cosface v arcface, too.
         self.head = Am_softmax(embedding_size=embedding_size,
                                classnum=class_num)
-        self.backbone_target = Backbone_FC2Conv(net_depth,
-                                                dropout_ratio,
-                                                net_mode,
-                                                returnGrid=False)
+        self.backbone_target = Backbone(net_depth,
+                                        dropout_ratio,
+                                        net_mode)
         self.frobenius_inner_product = FrobeniusInnerProduct()
         self.grid_cos = GridCos()  # chw2hwc=True
 
