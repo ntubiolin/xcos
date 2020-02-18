@@ -13,6 +13,7 @@
 
 import os.path as op
 import torch
+from collections import OrderedDict
 from model.model import xCosModel
 insight_dir = "/home/r07944011/researches/InsightFace_Pytorch"
 backbone_weights_path = 'work_space/save/model_2019-08-25-14-35_accuracy:0.9931666666666666_step:218349_None.pth'
@@ -30,6 +31,13 @@ xcos_model.backbone_target.load_state_dict(torch.load(backbone_target_path))
 
 
 model_state = xcos_model.state_dict()
+model_state_tmp = OrderedDict()
+for k, v in model_state.items():
+    if k.startswith("head"):
+        print(k)
+    else:
+        model_state_tmp[k] = v
+model_state = model_state_tmp
 state = {
     'state_dict': model_state
 }
