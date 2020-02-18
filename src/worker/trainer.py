@@ -44,10 +44,22 @@ class Trainer(TrainingWorker):
         if self.optimize_strategy == 'normal':
             self.optimizers['default'].zero_grad()
             model_output = self.model(data)
-            losses, total_loss = self._get_and_write_losses(data, model_output)
+            _, total_loss = self._get_and_write_losses(data, model_output)
 
             total_loss.backward()
             self.optimizers['default'].step()
+
+        elif self.optimize_strategy == 'multitasking':
+            for optimizer_name in self.optimizers.keys():
+                self.optimizers[optimizer_name].zero_grad()
+            
+            model_output = self.model(data, 'normal')
+            _, total_loss = self._get_and_write_losses(data, model_output)
+
+            total_loss.backward()
+
+            for optimizer_name in self.optimizers.keys():
+                self.optimizers[optimizer_name].step()
 
         elif self.optimize_strategy == 'GAN':
             total_loss = 0
