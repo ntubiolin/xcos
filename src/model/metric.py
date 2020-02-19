@@ -11,11 +11,12 @@ from utils.verification import evaluate_accuracy
 
 
 class BaseMetric(torch.nn.Module):
-    def __init__(self, output_key, target_key, nickname):
+    def __init__(self, output_key, target_key, nickname, scenario='training'):
         super().__init__()
         self.nickname = nickname
         self.output_key = output_key
         self.target_key = target_key
+        self.scenario = scenario
 
     @abstractmethod
     def clear(self):
@@ -41,9 +42,9 @@ class BaseMetric(torch.nn.Module):
 
 
 class TestMetric(BaseMetric):
-    def __init__(self, k, output_key, target_key, nickname=None):
+    def __init__(self, k, output_key, target_key, nickname=None, scenario='training'):
         nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
-        super().__init__(output_key, target_key, nickname)
+        super().__init__(output_key, target_key, nickname, scenario)
         self.k = k
 
     def clear(self):
@@ -60,9 +61,10 @@ class TestMetric(BaseMetric):
 
 
 class VerificationMetric(BaseMetric):
-    def __init__(self, output_key, target_key, nickname=None, num_of_folds=5):
+    def __init__(self, output_key, target_key, 
+                 nickname=None, num_of_folds=5, scenario='validation'):
         nickname = f"verificatoin_acc_{target_key}" if nickname is None else nickname
-        super().__init__(output_key, target_key, nickname)
+        super().__init__(output_key, target_key, nickname, scenario)
         self.num_of_folds = num_of_folds
         self.cos_values = []
         self.is_same_ground_truth = []

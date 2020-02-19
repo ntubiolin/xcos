@@ -23,8 +23,8 @@
             "target_network": "attention",
             "type": "Adam",
             "args": {
-                "lr": 0.001,
-                "weight_decay": 0,
+                "lr": 0.0001,
+                "weight_decay": 4e-5,
                 "amsgrad": true
             }
         }
@@ -59,7 +59,7 @@
         "monitor": "valid_seen_loss",
         "monitored_metric": "avg_loss",
         "monitor_mode": "min",
-        "monitored_loader":"valid_casia"
+        "monitored_loader":"lfw"
     },
     "trainer_args": {},
     "visualization": {
@@ -76,14 +76,28 @@
         "type": "FaceDataLoader",
         "args": {
             "data_dir": "../datasets/face/CASIA",
-            "batch_size": 40,
-            "validation_split": 0.2,
-            "num_workers": 6,
+            "batch_size":48
+            ,
+            "validation_split": 0,
+            "num_workers": 4,
             "name": "casia"
         }
     },
     "validation_strategy": "bypass_loss_calculation",
     "optimize_strategy": "multitasking",
+    "valid_data_loaders": {
+        "1": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 48,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "lfw"
+            }
+        }
+    },
     "losses": {
         "0": {
             "type": "SiameseCrossEntropyLoss",
@@ -111,7 +125,18 @@
                 "nickname": "testMetric",
                 "output_key": "x_coses",
                 "target_key": "is_same_labels",
-                "k": 10
+                "k": 10, 
+                "scenario": "training"
+            }
+        },
+        "1": {
+            "type": "VerificationMetric",
+            "args": {
+                "nickname": "verificationMetric",
+                "output_key": "x_coses",
+                "target_key": "is_same_labels",
+                "num_of_folds": 10,
+                "scenario": "validation"
             }
         }
     },

@@ -23,7 +23,8 @@ class Trainer(TrainingWorker):
         shared_attrs += ['gan_loss_functions'] if self.optimize_strategy == 'GAN' else []
         for attr_name in shared_attrs:
             setattr(self, attr_name, getattr(pipeline, attr_name))
-
+        self.evaluation_metrics = self._filter_evaluation_metrics(self.evaluation_metrics, scenario='training')
+    
     @property
     def enable_grad(self):
         return True

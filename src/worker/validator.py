@@ -18,6 +18,7 @@ class Validator(TrainingWorker):
         if self.optimize_strategy == 'GAN':
             attr_name = 'gan_loss_functions'
             setattr(self, attr_name, getattr(pipeline, attr_name))
+        self.evaluation_metrics = self._filter_evaluation_metrics(self.evaluation_metrics, scenario='validation')
 
     @property
     def enable_grad(self):
