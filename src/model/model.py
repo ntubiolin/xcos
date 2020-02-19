@@ -77,9 +77,9 @@ class xCosModel(BaseModel):
             attention_maps = self.attention(grid_feat1s, grid_feat2s)
             grid_cos_maps = self.grid_cos(grid_feat1s, grid_feat2s)
             x_coses = self.frobenius_inner_product(grid_cos_maps, attention_maps)
-            model_output["x_coses"] = x_coses.cpu().numpy()
+            model_output["x_coses"] = x_coses
             targeted_coses = self.getCos(img1s, img2s)
-            model_output["targeted_cos"] = targeted_coses.cpu().numpy()
+            model_output["targeted_cos"] = targeted_coses
         return model_output
 
     def getCos(self, img1s, img2s):

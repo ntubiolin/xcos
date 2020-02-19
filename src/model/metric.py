@@ -74,7 +74,7 @@ class VerificationMetric(BaseMetric):
         self.is_same_ground_truth = []
 
     def update(self, data, output):
-        self.cos_values.append(output[self.output_key])
+        self.cos_values.append(output[self.output_key].cpu().numpy())
         self.is_same_ground_truth.append(data[self.target_key].cpu().numpy())
         return None
 
