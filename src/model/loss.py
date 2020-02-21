@@ -30,6 +30,26 @@ class CrossEntropyLoss(BaseLoss):
         self.loss_fn = nn.CrossEntropyLoss()
 
 
+class SiameseCrossEntropyLoss(BaseLoss):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        self.loss_fn = nn.CrossEntropyLoss()
+
+    def _preproces(self, data_dict, output_dict):
+        data_dict[self.target_key] = torch.cat(data_dict[self.target_key])
+        return data_dict, output_dict
+
+
+class SiameseMSELoss(BaseLoss):
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        self.loss_fn = nn.MSELoss()
+
+    def _preproces(self, data_dict, output_dict):
+        data_dict[self.target_key] = output_dict[self.target_key]
+        return data_dict, output_dict
+
+
 class GANLoss(BaseLoss):
     def __init__(
         self, network,

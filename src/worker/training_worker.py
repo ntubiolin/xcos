@@ -52,3 +52,8 @@ class TrainingWorker(WorkerTemplate):
         loss = loss_function(data, model_output) * loss_function.weight
         self.writer.add_scalar(f'{loss_function.nickname}', loss.item())
         return loss
+
+    def _filter_evaluation_metrics(self, metrics, scenario):
+        assert scenario in ['training', 'validation']
+        metrics = [metric for metric in metrics if metric.scenario == scenario]
+        return metrics

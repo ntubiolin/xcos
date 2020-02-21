@@ -122,3 +122,7 @@ src/saved/
 
 # pretrained model weights
 libs/model_weights/
+pretrained_model/
+
+# VS code settings
+settings.json

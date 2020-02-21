@@ -1,6 +1,6 @@
 import os
 import argparse
-
+# import warnings
 import torch
 
 from utils.logging_config import logger
@@ -71,5 +71,9 @@ def parse_args():
 
 
 if __name__ == '__main__':
+
+    # with warnings.catch_warnings():
+    #     warnings.simplefilter('error')
+
     args = parse_args()
     main(args)

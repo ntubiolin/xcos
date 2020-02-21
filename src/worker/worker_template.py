@@ -72,11 +72,15 @@ class WorkerTemplate(ABC):
     # Generally, the following function should not be changed.
     def _write_data_to_tensorboard(self, data, model_output):
         """ Write images to Tensorboard """
-        self.writer.add_image("data_input", make_grid(data["data_input"], nrow=4, normalize=True))
+        img_tensors = data["data_input"]
+        if not isinstance(img_tensors, torch.Tensor):
+            img_tensors = torch.cat(img_tensors)
+
+        self.writer.add_image("data_input", make_grid(img_tensors, nrow=4, normalize=True))
         if self.optimize_strategy == 'GAN':
             self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
             self.writer.add_histogram("dist_G_z", model_output["G_z"])
-            self.writer.add_histogram("dist_x", data["data_input"])
+            self.writer.add_histogram("dist_x", img_tensors)
 
     def _setup_writer(self):
         """ Setup Tensorboard writer for each iteration """
@@ -107,6 +111,9 @@ class WorkerTemplate(ABC):
             # Dataloader yeilds something that's not tensor, e.g data['video_id']
             if torch.is_tensor(data[key]):
                 data[key] = data[key].to(self.device)
+            elif isinstance(data[key], list):
+                for i, elem in enumerate(data[key]):
+                    data[key][i] = elem.to(self.device)
         return data
 
     def _iter_data(self, epoch):

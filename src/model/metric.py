@@ -7,14 +7,16 @@ import numpy as np
 from torchvision import transforms
 
 from utils.util import DeNormalize, lib_path, import_given_path
+from utils.verification import evaluate_accuracy
 
 
 class BaseMetric(torch.nn.Module):
-    def __init__(self, output_key, target_key, nickname):
+    def __init__(self, output_key, target_key, nickname, scenario='training'):
         super().__init__()
         self.nickname = nickname
         self.output_key = output_key
         self.target_key = target_key
+        self.scenario = scenario
 
     @abstractmethod
     def clear(self):
@@ -37,6 +39,58 @@ class BaseMetric(torch.nn.Module):
     def finalize(self):
         """ Calculate the final metric values given the variables updated in each batch. """
         pass
+
+
+class TestMetric(BaseMetric):
+    def __init__(self, k, output_key, target_key, nickname=None, scenario='training'):
+        nickname = f'top{self.k}_acc_{target_key}' if nickname is None else nickname
+        super().__init__(output_key, target_key, nickname, scenario)
+        self.k = k
+
+    def clear(self):
+        self.total_correct = 0
+        self.total_number = 0
+
+    def update(self, data, output):
+        self.total_correct += 2
+        self.total_number += 1
+        return self.total_correct / self.total_number
+
+    def finalize(self):
+        return self.total_correct / self.total_number
+
+
+class VerificationMetric(BaseMetric):
+    def __init__(self, output_key, target_key,
+                 nickname=None, num_of_folds=5, scenario='validation'):
+        nickname = f"verificatoin_acc_{target_key}" if nickname is None else nickname
+        super().__init__(output_key, target_key, nickname, scenario)
+        self.num_of_folds = num_of_folds
+        self.cos_values = []
+        self.is_same_ground_truth = []
+
+    def clear(self):
+        self.cos_values = []
+        self.is_same_ground_truth = []
+
+    def update(self, data, output):
+        self.cos_values.append(output[self.output_key].cpu().numpy())
+        self.is_same_ground_truth.append(data[self.target_key].cpu().numpy())
+        return None
+
+    def finalize(self):
+        self.cos_values = np.concatenate(self.cos_values, axis=None)
+        self.is_same_ground_truth = np.concatenate(self.is_same_ground_truth, axis=None)
+        accuracy, threshold, roc_tensor = self.evaluate_and_plot_roc(
+            self.cos_values, self.is_same_ground_truth, self.num_of_folds
+        )
+        return accuracy
+
+    def evaluate_and_plot_roc(self, coses, issame, nrof_folds=5):
+        accuracy, best_thresholds, roc_curve_tensor = evaluate_accuracy(
+            coses, issame, nrof_folds
+        )
+        return accuracy.mean(), best_thresholds.mean(), roc_curve_tensor
 
 
 class TopKAcc(BaseMetric):
