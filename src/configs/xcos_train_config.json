@@ -18,7 +18,7 @@
                 "weight_decay": 4e-4,
                 "momentum": 0.9
             }
-        }, 
+        },
         "attention": {
             "target_network": "attention",
             "type": "Adam",
@@ -96,6 +96,83 @@
                 "num_workers": 4,
                 "name": "lfw"
             }
+        },
+        "2": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "vgg2_fp"
+            }
+        },
+        "3": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "agedb_30"
+            }
+        },
+        "4": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "calfw"
+            }
+        },
+        "5": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "calfw"
+            }
+        },
+        "6": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cfp_ff"
+            }
+        },
+        "7": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cfp_fp"
+            }
+        },
+        "8": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cplfw"
+            }
         }
     },
     "losses": {
@@ -125,7 +202,7 @@
                 "nickname": "testMetric",
                 "output_key": "x_coses",
                 "target_key": "is_same_labels",
-                "k": 10, 
+                "k": 10,
                 "scenario": "training"
             }
         },
