@@ -51,7 +51,7 @@ class InsightFaceBinaryImg(Dataset):
         # BGR2RGB
         img_pair_tmp = []
         for img in img_pair:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             if self.transform is not None:
                 img = self.transform(img)
             else:

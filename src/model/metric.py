@@ -61,7 +61,7 @@ class TestMetric(BaseMetric):
 
 
 class VerificationMetric(BaseMetric):
-    def __init__(self, output_key, target_key, 
+    def __init__(self, output_key, target_key,
                  nickname=None, num_of_folds=5, scenario='validation'):
         nickname = f"verificatoin_acc_{target_key}" if nickname is None else nickname
         super().__init__(output_key, target_key, nickname, scenario)

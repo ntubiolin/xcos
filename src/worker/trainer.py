@@ -24,7 +24,7 @@ class Trainer(TrainingWorker):
         for attr_name in shared_attrs:
             setattr(self, attr_name, getattr(pipeline, attr_name))
         self.evaluation_metrics = self._filter_evaluation_metrics(self.evaluation_metrics, scenario='training')
-    
+
     @property
     def enable_grad(self):
         return True
@@ -53,7 +53,7 @@ class Trainer(TrainingWorker):
         elif self.optimize_strategy == 'multitasking':
             for optimizer_name in self.optimizers.keys():
                 self.optimizers[optimizer_name].zero_grad()
-            
+
             model_output = self.model(data, 'normal')
             _, total_loss = self._get_and_write_losses(data, model_output)
 
