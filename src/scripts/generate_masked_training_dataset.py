@@ -4,9 +4,10 @@ import numpy as np
 from glob import glob
 from PIL import Image
 from tqdm import tqdm
+from joblib import Parallel, delayed
 
 
-def apply_mask(img_dir, mask_dir, out_dir, csv_path):
+def apply_mask(img_dir, mask_dir, out_dir, csv_path, n_jobs):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     csv_content = []
@@ -14,7 +15,8 @@ def apply_mask(img_dir, mask_dir, out_dir, csv_path):
     print(f'>>> mask_dir[0]:{mask_dir[0]}')
     print(f'>>> out_dir:{out_dir}')
     print(f'>>> csv_path:{csv_path}')
-    for i, image_file in tqdm(enumerate(img_dir), total=len(img_dir)):
+
+    def apply_mask(image_file):
         mask_file = np.random.choice(mask_dir)
         image = Image.open(image_file)
         mask = Image.open(mask_file)
@@ -29,7 +31,12 @@ def apply_mask(img_dir, mask_dir, out_dir, csv_path):
 
         mask_number = os.path.join(os.path.basename(os.path.dirname(mask_file)), os.path.basename(mask_file))
         output_name = os.path.join(os.path.basename(out_dir), out_subdir, name)
-        csv_content.append((output_name, mask_number))
+        # csv_content.append((output_name, mask_number))
+        return (output_name, mask_number)
+    csv_content = Parallel(n_jobs=n_jobs,
+                           backend="threading")(delayed(apply_mask)(image_file) for image_file
+                                                in tqdm(img_dir, total=len(img_dir)))
+    # [print(c[1]) for c in csv_content]
     with open(csv_path, 'w') as filehandle:
         for listitem in csv_content:
             filehandle.write(f'{listitem[0]},{listitem[1]}\n')
@@ -41,6 +48,11 @@ def parse_args():
         '-r', '--mask_ratio',
         type=int,
         default=25
+    ),
+    parser.add_argument(
+        '-j', '--n_jobs',
+        type=int,
+        default=4
     )
     parser.add_argument(
         '-md', '--mask_dir',
@@ -70,5 +82,5 @@ if __name__ == '__main__':
     csv_path = out_dir + '.csv'
     # print(img_dir)
     print(len(img_dir))
-    np.random.seed(9487)
-    apply_mask(img_dir, mask_dir, out_dir, csv_path)
+    # np.random.seed(9487)
+    apply_mask(img_dir, mask_dir, out_dir, csv_path, args.n_jobs)
