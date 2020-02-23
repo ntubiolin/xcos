@@ -36,16 +36,25 @@ class myImageFolder(ImageFolder):
 
 
 class InsightFaceBinaryImg(Dataset):
-    def __init__(self, root_folder, dataset_name, transform=None):
+    def __init__(self, root_folder, dataset_name, transform=None, mask_dir=None):
         self.root = root_folder
         self.name = dataset_name
         self.transform = transform
         self.img_arr, self.is_same_arr = self.get_val_pair(self.root, self.name)
+        self.mask_dir = mask_dir
+        if self.mask_dir is not None:
+            assert op.isdir(self.mask_dir)
+            self.mask_files = glob(op.join(self.mask_dir, '*.png'))
 
     def __getitem__(self, index):
         img_pair = self.img_arr[index * 2: (index + 1) * 2]
         # Shape: from [2, c, h, w] to [2, h, w, c]
         img_pair = np.transpose(img_pair, (0, 2, 3, 1))
+        if self.mask_dir is not None:
+            # Randomly choose one profile from the pair.
+            mask_img_idx = np.random.choice(2)
+            mask_file = np.random.choice(self.mask_files)
+            img_pair[mask_img_idx] = self.apply_mask(img_pair[mask_img_idx], mask_file)
         # Range: [-1, +1] --> [0, 255]
         img_pair = ((img_pair + 1) * 0.5 * 255).astype(np.uint8)
         # BGR2RGB
@@ -71,6 +80,20 @@ class InsightFaceBinaryImg(Dataset):
         carray = bcolz.carray(rootdir=op.join(path, name), mode="r")
         issame = np.load(op.join(path, "{}_list.npy".format(name)))
         return carray, issame
+
+    def apply_mask(self, image, mask_path):
+        """Apply the binary mask to one image.
+
+        Arguments:
+            image {np.array} -- of shape (h, w, c)
+            mask_path {str} -- file path for one mask
+
+        Returns:
+            np.array -- masked image
+        """
+        mask = Image.open(mask_path)
+        masked = np.array(image) * np.expand_dims(np.array(mask), 2)
+        return masked
 
 
 class SiameseDFWImageFolder(Dataset):
