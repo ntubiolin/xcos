@@ -33,6 +33,7 @@ def apply_single_mask(image_file, random_state):
     # csv_content.append((output_name, mask_number))
     return (output_name, mask_number)
 
+
 def apply_mask(img_dir, mask_dir, out_dir, csv_path, n_jobs):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
