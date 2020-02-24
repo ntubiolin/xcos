@@ -80,6 +80,9 @@ class xCosModel(BaseModel):
             model_output["x_coses"] = x_coses
             targeted_coses = self.getCos(img1s, img2s)
             model_output["targeted_cos"] = targeted_coses
+
+        model_output["attention_maps"] = attention_maps
+        model_output["grid_cos_maps"] = grid_cos_maps
         return model_output
 
     def getCos(self, img1s, img2s):
