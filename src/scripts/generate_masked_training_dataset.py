@@ -1,4 +1,5 @@
 import os
+import errno
 import argparse
 import numpy as np
 from glob import glob
@@ -25,7 +26,13 @@ def apply_mask(img_dir, mask_dir, out_dir, csv_path, n_jobs):
         name = os.path.basename(image_file)
         out_subdir = os.path.basename(os.path.dirname(image_file))
         if not os.path.exists(os.path.join(out_dir, out_subdir)):
-            os.makedirs(os.path.join(out_dir, out_subdir))
+            try:
+                os.makedirs(os.path.join(out_dir, out_subdir))
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise OSError
+                # time.sleep might help here
+                pass
         out_file = os.path.join(out_dir, out_subdir, name)
         Image.fromarray(masked).save(out_file)
 
