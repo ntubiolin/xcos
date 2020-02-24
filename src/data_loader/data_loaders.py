@@ -35,14 +35,14 @@ class FaceBinDataLoader(BaseDataLoader):
     Returned data will be in dictionary
     """
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
-                 num_workers=1, name="lfw",
+                 num_workers=1, name="lfw", mask_dir=None,
                  norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5)):
         trsfm = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=norm_mean, std=norm_std)
         ])
         self.data_dir = data_dir
-        self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm)
+        self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm, mask_dir)
         self.name = self.__class__.__name__ if name is None else name
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
 

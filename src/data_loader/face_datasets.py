@@ -269,16 +269,11 @@ class SiameseImageFolder(Dataset):
         self.wFace_dataset = ImageFolder(imgs_folder_dir, transform)
         self.class_num = len(self.wFace_dataset.classes)
         print(">>> self.class_num = ", self.class_num)
-        # self.memoryAll = False
 
         self.train_labels = np.array(self.wFace_dataset.targets, dtype=int)
         print(">>> self.train_labels:", self.train_labels[1000:1010])
 
         self.train_data = self.wFace_dataset
-
-        # XXX
-        # if self.memoryAll:
-        #    self.train_data = self.wFace_dataset.train_data
 
         self.labels_set = set(self.train_labels)
         self.label_to_indices = {
@@ -301,8 +296,6 @@ class SiameseImageFolder(Dataset):
             siamese_index = np.random.choice(self.label_to_indices[siamese_label])
         img2, label2 = self.train_data[siamese_index]
 
-        # XXX stack
-        # stack (img1, img2), (label1, label2), cos_gt
         return {"data_input": (img1, img2), "targeted_id_labels": (label1, label2)}
 
     def __len__(self):

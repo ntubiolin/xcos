@@ -126,3 +126,6 @@ pretrained_model/
 
 # VS code settings
 settings.json
+
+# juputer notebooks
+src/notebooks
