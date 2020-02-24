@@ -8,6 +8,31 @@ from tqdm import tqdm
 from joblib import Parallel, delayed
 
 
+def apply_single_mask(image_file, random_state):
+    random_state = np.random.RandomState(random_state)
+    mask_file = random_state.choice(mask_dir)
+    image = Image.open(image_file)
+    mask = Image.open(mask_file)
+    masked = np.array(image) * np.expand_dims(np.array(mask), 2)
+
+    name = os.path.basename(image_file)
+    out_subdir = os.path.basename(os.path.dirname(image_file))
+    if not os.path.exists(os.path.join(out_dir, out_subdir)):
+        try:
+            os.makedirs(os.path.join(out_dir, out_subdir))
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise OSError
+            # time.sleep might help here
+            pass
+    out_file = os.path.join(out_dir, out_subdir, name)
+    Image.fromarray(masked).save(out_file)
+
+    mask_number = os.path.join(os.path.basename(os.path.dirname(mask_file)), os.path.basename(mask_file))
+    output_name = os.path.join(os.path.basename(out_dir), out_subdir, name)
+    # csv_content.append((output_name, mask_number))
+    return (output_name, mask_number)
+
 def apply_mask(img_dir, mask_dir, out_dir, csv_path, n_jobs):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -17,32 +42,9 @@ def apply_mask(img_dir, mask_dir, out_dir, csv_path, n_jobs):
     print(f'>>> out_dir:{out_dir}')
     print(f'>>> csv_path:{csv_path}')
 
-    def apply_mask(image_file):
-        mask_file = np.random.choice(mask_dir)
-        image = Image.open(image_file)
-        mask = Image.open(mask_file)
-        masked = np.array(image) * np.expand_dims(np.array(mask), 2)
-
-        name = os.path.basename(image_file)
-        out_subdir = os.path.basename(os.path.dirname(image_file))
-        if not os.path.exists(os.path.join(out_dir, out_subdir)):
-            try:
-                os.makedirs(os.path.join(out_dir, out_subdir))
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    raise OSError
-                # time.sleep might help here
-                pass
-        out_file = os.path.join(out_dir, out_subdir, name)
-        Image.fromarray(masked).save(out_file)
-
-        mask_number = os.path.join(os.path.basename(os.path.dirname(mask_file)), os.path.basename(mask_file))
-        output_name = os.path.join(os.path.basename(out_dir), out_subdir, name)
-        # csv_content.append((output_name, mask_number))
-        return (output_name, mask_number)
     csv_content = Parallel(n_jobs=n_jobs,
-                           backend="threading")(delayed(apply_mask)(image_file) for image_file
-                                                in tqdm(img_dir, total=len(img_dir)))
+                           backend="multiprocessing")(delayed(apply_single_mask)(image_file, None)
+                                                      for image_file in tqdm(img_dir, total=len(img_dir)))
     # [print(c[1]) for c in csv_content]
     with open(csv_path, 'w') as filehandle:
         for listitem in csv_content:
