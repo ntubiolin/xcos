@@ -220,7 +220,7 @@ def drawGridLines(image_t, w_lines=5, h_lines=6,
 
 
 def heatmap(data, row_labels, col_labels, ax=None,
-            cbar_kw={}, cbarlabel="", **kwargs):
+            cbar_kw=None, cbarlabel="", **kwargs):
     """
     Create a heatmap from a numpy array and two lists of labels.
 
@@ -242,7 +242,8 @@ def heatmap(data, row_labels, col_labels, ax=None,
     **kwargs
         All other arguments are forwarded to `imshow`.
     """
-
+    if cbar_kw is None:
+        cbar_kw = {}
     if not ax:
         ax = plt.gca()
 
@@ -269,7 +270,7 @@ def heatmap(data, row_labels, col_labels, ax=None,
              rotation_mode="anchor")
 
     # Turn spines off and create white grid.
-    for edge, spine in ax.spines.items():
+    for _, spine in ax.spines.items():
         spine.set_visible(False)
 
     ax.set_xticks(np.arange(data.shape[1] + 1) - .5, minor=True)
