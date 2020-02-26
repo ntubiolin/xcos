@@ -83,6 +83,8 @@ class WorkerTemplate(ABC):
         grid_cos_maps = model_output['grid_cos_maps'].squeeze().detach().cpu().numpy()
         attention_maps = model_output['attention_maps'].squeeze().detach().cpu().numpy()
         visualizations = batch_visualize_xcos(img1s, img2s, grid_cos_maps, attention_maps)
+        if len(visualizations) > 10:
+            visualizations = visualizations[:10]
         self.writer.add_image("xcos_visualization", make_grid(torch.cat(visualizations), nrow=1))
 
         if self.optimize_strategy == 'GAN':
