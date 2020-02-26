@@ -19,7 +19,13 @@ insight_dir = "/home/r07944011/researches/InsightFace_Pytorch"
 backbone_weights_path = 'work_space/save/model_2019-08-25-14-35_accuracy:0.9931666666666666_step:218349_None.pth'
 atten_weights_path = 'work_space/save/model_attention_2019-08-25-14-35_accuracy:0.9931666666666666_step:218349_None.pth'
 backbone_target_path = "work_space/save/model_ir_se50.pth"
+output_name = '../pretrained_model/xcos/20200217_accu_9931_Arcface.pth'
 
+backbone_weights_path = 'work_space/save/model_2019-09-02-08-21_accuracy:0.9968333333333333_step:436692_CosFace.pth'
+atten_weights_path = 'work_space/save/model_attention_2019-09-02-08-21_'\
+                     'accuracy:0.9968333333333333_step:436692_CosFace.pth'
+backbone_target_path = "work_space/save/model_irse50_CosFace_ms1m_9039.pth"
+output_name = '../pretrained_model/xcos/20200226_accu_9968_Cosface.pth'
 backbone_weights_path = op.join(insight_dir, backbone_weights_path)
 atten_weights_path = op.join(insight_dir, atten_weights_path)
 backbone_target_path = op.join(insight_dir, backbone_target_path)
@@ -41,4 +47,4 @@ model_state = model_state_tmp
 state = {
     'state_dict': model_state
 }
-torch.save(state, '../pretrained_model/xcos/20200217_accu_9931_Arcface.pth')
+torch.save(state, output_name)
