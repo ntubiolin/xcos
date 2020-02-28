@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from .base_model import BaseModel
 from .networks import MnistGenerator, MnistDiscriminator
 
-from .face_recog import Backbone_FC2Conv, Backbone, Am_softmax
+from .face_recog import Backbone_FC2Conv, Backbone, Am_softmax, Arcface
 from .xcos_modules import XCosAttention, FrobeniusInnerProduct, GridCos, l2normalize
 # from utils.global_config import global_config
 
@@ -19,16 +19,23 @@ cosineDim1 = nn.CosineSimilarity(dim=1, eps=1e-6)
 class xCosModel(BaseModel):
     def __init__(self,
                  net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
-                 embedding_size=1568, class_num=9999,
+                 model_to_plugin='CosFace', embedding_size=1568, class_num=9999,
                  use_softmax=True, softmax_temp=1):
         super().__init__()
+        assert model_to_plugin in ['CosFace', 'ArcFace']
         self.attention = XCosAttention(use_softmax=True, softmax_t=1, chw2hwc=True)
         self.backbone = Backbone_FC2Conv(net_depth,
                                          dropout_ratio,
                                          net_mode)
-        # TODO cosface v arcface, too.
-        self.head = Am_softmax(embedding_size=embedding_size,
-                               classnum=class_num)
+        self.model_to_plugin = model_to_plugin
+        if self.model_to_plugin == 'CosFace':
+            self.head = Am_softmax(embedding_size=embedding_size,
+                                   classnum=class_num)
+        elif self.model_to_plugin == 'ArcFace':
+            self.head = Arcface(embedding_size=embedding_size,
+                                classnum=class_num)
+        else:
+            raise NotImplementedError
         self.backbone_target = Backbone(net_depth,
                                         dropout_ratio,
                                         net_mode)
@@ -107,10 +114,18 @@ class xCosModel(BaseModel):
 class NormalFaceModel(BaseModel):
     def __init__(self,
                  net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
-                 embedding_size=512, class_num=9999):
+                 model_to_plugin='CosFace', embedding_size=512, class_num=9999):
         super().__init__()
-        self.head = Am_softmax(embedding_size=embedding_size,
-                               classnum=class_num)
+        assert model_to_plugin in ['CosFace', 'ArcFace']
+        self.model_to_plugin = model_to_plugin
+        if self.model_to_plugin == 'CosFace':
+            self.head = Am_softmax(embedding_size=embedding_size,
+                                   classnum=class_num)
+        elif self.model_to_plugin == 'ArcFace':
+            self.head = Arcface(embedding_size=embedding_size,
+                                classnum=class_num)
+        else:
+            raise NotImplementedError
         self.backbone = Backbone(net_depth,
                                  dropout_ratio,
                                  net_mode)
