@@ -53,7 +53,8 @@
     "arch": {
         "type": "NormalFaceModel",
         "args": {
-            "class_num": 10572
+            "class_num": 10572,
+            "model_type": "ArcFace"
         }
     },
     "data_loader": {
