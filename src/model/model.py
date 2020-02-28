@@ -104,6 +104,62 @@ class xCosModel(BaseModel):
             return cosine
 
 
+class NormalFaceModel(BaseModel):
+    def __init__(self,
+                 net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
+                 embedding_size=512, class_num=9999):
+        super().__init__()
+        self.head = Am_softmax(embedding_size=embedding_size,
+                               classnum=class_num)
+        self.backbone = Backbone(net_depth,
+                                 dropout_ratio,
+                                 net_mode)
+
+        self.backbone.weight_init(mean=0.0, std=0.02)
+
+    def forward(self, data_dict, scenario="normal"):
+        model_output = {}
+        if scenario == 'normal':
+            img1s, img2s = data_dict['data_input']
+            label1s, label2s = data_dict['targeted_id_labels']
+
+            flatten_feat1s = self.backbone(img1s)
+            flatten_feat2s = self.backbone(img2s)
+            # Part1: FR
+            theta1s = self.head(flatten_feat1s, label1s)
+            theta2s = self.head(flatten_feat2s, label2s)
+            thetas = torch.cat((theta1s, theta2s), 0)
+            model_output["thetas"] = thetas
+
+        elif scenario == 'get_feature_and_xcos':
+            img1s, img2s = data_dict['data_input']
+            flatten_feat1s = self.backbone(img1s)
+            flatten_feat2s = self.backbone(img2s)
+
+            model_output["flatten_feats"] = (flatten_feat1s, flatten_feat2s)
+            targeted_coses = self.getCos(img1s, img2s)
+            model_output["coses"] = targeted_coses
+        return model_output
+
+    def getCos(self, img1s, img2s):
+        '''
+        img1s.size: [bs * 2, c, h, w]
+        feats: [bs * 2, 512]
+        feat1: [bs, 512]
+        cosine:(bs,)
+        '''
+        with torch.no_grad():
+            feat1s = self.backbone(img1s)
+            feat2s = self.backbone(img2s)
+            # half_idx = feats.size(0) // 2
+            # feat1 = feats[:half_idx]
+            # feat2 = feats[half_idx:]
+            feat1s = l2normalize(feat1s)
+            feat2s = l2normalize(feat2s)
+            cosine = cosineDim1(feat1s, feat2s)
+            return cosine
+
+
 class MnistModel(BaseModel):
     """
     Mnist model demo
