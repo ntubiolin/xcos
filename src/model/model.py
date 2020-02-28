@@ -114,14 +114,14 @@ class xCosModel(BaseModel):
 class NormalFaceModel(BaseModel):
     def __init__(self,
                  net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
-                 model_to_plugin='CosFace', embedding_size=512, class_num=9999):
+                 model_type='CosFace', embedding_size=512, class_num=9999):
         super().__init__()
-        assert model_to_plugin in ['CosFace', 'ArcFace']
-        self.model_to_plugin = model_to_plugin
-        if self.model_to_plugin == 'CosFace':
+        assert model_type in ['CosFace', 'ArcFace']
+        self.model_type = model_type
+        if self.model_type == 'CosFace':
             self.head = Am_softmax(embedding_size=embedding_size,
                                    classnum=class_num)
-        elif self.model_to_plugin == 'ArcFace':
+        elif self.model_type == 'ArcFace':
             self.head = Arcface(embedding_size=embedding_size,
                                 classnum=class_num)
         else:
