@@ -7,7 +7,7 @@ from torchvision import transforms
 from .base_data_loader import BaseDataLoader
 from .mnist import MnistDataset
 from .mnist_result import MnistResultDataset
-from .face_datasets import SiameseImageFolder, InsightFaceBinaryImg
+from .face_datasets import SiameseImageFolder, InsightFaceBinaryImg, ARFaceDataset, GeneGANDataset
 
 
 class FaceDataLoader(BaseDataLoader):
@@ -75,3 +75,40 @@ class MnistResultDataLoader(BaseDataLoader):
         self.dataset = MnistResultDataset(**dataset_args)
         self.name = self.__class__.__name__ if name is None else name
         super().__init__(self.dataset, batch_size, False, 0, num_workers)
+
+
+class ARFaceDataLoader(BaseDataLoader):
+    """
+    Customized Face data loader that load val data from ARFace
+    Returned data will be in dictionary
+    """
+    def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
+                 num_workers=1, name=None, norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5)):
+        trsfm = transforms.Compose([
+            transforms.Resize([112, 112]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=norm_mean, std=norm_std)
+        ])
+        self.data_dir = data_dir
+        self.dataset = ARFaceDataset(data_dir, trsfm)
+        self.name = self.__class__.__name__ if name is None else name
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+class GeneGANDataLoader(BaseDataLoader):
+    """
+    Customized Face data loader that load data from augemented GeneGAN data
+    Returned data will be in dictionary
+    """
+    def __init__(self, data_dir, batch_size, identity_txt, shuffle=True, validation_split=0.0,
+                 num_workers=1, name=None,
+                 norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5)):
+        trsfm = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=norm_mean, std=norm_std)
+        ])
+        self.data_dir = data_dir
+        self.dataset = GeneGANDataset(data_dir, identity_txt, trsfm)
+        self.name = self.__class__.__name__ if name is None else name
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)

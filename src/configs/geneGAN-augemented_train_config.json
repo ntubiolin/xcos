@@ -1,0 +1,234 @@
+{
+    "n_gpu": 1,
+    "optimizers": {
+        "backbone": {
+            "target_network": "backbone",
+            "type": "SGD",
+            "args": {
+                "lr": 1e-3,
+                "weight_decay": 4e-5,
+                "momentum": 0.9
+            }
+        },
+        "head": {
+            "target_network": "head",
+            "type": "SGD",
+            "args": {
+                "lr": 0.001,
+                "weight_decay": 4e-4,
+                "momentum": 0.9
+            }
+        },
+        "attention": {
+            "target_network": "attention",
+            "type": "Adam",
+            "args": {
+                "lr": 0.0001,
+                "weight_decay": 4e-5,
+                "amsgrad": true
+            }
+        }
+    },
+    "lr_schedulers": {
+        "backbone": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 8,
+                "gamma": 0.99
+            }
+        },
+        "head": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 8,
+                "gamma": 0.99
+            }
+        },
+        "attention": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 8,
+                "gamma": 0.99
+            }
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 1,
+        "monitor": "valid_seen_loss",
+        "monitored_metric": "avg_loss",
+        "monitor_mode": "min",
+        "monitored_loader":"lfw"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "xCosModel",
+        "args": {
+            "class_num": 10572
+        }
+    },
+    "data_loader": {
+        "type": "GeneGANDataLoader",
+        "args": {
+            "data_dir": "../datasets/CelebA_glasses",
+            "batch_size": 48,
+            "identity_txt": "../datasets/face/identity_CelebA.txt",
+            "validation_split": 0,
+            "num_workers": 4,
+            "name": "GeneGAN"
+        }
+    },
+    "validation_strategy": "bypass_loss_calculation",
+    "optimize_strategy": "multitasking",
+    "valid_data_loaders": {
+        "1": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 48,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "lfw"
+            }
+        },
+        "2": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "vgg2_fp"
+            }
+        },
+        "3": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "agedb_30"
+            }
+        },
+        "4": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "calfw"
+            }
+        },
+        "5": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "calfw"
+            }
+        },
+        "6": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cfp_ff"
+            }
+        },
+        "7": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cfp_fp"
+            }
+        },
+        "8": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "cplfw"
+            }
+        },
+        "9": {
+            "type": "ARFaceDataLoader",
+            "args": {
+                "data_dir": "../datasets/ARFace",
+                "batch_size": 256,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "ARFace"
+            }
+        }        
+    },
+    "losses": {
+        "0": {
+            "type": "SiameseCrossEntropyLoss",
+            "args": {
+                "output_key": "thetas",
+                "target_key": "targeted_id_labels",
+                "nickname": "CrossEntropy",
+                "weight": 1
+            }
+        },
+        "1": {
+            "type": "SiameseMSELoss",
+            "args": {
+                "output_key": "x_coses",
+                "target_key": "targeted_cos",
+                "nickname": "MSE",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "TestMetric",
+            "args": {
+                "nickname": "testMetric",
+                "output_key": "x_coses",
+                "target_key": "is_same_labels",
+                "k": 10,
+                "scenario": "training"
+            }
+        },
+        "1": {
+            "type": "VerificationMetric",
+            "args": {
+                "nickname": "verificationMetric",
+                "output_key": "x_coses",
+                "target_key": "is_same_labels",
+                "num_of_folds": 10,
+                "scenario": "validation"
+            }
+        }
+    },
+    "log_step": 500,
+    "verbosity": 2,
+    "name": "geneGAN-augmented_train_config"
+}

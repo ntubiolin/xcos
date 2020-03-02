@@ -1237,3 +1237,60 @@ class ARVerificationAllPathDataset(Dataset):
 
     def __len__(self):
         return len(self.face_image_paths)
+
+
+class ARFaceDataset(Dataset):
+    def __init__(self, root_folder, transform=None):
+        self.root = root_folder
+        self.transform = transform
+        with os.scandir(root_folder) as it:
+            self.img_arr = pd.DataFrame([[entry.name, int(entry.name.split('-')[1])]
+                                         for entry in it if entry.name.endswith('.bmp')],
+                                        columns=['image_id', 'person_id'])
+
+    def __getitem__(self, index):
+        target = np.random.randint(0, 2)  # 0: same person, 1: different person
+        row1 = self.img_arr.iloc[index]
+        if target == 0:
+            row2 = self.img_arr[self.img_arr['person_id'] == row1['person_id']].sample().iloc[0]
+        else:
+            row2 = self.img_arr[self.img_arr['person_id'] != row1['person_id']].sample().iloc[0]
+
+        img1 = Image.open(os.path.join(self.root, row1['image_id']))
+        img2 = Image.open(os.path.join(self.root, row2['image_id']))
+        return {
+            'data_input': (self.transform(img1), self.transform(img2)),
+            'is_same_labels': row1['person_id'] == row2['person_id']
+        }
+
+    def __len__(self):
+        return self.img_arr.shape[0]
+
+
+class GeneGANDataset(Dataset):
+    def __init__(self, root_folder, identity_txt, transform=None):
+        self.root = root_folder
+        self.img_arr = pd.read_csv(identity_txt, sep=' ', header=None)
+        self.img_arr.columns = ['image_id', 'person_id']
+        for name in self.img_arr['image_id']:
+            if not os.path.exists(os.path.join(self.root, name)):
+                raise FileNotFoundError(f'{os.path.join(self.root, name)} does not exists.')
+        self.transform = transform
+
+    def __getitem__(self, index):
+        target = np.random.randint(0, 2)  # 0: same person, 1: different person
+        row1 = self.img_arr.iloc[index]
+        if target == 0:
+            row2 = self.img_arr[self.img_arr['person_id'] == row1['person_id']].sample().iloc[0]
+        else:
+            row2 = self.img_arr[self.img_arr['person_id'] != row1['person_id']].sample().iloc[0]
+
+        img1 = Image.open(os.path.join(self.root, row1['image_id']))
+        img2 = Image.open(os.path.join(self.root, row2['image_id']))
+        return {
+            'data_input': (self.transform(img1), self.transform(img2)),
+            'targeted_id_labels': (row1['person_id'], row2['person_id'])
+        }
+
+    def __len__(self):
+        return self.img_arr.shape[0]
