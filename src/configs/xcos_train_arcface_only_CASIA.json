@@ -1,0 +1,122 @@
+{
+    "n_gpu": 1,
+    "optimizers": {
+        "backbone": {
+            "target_network": "backbone",
+            "type": "SGD",
+            "args": {
+                "lr": 1e-4,
+                "weight_decay": 4e-5,
+                "momentum": 0.9
+            }
+        },
+        "head": {
+            "target_network": "head",
+            "type": "SGD",
+            "args": {
+                "lr": 0.001,
+                "weight_decay": 4e-4,
+                "momentum": 0.9
+            }
+        }
+    },
+    "lr_schedulers": {
+        "backbone": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 8,
+                "gamma": 0.99
+            }
+        },
+        "head": {
+            "type": "StepLR",
+            "args": {
+                "step_size": 8,
+                "gamma": 0.99
+            }
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 5,
+        "monitor": "valid_seen_loss",
+        "monitored_metric": "avg_loss",
+        "monitor_mode": "min",
+        "monitored_loader":"lfw"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "NormalFaceModel",
+        "args": {
+            "class_num": 10572,
+            "model_type": "ArcFace"
+        }
+    },
+    "data_loader": {
+        "type": "FaceDataLoader",
+        "args": {
+            "data_dir": "../datasets/face/masked_CASIA/masked_CASIA/imgs_masked25",
+            "batch_size":50,
+            "validation_split": 0,
+            "num_workers": 4,
+            "name": "casia_masked"
+        }
+    },
+    "validation_strategy": "bypass_loss_calculation",
+    "optimize_strategy": "multitasking",
+    "valid_data_loaders": {
+        "1": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 250,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "lfw"
+            }
+        },
+        "2": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 250,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "vgg2_fp"
+            }
+        }
+    },
+    "losses": {
+        "0": {
+            "type": "SiameseCrossEntropyLoss",
+            "args": {
+                "output_key": "thetas",
+                "target_key": "targeted_id_labels",
+                "nickname": "CrossEntropy",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "VerificationMetric",
+            "args": {
+                "nickname": "verificationMetric",
+                "output_key": "coses",
+                "target_key": "is_same_labels",
+                "num_of_folds": 10,
+                "scenario": "validation"
+            }
+        }
+    },
+    "log_step": 500,
+    "verbosity": 2,
+    "name": "xcos_train_arcface_only"
+}

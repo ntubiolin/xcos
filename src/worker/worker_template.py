@@ -7,6 +7,7 @@ from torchvision.utils import make_grid
 from data_loader.base_data_loader import BaseDataLoader
 from pipeline.base_pipeline import BasePipeline
 from utils.global_config import global_config
+from utils.util import batch_visualize_xcos
 
 
 class WorkerTemplate(ABC):
@@ -75,8 +76,17 @@ class WorkerTemplate(ABC):
         img_tensors = data["data_input"]
         if not isinstance(img_tensors, torch.Tensor):
             img_tensors = torch.cat(img_tensors)
+        if global_config.arch.type == "xCosModel":
+            img1s, img2s = data['data_input']
+            img1s = img1s.cpu().numpy()
+            img2s = img2s.cpu().numpy()
+            grid_cos_maps = model_output['grid_cos_maps'].squeeze().detach().cpu().numpy()
+            attention_maps = model_output['attention_maps'].squeeze().detach().cpu().numpy()
+            visualizations = batch_visualize_xcos(img1s, img2s, grid_cos_maps, attention_maps)
+            if len(visualizations) > 10:
+                visualizations = visualizations[:10]
+            self.writer.add_image("xcos_visualization", make_grid(torch.cat(visualizations), nrow=1))
 
-        self.writer.add_image("data_input", make_grid(img_tensors, nrow=4, normalize=True))
         if self.optimize_strategy == 'GAN':
             self.writer.add_image("G_z", make_grid(model_output["G_z"], nrow=4, normalize=True))
             self.writer.add_histogram("dist_G_z", model_output["G_z"])
