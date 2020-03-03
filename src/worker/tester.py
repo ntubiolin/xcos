@@ -1,14 +1,13 @@
 import os
 import time
-import numpy as np
-
 import torch
-
+from torchvision.utils import save_image
 from .worker_template import WorkerTemplate
 from data_loader.base_data_loader import BaseDataLoader
 from pipeline.base_pipeline import BasePipeline
 from utils.global_config import global_config
 from utils.logging_config import logger
+from utils.verification import checkTFPN
 
 
 class Tester(WorkerTemplate):
@@ -66,24 +65,31 @@ class Tester(WorkerTemplate):
 
         for d in [data, model_output]:
             update_epoch_output_from_dict(d)
-        if global_config.save_while_infer:
+
+        if global_config.save_while_infer and global_config.arch.args.draw_qualitative_result:
             # Save results
             name = self.data_loader.name
             # print(epoch_output.keys())
             # print(epoch_output['saved'].keys())
             # print(products.keys())
             # ['flatten_feats', 'grid_feats', 'x_coses', 'attention_maps', 'grid_cos_maps', 'xcos_visualizations']
-            print(len(products['model_output']['xcos_visualizations']))
-            print(products['model_output']['xcos_visualizations'][0].shape)
-        # TODO Support visualization output
-        if False:
-            for i in range(len(epoch_output['saved']['model_output'])):
+            # print(len(products['model_output']['xcos_visualizations']))
+            # print(products['model_output']['xcos_visualizations'][0].shape)
+            # print(epoch_output['saved'].keys())
+
+            for i in range(len(epoch_output['saved']['xcos_visualizations'])):
                 index = epoch_output['saved']['index'][i]
-                output = {}
-                for saved_key in epoch_output['saved'].keys():
-                    output[saved_key] = epoch_output['saved'][saved_key][i]
-                output_path = os.path.join(self.saving_dir, f'{name}_index{index:06d}.npz')
-                np.savez(output_path, **output)
+                visualization = epoch_output['saved']['xcos_visualizations'][i]
+                xcos = epoch_output['saved']['x_coses'][i]
+                is_same_label = epoch_output['saved']['is_same_labels'][i]
+                TFPN = checkTFPN(xcos, is_same_label)
+                output_path = os.path.join(self.saving_dir, f'{name}_{TFPN}_xcos_{xcos:.4f}_pair_{index:06d}.png')
+                save_image(visualization, output_path)
+                # output = {}
+                # for saved_key in epoch_output['saved'].keys():
+                #     output[saved_key] = epoch_output['saved'][saved_key][i]
+                # output_path = os.path.join(self.saving_dir, f'{name}_index{index:06d}.npz')
+                # np.savez(output_path, **output)
                 if index % 1000 == 0:
                     logger.info(f'Saving output {output_path} ...')
 

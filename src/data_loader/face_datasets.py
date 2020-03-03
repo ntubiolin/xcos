@@ -70,7 +70,8 @@ class InsightFaceBinaryImg(Dataset):
         is_same_label = self.is_same_arr[index]
         return {
             "data_input": (img_pair_tmp[0], img_pair_tmp[1]),
-            "is_same_labels": is_same_label
+            "is_same_labels": is_same_label,
+            "index": index
         }
 
     def __len__(self):
@@ -1276,7 +1277,8 @@ class ARFaceDataset(Dataset):
         img2 = Image.open(os.path.join(self.root, row2['image_id']))
         return {
             'data_input': (self.transform(img1), self.transform(img2)),
-            'is_same_labels': row1['person_id'] == row2['person_id']
+            'is_same_labels': row1['person_id'] == row2['person_id'],
+            'index': index
         }
 
     def __len__(self):

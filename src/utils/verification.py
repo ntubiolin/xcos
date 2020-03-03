@@ -114,3 +114,30 @@ def gen_plot(fpr, tpr):
     buf.seek(0)
     plt.close()
     return buf
+
+
+def getTFNPString(same, isSame_pred):
+    title_str = 'LL'
+    if same == 1 and int(isSame_pred) == 0:
+        # not the same person but predicted the same]
+        # False negative
+        title_str = 'False_Negative'
+
+    elif same == 0 and int(isSame_pred) == 1:
+        # False positive
+        title_str = 'False_Positive'
+
+    elif same == 1 and int(isSame_pred) == 1:
+        # True positive
+        title_str = 'True_Positive'
+
+    elif same == 0 and int(isSame_pred) == 0:
+        # True negative
+        title_str = 'True_Negative'
+    return title_str
+
+
+def checkTFPN(cos, is_same_label, threshold=0.2545):
+    # 0.2545 is the threshold for xCosArcFace
+    same = 1 if float(cos) > threshold else 0
+    return getTFNPString(is_same_label, same)
