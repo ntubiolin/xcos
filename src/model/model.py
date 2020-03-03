@@ -11,6 +11,7 @@ from .networks import MnistGenerator, MnistDiscriminator
 
 from .face_recog import Backbone_FC2Conv, Backbone, Am_softmax, Arcface
 from .xcos_modules import XCosAttention, FrobeniusInnerProduct, GridCos, l2normalize
+from utils.util import batch_visualize_xcos
 # from utils.global_config import global_config
 
 cosineDim1 = nn.CosineSimilarity(dim=1, eps=1e-6)
@@ -20,7 +21,7 @@ class xCosModel(BaseModel):
     def __init__(self,
                  net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
                  model_to_plugin='CosFace', embedding_size=1568, class_num=9999,
-                 use_softmax=True, softmax_temp=1):
+                 use_softmax=True, softmax_temp=1, draw_qualitative_result=False):
         super().__init__()
         assert model_to_plugin in ['CosFace', 'ArcFace']
         self.attention = XCosAttention(use_softmax=True, softmax_t=1, chw2hwc=True)
@@ -45,6 +46,8 @@ class xCosModel(BaseModel):
         self.attention.weight_init(mean=0.0, std=0.02)
         self.backbone.weight_init(mean=0.0, std=0.02)
         self.backbone_target.weight_init(mean=0.0, std=0.02)
+
+        self.draw_qualitative_result = draw_qualitative_result
 
     def forward(self, data_dict, scenario="normal"):
         model_output = {}
@@ -85,11 +88,16 @@ class xCosModel(BaseModel):
             grid_cos_maps = self.grid_cos(grid_feat1s, grid_feat2s)
             x_coses = self.frobenius_inner_product(grid_cos_maps, attention_maps)
             model_output["x_coses"] = x_coses
-            targeted_coses = self.getCos(img1s, img2s)
-            model_output["targeted_cos"] = targeted_coses
 
         model_output["attention_maps"] = attention_maps
         model_output["grid_cos_maps"] = grid_cos_maps
+        if self.draw_qualitative_result:
+            img1s = img1s.cpu().numpy()
+            img2s = img2s.cpu().numpy()
+            grid_cos_maps = grid_cos_maps.squeeze().detach().cpu().numpy()
+            attention_maps = attention_maps.squeeze().detach().cpu().numpy()
+            visualizations = batch_visualize_xcos(img1s, img2s, grid_cos_maps, attention_maps)
+            model_output["xcos_visualizations"] = visualizations
         return model_output
 
     def getCos(self, img1s, img2s):
