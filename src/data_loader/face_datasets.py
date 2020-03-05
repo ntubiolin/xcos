@@ -49,22 +49,23 @@ class InsightFaceBinaryImg(Dataset):
     def __getitem__(self, index):
         img_pair = self.img_arr[index * 2: (index + 1) * 2]
         # Shape: from [2, c, h, w] to [2, h, w, c]
-        img_pair = np.transpose(img_pair, (0, 2, 3, 1))
+        # img_pair = np.transpose(img_pair, (0, 2, 3, 1))
         if self.mask_dir is not None:
             # Randomly choose one profile from the pair.
             mask_img_idx = np.random.choice(2)
             mask_file = np.random.choice(self.mask_files)
             img_pair[mask_img_idx] = self.apply_mask(img_pair[mask_img_idx], mask_file)
         # Range: [-1, +1] --> [0, 255]
-        img_pair = ((img_pair + 1) * 0.5 * 255).astype(np.uint8)
+        # img_pair = ((img_pair + 1) * 0.5 * 255).astype(np.uint8)
         # BGR2RGB
         img_pair_tmp = []
         for img in img_pair:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            if self.transform is not None:
-                img = self.transform(img)
-            else:
-                raise NotImplementedError
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # if self.transform is not None:
+            #     img = self.transform(img)
+            # else:
+            #     raise NotImplementedError
+            img = torch.tensor(img)
             img_pair_tmp.append(img)
         # img_pair = torch.stack(img_pair_tmp)
         is_same_label = self.is_same_arr[index]

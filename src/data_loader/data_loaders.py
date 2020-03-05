@@ -39,7 +39,7 @@ class FaceBinDataLoader(BaseDataLoader):
                  norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5)):
         trsfm = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=norm_mean, std=norm_std)
+            # transforms.Normalize(mean=norm_mean, std=norm_std)
         ])
         self.data_dir = data_dir
         self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm, mask_dir)
