@@ -36,13 +36,19 @@ class FaceBinDataLoader(BaseDataLoader):
     """
     def __init__(self, data_dir, batch_size, shuffle=True, validation_split=0.0,
                  num_workers=1, name="lfw", nickname=None, mask_dir=None,
-                 norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5)):
-        trsfm = transforms.Compose([
-            transforms.ToTensor(),
-            # transforms.Normalize(mean=norm_mean, std=norm_std)
-        ])
+                 norm_mean=(0.5, 0.5, 0.5), norm_std=(0.5, 0.5, 0.5),
+                 use_bgr=True):
+        if use_bgr:
+            trsfm = transforms.Compose([
+                transforms.ToTensor()
+            ])
+        else:
+            trsfm = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=norm_mean, std=norm_std)
+            ])
         self.data_dir = data_dir
-        self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm, mask_dir)
+        self.dataset = InsightFaceBinaryImg(data_dir, name, trsfm, mask_dir, use_bgr)
         self.name = self.__class__.__name__ if name is None else name
         self.name = nickname if nickname is not None else self.name
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
