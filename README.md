@@ -1,6 +1,6 @@
 # xCos: An Explainable Cosine Metric for Face Verification Task
 
-Official Pytorch implementation of "LxCos: An Explainable Cosine Metric for Face Verification Task" [arXiv](https://arxiv.org/abs/2003.05383)
+Official Pytorch implementation of "xCos: An Explainable Cosine Metric for Face Verification Task" [arXiv](https://arxiv.org/abs/2003.05383)
 
 
 ## Introduction
