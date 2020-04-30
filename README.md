@@ -27,11 +27,17 @@ Please refer to the [pytorch-golden-template](https://github.com/amjltc295/pytor
 
 ## Authors
 Yu-sheng Lin [ntubiolin](https://github.com/ntubiolin) biolin@cmlab.csie.ntu.edu.tw
+
 Zhe-Yu Liu [Nash2325138](https://github.com/Nash2325138) zhe2325138@cmlab.csie.ntu.edu.tw
+
 Yuan Chen
+
 Yu-Siang Wang
+
 Hsin-Ying Lee
+
 Yirong Chen
+
 Ya-Liang Chang (Allen) [amjltc295](https://github.com/amjltc295/) yaliangchang@cmlab.csie.ntu.edu.tw
 
 Please cite our papers if you use this repo in your research:
