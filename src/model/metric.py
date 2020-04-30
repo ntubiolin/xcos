@@ -8,6 +8,7 @@ from torchvision import transforms
 
 from utils.util import DeNormalize, lib_path, import_given_path
 from utils.verification import evaluate_accuracy
+from utils.logging_config import logger
 
 
 class BaseMetric(torch.nn.Module):
@@ -84,6 +85,7 @@ class VerificationMetric(BaseMetric):
         accuracy, threshold, roc_tensor = self.evaluate_and_plot_roc(
             self.cos_values, self.is_same_ground_truth, self.num_of_folds
         )
+        logger.info(f">>>> In verification metric, accuracy:{accuracy}, threshold: {threshold}")
         return accuracy
 
     def evaluate_and_plot_roc(self, coses, issame, nrof_folds=5):

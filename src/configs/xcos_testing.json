@@ -1,0 +1,97 @@
+{
+    "n_gpu": 1,
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "saved/",
+        "save_freq": 5,
+        "monitor": "valid_seen_loss",
+        "monitored_metric": "avg_loss",
+        "monitor_mode": "min",
+        "monitored_loader":"lfw"
+    },
+    "trainer_args": {},
+    "visualization": {
+        "tensorboardX": true,
+        "log_dir": "saved/runs"
+    },
+    "arch": {
+        "type": "xCosModel",
+        "args": {
+            "class_num": 10572,
+            "draw_qualitative_result": true
+        }
+    },
+    "data_loader": {
+        "type": "FaceDataLoader",
+        "args": {
+            "data_dir": "../datasets/face/masked_CASIA/masked_CASIA/imgs_masked25",
+            "batch_size":600,
+            "validation_split": 0,
+            "num_workers": 4,
+            "name": "casia_masked_testing"
+        }
+    },
+    "validation_strategy": "bypass_loss_calculation",
+    "optimize_strategy": "multitasking",
+    "test_data_loaders": {
+        "1": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 8,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "lfw"
+            }
+        },
+        "2": {
+            "type": "FaceBinDataLoader",
+            "args": {
+                "data_dir": "../datasets/face/faces_emore",
+                "batch_size": 8,
+                "shuffle": false,
+                "validation_split": 0.0,
+                "num_workers": 4,
+                "name": "vgg2_fp"
+            }
+        }
+    },
+    "losses": {
+        "0": {
+            "type": "SiameseCrossEntropyLoss",
+            "args": {
+                "output_key": "thetas",
+                "target_key": "targeted_id_labels",
+                "nickname": "CrossEntropy",
+                "weight": 1
+            }
+        },
+        "1": {
+            "type": "SiameseMSELoss",
+            "args": {
+                "output_key": "x_coses",
+                "target_key": "targeted_cos",
+                "nickname": "MSE",
+                "weight": 1
+            }
+        }
+    },
+    "metrics": {
+        "0": {
+            "type": "VerificationMetric",
+            "args": {
+                "nickname": "verificationMetric",
+                "output_key": "x_coses",
+                "target_key": "is_same_labels",
+                "num_of_folds": 10,
+                "scenario": "validation"
+            }
+        }
+    },
+    "log_step": 500,
+    "verbosity": 2,
+    "saved_keys": ["xcos_visualizations", "index", "x_coses", "is_same_labels"],
+    "save_while_infer": true,
+    "name": "testing_xCos_lfw"
+}

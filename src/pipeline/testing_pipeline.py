@@ -75,4 +75,4 @@ class TestingPipeline(BasePipeline):
             if not global_config.save_while_infer:
                 self._save_inference_results(worker.data_loader.name, worker_output['saved'])
             self.worker_outputs[worker.data_loader.name] = worker_output
-        self._print_and_write_log(0, self.worker_outputs, write=False)
+        self._print_and_write_log(0, self.worker_outputs, write=True)
