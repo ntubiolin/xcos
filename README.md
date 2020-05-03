@@ -5,11 +5,11 @@ Official Pytorch implementation of "xCos: An Explainable Cosine Metric for Face 
 
 ## Introduction
 In "xCos: An Explainable Cosine Metric for Face Verification Task", we propose a novel similarity metric, called explainable cosine xCos, that comes with a learnable module that can be plugged into most of the verification models to provide meaningful explanations.
-<img src='./doc/Example-of-xCos-framework-Traditional-face-verification-models-provide-no-spatial-clues.png'>
+<img src='./doc/idea.png'>
 State-of-the-art face verification models extract deep features of a pair of face images and compute the cosine similarity or the L2-distance of the paired features. Two images are said to be from the same person if the similarity is larger than a threshold value. However, with this standard procedure, we can hardly interpret these high dimensional features with our knowledge.
-<img src='./doc/Comparison-with-saliency-methods-1The-first-row-shows-one-true-positive-pair-It-is.png'>
+<img src='./doc/compare_xcos_with_grad_cam.png'>
 Although there are some previous works attempting to visualize the results on the input images with saliency map, these saliency map based visualizations are mostly used for the localization of objects in a single image rather the similarity of two faces. Therefore, our framework provides a new verification branch to calculate similarity maps and discriminative location maps based on the features extracted from two faces. This way, we can strike a balance between verification accuracy and visual interpretability.
-<img src='./doc/Proposed-Architecture-Our-proposed-architecture-contains-one-modified-CNN-backbone-and.png'>
+<img src='./doc/architecture.png'>
 
 ## Environment Setup
 ```
