@@ -11,16 +11,49 @@ State-of-the-art face verification models extract deep features of a pair of fac
 Although there are some previous works attempting to visualize the results on the input images with saliency map, these saliency map based visualizations are mostly used for the localization of objects in a single image rather the similarity of two faces. Therefore, our framework provides a new verification branch to calculate similarity maps and discriminative location maps based on the features extracted from two faces. This way, we can strike a balance between verification accuracy and visual interpretability.
 <img src='./doc/architecture.png'>
 
-## Environment Setup
+## Environment Setup/ Dataset preparation
+### Environment Setup
 ```
 git clone git@github.com:ntubiolin/xcos.git
 cd xcos
 conda env create -f environment_xcos_template.yml
 source activate xcos_template
 ```
+### Dataset preparation
+The training dataset should be a folder structured like [torchvision.datasets.ImageFolder](https://pytorch.org/docs/stable/torchvision/datasets.html#imagefolder):
+```
+root/person_1/face_1.jpeg
+root/person_1/face_2.png
+root/person_2/face_1.jpg
+
+root/person_n/face_1.png
+root/person_n/face_2.png
+root/person_n/face_m.png
+```
+
+The validation/ testing dataset we use are stored in a binary format. For customized validation/ testing dataset, you can write a customized dataset which read your own dataset and return the same format as the `__getitem__` method in `.src.data_loader.face_datasets.InsightFaceBinaryImg`, and then wrap the dataset with a new dataloader like the one in `.src.data_loader.data_loaders.FaceBinDataLoader`.
+
+If you have no idea what the datasets you can use, [insightface](https://github.com/deepinsight/insightface) would be a good start.
 
 ## Training/ Testing
 Please refer to the [pytorch-golden-template](https://github.com/amjltc295/pytorch-golden-template) for detailed config options.
+
+Please execute `cd src/` first before executing the following codes.
+### Training
+Train the model from scratch
+```
+python main.py -tc configs/xcos_train_config.json
+```
+
+### Testing
+The pretrained weights can be accessible at [Google Drive](https://drive.google.com/file/d/1g5QnCATkoWZ1WXV1NZW6DbYqRPLx-ndo/view?usp=sharing). You can download it and place it in `../pretrained_model/xcos/'.
+#### Quantitative testing
+```
+python main.py -tc configs/xcos_testing.json --mode test -p ../pretrained_model/xcos/20200217_accu_9931_Arcface.pth
+```
+#### Visualization
+First, download and unzip [mtcnn_pytorch](https://drive.google.com/file/d/1d948kXxnc0RJv19v0ZK_zCqt7RpgXeis/view?usp=sharing) under `src/`. The `mtcnn_pytorch` module is used in the `src/visualize_xcos_one_example.ipynb`.
+Second, please refer to `src/visualize_xcos_one_example.ipynb`. To get the xcos result, you can replace the `img1` and `img2` image paths with the paths of the photos of your interest.
 
 ## License
 **This repository is limited to research purpose.** For any commercial usage, please contact us.

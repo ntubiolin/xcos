@@ -129,3 +129,4 @@ settings.json
 
 # juputer notebooks
 src/notebooks
+src/mtcnn_pytorch
