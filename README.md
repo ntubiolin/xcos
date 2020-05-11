@@ -46,13 +46,14 @@ python main.py -tc configs/xcos_train_config.json
 ```
 
 ### Testing
-The pretrained weights can be accessible at [Google Drive](https://drive.google.com/file/d/1g5QnCATkoWZ1WXV1NZW6DbYqRPLx-ndo/view?usp=sharing). You can download it and place it in `../pretrained_model/xcos/'.
+The pretrained weights can be accessible at [Google Drive](https://drive.google.com/file/d/1g5QnCATkoWZ1WXV1NZW6DbYqRPLx-ndo/view?usp=sharing). You can download it and place it in `../pretrained_model/xcos/`.
 #### Quantitative testing
 ```
 python main.py -tc configs/xcos_testing.json --mode test -p ../pretrained_model/xcos/20200217_accu_9931_Arcface.pth
 ```
 #### Visualization
 First, download and unzip [mtcnn_pytorch](https://drive.google.com/file/d/1d948kXxnc0RJv19v0ZK_zCqt7RpgXeis/view?usp=sharing) under `src/`. The `mtcnn_pytorch` module is used in the `src/visualize_xcos_one_example.ipynb`.
+
 Second, please refer to `src/visualize_xcos_one_example.ipynb`. To get the xcos result, you can replace the `img1` and `img2` image paths with the paths of the photos of your interest.
 
 ## License
