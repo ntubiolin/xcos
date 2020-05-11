@@ -40,6 +40,8 @@ Yirong Chen
 
 Ya-Liang Chang (Allen) [amjltc295](https://github.com/amjltc295/) yaliangchang@cmlab.csie.ntu.edu.tw
 
+Winston H. Hsu [website](https://winstonhsu.info/) whsu@ntu.edu.tw
+
 Please cite our papers if you use this repo in your research:
 ```
 @article{Lin2020xCosAE,
