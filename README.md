@@ -2,6 +2,8 @@
 
 Official Pytorch implementation of "xCos: An Explainable Cosine Metric for Face Verification Task" [arXiv](https://arxiv.org/abs/2003.05383)
 
+#### 30 sec demo video (YouTube)
+[![YouTube demo video](https://i.imgur.com/dlV49X6.png)](https://www.youtube.com/watch?v=lFIW_w0y08A&feature=emb_logo)
 
 ## Introduction
 In "xCos: An Explainable Cosine Metric for Face Verification Task", we propose a novel similarity metric, called explainable cosine xCos, that comes with a learnable module that can be plugged into most of the verification models to provide meaningful explanations.
