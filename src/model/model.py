@@ -21,13 +21,15 @@ class xCosModel(BaseModel):
     def __init__(self,
                  net_depth=50, dropout_ratio=0.6, net_mode='ir_se',
                  model_to_plugin='CosFace', embedding_size=1568, class_num=9999,
-                 use_softmax=True, softmax_temp=1, draw_qualitative_result=False):
+                 use_softmax=True, softmax_temp=1, draw_qualitative_result=False,
+                 grid_size=7):
         super().__init__()
         assert model_to_plugin in ['CosFace', 'ArcFace']
         self.attention = XCosAttention(use_softmax=True, softmax_t=1, chw2hwc=True)
         self.backbone = Backbone_FC2Conv(net_depth,
                                          dropout_ratio,
-                                         net_mode)
+                                         net_mode,
+                                         grid_size=grid_size)
         self.model_to_plugin = model_to_plugin
         if self.model_to_plugin == 'CosFace':
             self.head = Am_softmax(embedding_size=embedding_size,

@@ -116,6 +116,21 @@ def get_blocks(num_layers):
         ]
     return blocks
 
+def get_blocks_by_grid_size(num_layers, grid_size):
+    if num_layers == 50:
+        if grid_size == 14:
+            stride = 1
+        elif grid_size == 5: #XXX
+            stride = 3
+        blocks = [
+            get_block(in_channel=64, depth=64, num_units=3),
+            get_block(in_channel=64, depth=128, num_units=4),
+            get_block(in_channel=128, depth=256, num_units=14),
+            get_block(in_channel=256, depth=512, num_units=3, stride=stride)
+        ]
+    else:
+        raise NotImplementedError
+    return blocks
 
 class Backbone(Module):
     def __init__(self, num_layers, drop_ratio, mode='ir'):
@@ -156,11 +171,15 @@ class Backbone(Module):
 
 
 class Backbone_FC2Conv(Module):
-    def __init__(self, num_layers, drop_ratio, mode='ir', returnGrid=True):
+    def __init__(self, num_layers, drop_ratio, mode='ir', returnGrid=True, grid_size=7):
         super(Backbone_FC2Conv, self).__init__()
         assert num_layers in [50, 100, 152], 'num_layers should be 50,100, or 152'
         assert mode in ['ir', 'ir_se'], 'mode should be ir or ir_se'
-        blocks = get_blocks(num_layers)
+        if grid_size == 7: # For ablation study of feat map size
+            blocks = get_blocks(num_layers)
+        else:
+            assert grid_size == 14 or grid_size == 5
+            blocks = get_blocks_by_grid_size(num_layers, grid_size)
         if mode == 'ir':
             unit_module = bottleneck_IR
         elif mode == 'ir_se':
@@ -177,7 +196,7 @@ class Backbone_FC2Conv(Module):
         self.output_layer = Sequential(BatchNorm2d(512),
                                        Dropout(drop_ratio),
                                        Flatten(),
-                                       Linear(512 * 7 * 7, 512),
+                                       Linear(512 * grid_size * grid_size, 512),
                                        BatchNorm1d(512))
         modules = []
         for block in blocks:
