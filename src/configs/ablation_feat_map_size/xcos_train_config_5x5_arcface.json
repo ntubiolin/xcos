@@ -70,8 +70,8 @@
         "type": "xCosModel",
         "args": {
             "class_num": 10572,
-            "grid_size": 14,
-            "embedding_size": 6272,
+            "grid_size": 5,
+            "embedding_size": 800,
             "model_to_plugin": "ArcFace"
 
         }
@@ -212,5 +212,5 @@
     },
     "log_step": 500,
     "verbosity": 2,
-    "name": "xcos_train_14x14_ArcFace"
+    "name": "xcos_train_5x5_ArcFace"
 }

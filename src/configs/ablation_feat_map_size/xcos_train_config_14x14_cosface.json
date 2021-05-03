@@ -72,7 +72,7 @@
             "class_num": 10572,
             "grid_size": 14,
             "embedding_size": 6272,
-            "model_to_plugin": "ArcFace"
+            "model_to_plugin": "CosFace"
 
         }
     },
@@ -212,5 +212,5 @@
     },
     "log_step": 500,
     "verbosity": 2,
-    "name": "xcos_train_14x14_ArcFace"
+    "name": "xcos_train_14x14_CosFace"
 }
