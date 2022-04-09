@@ -66,13 +66,9 @@ Yu-sheng Lin [ntubiolin](https://github.com/ntubiolin) biolin@cmlab.csie.ntu.edu
 
 Zhe-Yu Liu [Nash2325138](https://github.com/Nash2325138) zhe2325138@cmlab.csie.ntu.edu.tw
 
-Yuan Chen
+Yu-An Chen
 
 Yu-Siang Wang
-
-Hsin-Ying Lee
-
-Yirong Chen
 
 Ya-Liang Chang (Allen) [amjltc295](https://github.com/amjltc295/) yaliangchang@cmlab.csie.ntu.edu.tw
 
@@ -80,12 +76,24 @@ Ya-Liang Chang (Allen) [amjltc295](https://github.com/amjltc295/) yaliangchang@c
 
 Please cite our papers if you use this repo in your research:
 ```
-@article{Lin2020xCosAE,
-  title={xCos: An Explainable Cosine Metric for Face Verification Task},
-  author={Yu-sheng Lin and Zheyu Liu and Yuan Chen and Yu-Siang Wang and Hsin-Ying Lee and Yirong Chen and Ya-Liang Chang and Winston H. Hsu},
-  journal={ArXiv},
-  year={2020},
-  volume={abs/2003.05383}
+@article{10.1145/3469288,
+author = {Lin, Yu-Sheng and Liu, Zhe-Yu and Chen, Yu-An and Wang, Yu-Siang and Chang, Ya-Liang and Hsu, Winston H.},
+title = {XCos: An Explainable Cosine Metric for Face Verification Task},
+year = {2021},
+issue_date = {October 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {17},
+number = {3s},
+issn = {1551-6857},
+url = {https://doi.org/10.1145/3469288},
+doi = {10.1145/3469288},
+abstract = {We study the XAI (explainable AI) on the face recognition task, particularly the face verification. Face verification has become a crucial task in recent days and it has been deployed to plenty of applications, such as access control, surveillance, and automatic personal log-on for mobile devices. With the increasing amount of data, deep convolutional neural networks can achieve very high accuracy for the face verification task. Beyond exceptional performances, deep face verification models need more interpretability so that we can trust the results they generate. In this article, we propose a novel similarity metric, called explainable cosine (xCos), that comes with a learnable module that can be plugged into most of the verification models to provide meaningful explanations. With the help of xCos, we can see which parts of the two input faces are similar, where the model pays its attention to, and how the local similarities are weighted to form the output xCos score. We demonstrate the effectiveness of our proposed method on LFW and various competitive benchmarks, not only resulting in providing novel and desirable model interpretability for face verification but also ensuring the accuracy as plugging into existing face recognition models.},
+journal = {ACM Trans. Multimedia Comput. Commun. Appl.},
+month = {nov},
+articleno = {112},
+numpages = {16},
+keywords = {xCos, face recognition, XAI, explainable artificial intelligence, face verification, explainable AI}
 }
 ```
 ## Acknowledgement
